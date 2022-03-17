@@ -5,6 +5,7 @@ This (dataload) tool aims to ingest IoT [JSON](https://github.com/timeplus-io/ch
 
 # Workflow
 
+![Test Deployment](deployment.png)
 dataload ingest data -> Kafka / Redpanda <- Streaming Query in Timeplus
 
 
