@@ -7,7 +7,7 @@ import (
 )
 
 type Metric struct {
-	Devicename          string    `json:"devicename"`
+	Device              string    `json:"device"`
 	Region              string    `json:"region"`
 	City                string    `json:"city"`
 	Version             string    `json:"version"`
@@ -26,7 +26,7 @@ func generateMetric(ts time.Time, devIndex int, region string, location LatLon) 
 	r := rand.New(source)
 
 	return Metric{
-		Devicename:          fmt.Sprintf("%s-BHSH-%05d", location.City, devIndex),
+		Device:              fmt.Sprintf("%s-BHSH-%05d", location.City, devIndex),
 		Region:              region,
 		City:                location.City,
 		Version:             "1.0",

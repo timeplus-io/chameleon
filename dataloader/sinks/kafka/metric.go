@@ -3,6 +3,7 @@ package kafka
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -45,7 +46,7 @@ func (writer *kafkaWriter) doLoadMetricData(source *models.Source, wg *sync.Wait
 
 	/// Generating records is very slow. We generate once and reuse it to avoid perf bottleneck on client side
 	records := models.GenerateMetrics(source.Settings.BatchSize, writer.devLocations)
-	payload, err := writer.marshal(records, source.Settings.Topic, source.Type)
+	payload, err := writer.marshal(records, source)
 	if err != nil {
 		return
 	}
@@ -103,16 +104,24 @@ func (writer *kafkaWriter) doLoadMetricData(source *models.Source, wg *sync.Wait
 	}
 }
 
-func (writer *kafkaWriter) marshal(records []models.Metric, topic, typ string) ([]byte, error) {
+func (writer *kafkaWriter) marshal(records []models.Metric, source *models.Source) ([]byte, error) {
 	var data [][]byte
-	for _, record := range records {
-		payload, err := json.Marshal(record)
-		if err != nil {
-			writer.logger.Error("Failed to marshal base.Data object", zap.Error(err))
-			return nil, err
-		}
+	/*if source.Settings.Format == "csv" {
+		data = append(data, []byte("device,region,city,version,lat,lon,battery,humidity,temperature,hydraulic_pressure,atmospheric_pressure,timestamp"))
+	}*/
 
-		data = append(data, payload)
+	for _, record := range records {
+		if source.Settings.Format == "json" {
+			payload, err := json.Marshal(record)
+			if err != nil {
+				writer.logger.Error("Failed to marshal base.Data object", zap.Error(err))
+				return nil, err
+			}
+			data = append(data, payload)
+		} else if source.Settings.Format == "csv" {
+			payload := fmt.Sprintf("%s,%s,%s,%s,%g,%g,%g,%d,%d,%g,%g,%d", record.Device, record.Region, record.City, record.Version, record.Lat, record.Lon, record.Battery, record.Humidity, record.Temperature, record.HydraulicPressure, record.AtmosphericPressure, record.Timestamp.UnixMilli())
+			data = append(data, []byte(payload))
+		}
 	}
 
 	return bytes.Join(data, []byte("\n")), nil
@@ -149,7 +158,7 @@ func (writer *kafkaWriter) append(payload []byte, topic, typ string) error {
 		Key:   nil,
 		Value: sarama.StringEncoder(payload),
 		Headers: []sarama.RecordHeader{
-			sarama.RecordHeader{
+			{
 				Key:   []byte("_tp_time"),
 				Value: []byte(strconv.FormatInt(now, 10)), /// FormatInt is slow, but anyway
 			},
@@ -161,22 +170,31 @@ func (writer *kafkaWriter) append(payload []byte, topic, typ string) error {
 
 func (writer *kafkaWriter) newDeviceTopic(source *models.Source) error {
 	topic := source.Settings.Topic
-	metadata, err := writer.admin.DescribeTopics([]string{topic})
+	topics_metadata, err := writer.admin.DescribeTopics([]string{topic})
 	if err != nil {
 		writer.logger.Error("Failed to describe topic", zap.String("topic", topic), zap.Error(err))
+		return err
 	}
 
-	if len(metadata) > 0 && !source.Settings.CleanBeforeLoad {
-		// Topic exists
-		// return nil
+	topic_exists := false
+	// Check describe error
+	// https://pkg.go.dev/github.com/shopify/sarama#KError
+	// ErrUnknownTopicOrPartition
+	if topics_metadata[0].Err == sarama.ErrNoError {
+		topic_exists = true
 	}
 
-	if source.Settings.CleanBeforeLoad && err == nil {
+	if topic_exists && !source.Settings.CleanBeforeLoad {
+		// Topic exists and we don't need delete the topic before data load
+		return nil
+	}
+
+	if topic_exists && source.Settings.CleanBeforeLoad {
 		// Topic exists and we need clean it up before data load
 		err = writer.admin.DeleteTopic(topic)
 		if err != nil {
 			writer.logger.Error("Failed to delete topic", zap.String("topic", topic), zap.Error(err))
-			// return err
+			return err
 		} else {
 			writer.logger.Info("Successfully delete topic", zap.String("topic", topic))
 		}

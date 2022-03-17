@@ -60,24 +60,32 @@ func (sc *ServerConfig) Validate() error {
 }
 
 type Settings struct {
-	Table             string  `yaml:"table"`
-	Topic             string  `yaml:"topic"`
-	NumPartitions     int32   `yaml:"num_partitions"`
-	ReplicationFactor int16   `yaml:"replication_factor"`
-	CleanBeforeLoad   bool    `yaml:"clean_before_load"`
-	Concurrency       uint32  `yaml:"concurrency"`
-	BatchSize         uint32  `yaml:"batch_size"`
-	Interval          uint32  `yaml:"interval"`
-	InitialBase       float32 `yaml:"initial_base"`
-	Step              float32 `yaml:"step"`
-	Duration          uint32  `yaml:"duration"`
-	MaxValue          float32 `yaml:"max_value"`
-	BackFill          uint32  `yaml:"backfill"`
-	TotalEntities     uint32  `yaml:"total_entities"`
-	Sourcetype        string  `yaml:"sourcetype"`
-	LastRunStateDB    string  `yaml:"last_run_state_db"`
-	SampleFile        string  `yaml:"sample_file"`
-	Iteration         int32   `yaml:"iteration"`
+	Table           string  `yaml:"table"`
+	CleanBeforeLoad bool    `yaml:"clean_before_load"`
+	Concurrency     uint32  `yaml:"concurrency"`
+	BatchSize       uint32  `yaml:"batch_size"`
+	Interval        uint32  `yaml:"interval"`
+	InitialBase     float32 `yaml:"initial_base"`
+	Step            float32 `yaml:"step"`
+	Duration        uint32  `yaml:"duration"`
+	MaxValue        float32 `yaml:"max_value"`
+	BackFill        uint32  `yaml:"backfill"`
+	TotalEntities   uint32  `yaml:"total_entities"`
+	Sourcetype      string  `yaml:"sourcetype"`
+	LastRunStateDB  string  `yaml:"last_run_state_db"`
+	SampleFile      string  `yaml:"sample_file"`
+	Iteration       int32   `yaml:"iteration"`
+
+	// Kafka related settings
+	Topic                  string `yaml:"topic"`
+	Format                 string `yaml:"format"` // csv, json
+	NumPartitions          int32  `yaml:"num_partitions"`
+	ReplicationFactor      int16  `yaml:"replication_factor"`
+	MaxMessageBytes        int    `yaml:"max_message_bytes"`
+	MaxBufferedMessages    int    `yaml:"max_buffered_messages"`
+	FlushFrequencyMs       int64  `yaml:"flush_frequency_ms"`
+	FlushBytesThreshold    int    `yaml:"flush_bytes_threshold"`
+	FlushMessagesThreshold int    `yaml:"flush_messages_threshold"`
 }
 
 func (s *Settings) SetDefaults() *Settings {

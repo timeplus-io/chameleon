@@ -48,12 +48,22 @@ func init() {
 func NewkafkaWriter(config *models.Config, logger *zap.Logger) (sinks.Sink, error) {
 	kconfig := sarama.NewConfig()
 	kconfig.Producer.RequiredAcks = sarama.WaitForLocal
-	kconfig.Producer.Flush.Frequency = 500 * time.Millisecond
 
-	syncConfig := sarama.NewConfig()
-	syncConfig.Producer.Return.Successes = true
+	if len(config.Sources) > 0 {
+		/// Hack
+		/// Use the first source settings
+		kconfig.Producer.Flush.Frequency = time.Duration(config.Sources[0].Settings.FlushFrequencyMs) * time.Millisecond
+		kconfig.Producer.Flush.Messages = config.Sources[0].Settings.FlushMessagesThreshold
+		kconfig.Producer.Flush.Bytes = config.Sources[0].Settings.FlushBytesThreshold
+		kconfig.Producer.Flush.MaxMessages = config.Sources[0].Settings.MaxBufferedMessages
+		kconfig.Producer.MaxMessageBytes = config.Sources[0].Settings.MaxMessageBytes
+	}
 
-	syncProducer, err := sarama.NewSyncProducer(config.Sink.Addresses, syncConfig)
+	logger.Info("Kafka producer flush settings", zap.Int("frequency", int(kconfig.Producer.Flush.Frequency)), zap.Int("messages", kconfig.Producer.Flush.Messages), zap.Int("bytes", kconfig.Producer.Flush.Bytes), zap.Int("max_messages", kconfig.Producer.Flush.MaxMessages), zap.Int("max_message_bytes", kconfig.Producer.MaxMessageBytes))
+
+	kconfig.Producer.Return.Successes = true
+
+	syncProducer, err := sarama.NewSyncProducer(config.Sink.Addresses, kconfig)
 	if err != nil {
 		logger.Error("Failed to create kafka sync producer", zap.Error(err))
 		return nil, err
