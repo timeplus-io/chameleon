@@ -1,7 +1,7 @@
 ![Test Deployment](deployment.png)
 # Introduction
 
-This (dataload) tool aims to ingest [IoT CSV or JSON metric](https://github.com/timeplus-io/timeplus-redpanda-benchmark/blob/master/models/metric.go) data to external streaming stores : Redpanda and Kafka and then we streaming query the data directly from Kafka / Redpanda in realtime by using Timeplus. The intial goals are finding how Timeplus works in this scenario.
+This (dataload) tool aims to ingest [IoT CSV or JSON metric](https://github.com/timeplus-io/chameleon/blob/main/dataloader/models/metric.go) data to external streaming stores : Redpanda and Apache Kafka, and then we query the real-time data directly from Kafka / Redpanda using Timeplus. The initial goal is to test how Timeplus works in this scenario.
 
 
 # Build This Tool
@@ -21,8 +21,8 @@ dataload ingest data -> Kafka / Redpanda <- Streaming Query in Timeplus
 
 # Ingest Details
 
-In [config.yml](https://github.com/timeplus-io/timeplus-redpanda-benchmark/blob/master/config/config.yml), we can tune the batch size, concurrency, Kafka/Redpanda producer latency etc when loading the data to Kafka / Redpanda. We will use different batch size, concurrency, flush policy to ingest data to see how everything works.
-In order to test the end to end latency, this dataloader ingests a speicial header called `_tp_time` as the event timestamp to every Kafka/Redpanda record.  This special header in Kafka / Redpanda record is one of the speicial metadata Timeplus can honor.
+In [config.yml](https://github.com/timeplus-io/chameleon/blob/main/dataloader/config/config.yml), we can tune the batch size, concurrency, Kafka/Redpanda producer latency etc when loading the data to Kafka / Redpanda. We will use different batch size, concurrency, flush policy to ingest data to see how everything works.
+In order to test the end to end latency, this dataloader ingests a special header called `_tp_time` as the event timestamp to every Kafka/Redpanda record.  This special header in Kafka / Redpanda record is one of the special metadata Timeplus can honor.
 
 # Test Steps
 
@@ -59,7 +59,7 @@ We can use the following query to check the consume throughput (eps) as well by 
 
 ```sql
 SELECT
-    count() AS current_total,
+    count(*) AS current_total,
     lag(current_total, 1, 0) AS prev_total,
     (current_total - prev_total) * 100 AS eps
 FROM device_utils_external_stream
@@ -67,7 +67,7 @@ EMIT PERIODIC 1s;
 ```
 
 The above query keeps counting number of Kafka / Redpanda messages has been consumed and it maintains current grant total and last grant total, the difference of these 2 is basically the throughput (eps) since the query emits the result every second. Since each Kafka / Redpanda message contains a batch
-of events, hence there is a mulitply there.
+of events, hence there is a multiply there.
 
 # Build & Run 
 
