@@ -1,7 +1,7 @@
 
 # Timeplus Chameleon
 
-![Timeplus Chaneleon](chameleon.jpeg)
+![Timeplus Chaneleon](chameleon.png)
 
 ## What is Timeplus
 
