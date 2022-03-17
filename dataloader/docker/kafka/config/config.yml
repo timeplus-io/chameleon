@@ -3,13 +3,6 @@ sink:
   addresses:
       - kafka:9092
 
-  cred:
-    type:
-    context:
-      username:
-      password:
-  context:
-
 sources:
   - name: IoT device metric
     type: metric

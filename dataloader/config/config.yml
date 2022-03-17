@@ -1,29 +1,21 @@
 sink:
-  type: kafka
-  addresses:
+  type: kafka                                     # only kafka is supported now
+  addresses:                                      # kafka address of brokers
       - 172.31.3.114:9092
-
-  cred:
-    type:
-    context:
-      username:
-      password:
-  context:
 
 sources:
   - name: IoT device metric
-    type: metric
+    type: metric                                  # only metric is supported now
     enabled: true
     settings:
-      topic: device_utils
-      num_partitions: 1
-      replication_factor: 1
-      clean_before_load: false
-      concurrency: 8
-      batch_size: 1000
-      total_entities: 10000
-      # interval is in seconds
-      interval: 0
-      iteration: 100000
-      last_run_state_db: device_locations.db
+      topic: device_utils                         # kafka topic name
+      num_partitions: 1                           # kafka partition number
+      replication_factor: 1                       # kafka replication factor
+      clean_before_load: false                    # when set as true, will delete the topic before testing 
+      concurrency: 8                              # how many concurrent go routine for data generating
+      batch_size: 1000                            # how many data points in each batch
+      total_entities: 10000                       # how may entities to generate
+      interval: 0                                 # interval is in seconds
+      iteration: 100000                           # how many interation to run
+      last_run_state_db: device_locations.db      # internal stats database
 

@@ -3,13 +3,6 @@ sink:
   addresses:
       - redpanda:9099
 
-  cred:
-    type:
-    context:
-      username:
-      password:
-  context:
-
 sources:
   - name: IoT device metric
     type: metric
