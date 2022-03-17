@@ -10,12 +10,17 @@ sources:
     settings:
       topic: device_utils
       num_partitions: 1
+      max_message_bytes : 10485760
+      flush_frequency_ms: 2
+      flush_bytes_threshold: 1
+      flush_messages_threshold: 1
+      max_buffered_messages: 0
+      format: json
       replication_factor: 1
       clean_before_load: false
       concurrency: 2
       batch_size: 100
-      total_entities: 1000
-      # interval is in seconds
+      total_entities: 10000
       interval: 0
       iteration: 100000
       last_run_state_db: device_locations.db

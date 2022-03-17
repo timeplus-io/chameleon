@@ -10,6 +10,12 @@ sources:
     settings:
       topic: device_utils                         # kafka topic name
       num_partitions: 1                           # kafka partition number
+      max_message_bytes : 10485760
+      flush_frequency_ms: 2
+      flush_bytes_threshold: 1
+      flush_messages_threshold: 1
+      max_buffered_messages: 0
+      format: csv                                 # stream data format, supoprt csv and json
       replication_factor: 1                       # kafka replication factor
       clean_before_load: false                    # when set as true, will delete the topic before testing 
       concurrency: 8                              # how many concurrent go routine for data generating
