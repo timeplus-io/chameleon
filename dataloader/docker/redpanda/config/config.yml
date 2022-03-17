@@ -1,0 +1,29 @@
+sink:
+  type: kafka
+  addresses:
+      - redpanda:9099
+
+  cred:
+    type:
+    context:
+      username:
+      password:
+  context:
+
+sources:
+  - name: IoT device metric
+    type: metric
+    enabled: true
+    settings:
+      topic: device_utils
+      num_partitions: 1
+      replication_factor: 1
+      clean_before_load: false
+      concurrency: 2
+      batch_size: 100
+      total_entities: 1000
+      # interval is in seconds
+      interval: 0
+      iteration: 100000
+      last_run_state_db: device_locations.db
+

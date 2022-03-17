@@ -1,0 +1,4 @@
+cmd/cmd
+cmd/device_locations.db
+device_locations.db
+dataloader

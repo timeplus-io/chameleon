@@ -1,0 +1,42 @@
+version: "3.7"
+services:
+  dataloader:
+    container_name: dataloader
+    image: dataloader:dev
+    volumes:
+      - ./config/:/timeplus/config
+    depends_on:
+      - redpanda
+
+  redpanda:
+    container_name: redpanda
+    image: docker.vectorized.io/vectorized/redpanda:latest
+    ports:
+      - "9099:9099"
+      - "29099:29099"
+    volumes:
+      - redpandavol:/var/lib/redpanda/data
+    command:
+      - redpanda
+      - start
+      - --smp
+      - '1'
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - '0'
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:29099,OUTSIDE://0.0.0.0:9099
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:29099,OUTSIDE://redpanda:9099
+      - --set
+      - "redpanda.auto_create_topics_enabled=false"
+      - --set
+      - "redpanda.enable_idempotence=true"
+      - --check=false
+
+volumes:
+  redpandavol:
