@@ -22,5 +22,5 @@ push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)
 	docker tag $(IMAGE_NAME) $(DOCKER_ID_USER)/${BIN_NAME}:latest
 	docker push $(FULLNAME)
-	docker tag $(IMAGE_NAME) $(DOCKER_ID_USER)/${BIN_NAME}:latest
+	docker push $(DOCKER_ID_USER)/${BIN_NAME}:latest
 

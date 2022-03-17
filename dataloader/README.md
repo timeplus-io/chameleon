@@ -18,7 +18,7 @@ In order to test the end to end latency, this dataloader ingests a speicial head
 In Timeplus, we can run the following query statement to caculate the throughput (eps, a.k.a event per second) and latency.
 
 ```
-SELECT quantile(_tp_process_time - _tp_time, 0.9), avg(_tp_process_time - _tp_time) 
+SELECT p90(_tp_process_time - _tp_time, 0.9), avg(_tp_process_time - _tp_time) 
 FROM device_utils WHERE temperature > 30
 ```
 
