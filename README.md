@@ -1,6 +1,8 @@
 
 # Timeplus Chameleon
 
+![Timeplus Chaneleon](chameleon.jpeg)
+
 ## What is Timeplus
 
 ![Timeplus Architecture](architecture.jpeg)
