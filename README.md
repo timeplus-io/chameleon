@@ -21,6 +21,8 @@ For more information, refer to :
 - [Timeplus Linkedin](https://www.linkedin.com/company/timeplusinc/)
 - [Timeplus Playground](https://play.timeplus.com/playground)
 - [Timeplus Documentation](https://docs.timeplus.com/)
+- [Timeplus Slack](https://timepluscommunity.slack.com/)
+- [Timeplus Medium](https://medium.com/www-timeplus-com)
 - [Join Timeplus Beta](https://www.timeplus.com/) 
 
 ## What is Chameleon
