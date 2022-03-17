@@ -2,7 +2,7 @@ version: "3.7"
 services:
   dataloader:
     container_name: dataloader
-    image: dataloader:dev
+    image: timeplus/dataloader:latest
     volumes:
       - ./config/:/timeplus/config
     depends_on:
