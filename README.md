@@ -1,7 +1,8 @@
 
+![Timeplus Chaneleon](chameleon.png)
 # Timeplus Chameleon
 
-![Timeplus Chaneleon](chameleon.png)
+Make stream data test easy and efficient!
 
 ## What is Timeplus
 
