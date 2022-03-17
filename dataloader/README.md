@@ -15,11 +15,14 @@ In order to test the end to end latency, this dataloader ingests a speicial head
 
 # Query Details
 
-In Timeplus, we can run the following command to caculate the throughput (eps, a.k.a event per second) and altency.
+In Timeplus, we can run the following query statement to caculate the throughput (eps, a.k.a event per second) and latency.
 
 ```
-...
+SELECT quantile(_tp_process_time - _tp_time, 0.9), avg(_tp_process_time - _tp_time) 
+FROM device_utils WHERE temperature > 30
 ```
+
+To be simple, query latency is defined as `_tp_process_time - _tp_time`, where `_tp_time` is where data entering Kafka/Redpanda, and `_tp_process_time` is where the data result is processed and ready to deliver
 
 # Quick Start 
 

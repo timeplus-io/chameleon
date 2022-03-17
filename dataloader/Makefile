@@ -12,11 +12,11 @@ FULLNAME=$(DOCKER_ID_USER)/${BIN_NAME}:dev_${COMMIT}
 build:
 	go build cmd/dataloader.go  
 
+run:
+	go run cmd/dataloader.go --config=./config/config.yml
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
-
-docker_run:
-	docker run -p 8000:8000 $(IMAGE_NAME) --proton-addr host.docker.internal
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)
