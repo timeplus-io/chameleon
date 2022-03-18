@@ -33,8 +33,6 @@ Streaming data platform benchmarking is full of challengs, Timeplus's performanc
 
 There will be more functions and other tools opening in the future, ping us if you have any comment.
 
-```
-At Timeplus, component is named after the [particles](https://en.wikipedia.org/wiki/List_of_particles), [chameleon](https://en.wikipedia.org/wiki/Chameleon_particle) is a hypothetical scalar particle that couples to matter more weakly than gravity, postulated as a dark energy candidate.
-```
+> At Timeplus, component is named after the [particles](https://en.wikipedia.org/wiki/List_of_particles), [chameleon](https://en.wikipedia.org/wiki/Chameleon_particle) is a hypothetical scalar particle that couples to matter more weakly than gravity, postulated as a dark energy candidate.
 
   
