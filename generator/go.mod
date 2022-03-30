@@ -18,7 +18,10 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
-require github.com/reactivex/rxgo/v2 v2.5.0
+require (
+	github.com/google/uuid v1.3.0
+	github.com/reactivex/rxgo/v2 v2.5.0
+)
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

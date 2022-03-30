@@ -6,3 +6,8 @@ type Sink interface {
 	Write(headers []string, rows [][]interface{}) error
 	Init(fields []common.Field) error
 }
+
+type Configuration struct {
+	Type       string                 `json:"type"`
+	Properties map[string]interface{} `json:"properties"`
+}
