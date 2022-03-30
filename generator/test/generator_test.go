@@ -30,6 +30,16 @@ var _ = Describe("Test Generator", func() {
 			events := generator.Read()
 			log.Logger().Infof("get events %v", events)
 			Expect(events).ShouldNot(BeNil())
+
+			events = generator.Read()
+			log.Logger().Infof("get events %v", events)
+			Expect(events).ShouldNot(BeNil())
+
+			events = generator.Read()
+			log.Logger().Infof("get events %v", events)
+			Expect(events).ShouldNot(BeNil())
+
+			generator.Stop()
 		})
 	})
 })

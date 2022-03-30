@@ -2,10 +2,12 @@ package source
 
 import (
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
 	fake "github.com/brianvoe/gofakeit/v6"
+	rxgo "github.com/reactivex/rxgo/v2"
 
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
@@ -50,7 +52,10 @@ type GeneratorEngine struct {
 	Config   Configuration
 	Finished bool
 
-	streamChannels []chan []common.Event
+	streamChannels []chan rxgo.Item
+	streams        []rxgo.Observable
+
+	waiter sync.WaitGroup
 }
 
 var faker *fake.Faker
@@ -69,12 +74,22 @@ func init() {
 }
 
 func NewGenarator(config Configuration) (*GeneratorEngine, error) {
+	streamChannels := make([]chan rxgo.Item, config.Concurrency)
+	streams := make([]rxgo.Observable, config.Concurrency)
 
-	streamChannels := make([]chan []common.Event, config.Concurrency)
+	for i := 0; i < config.Concurrency; i++ {
+		streams[i] = rxgo.FromChannel(streamChannels[i])
+	}
+
+	waiter := sync.WaitGroup{}
+	waiter.Add(config.Concurrency)
+
 	return &GeneratorEngine{
 		Config:         config,
 		Finished:       false,
 		streamChannels: streamChannels,
+		streams:        streams,
+		waiter:         waiter,
 	}, nil
 }
 
@@ -104,12 +119,14 @@ func (s *GeneratorEngine) Start() {
 	for i := 0; i < s.Config.Concurrency; i++ {
 		go s.run(i)
 	}
+	s.waiter.Wait()
 }
 
 func (s *GeneratorEngine) run(index int) error {
 	log.Logger().Infof("start generate routine with index %d", index)
-	streamChannel := make(chan []common.Event)
+	streamChannel := make(chan rxgo.Item)
 	s.streamChannels[index] = streamChannel
+	s.streams[index] = rxgo.FromChannel(s.streamChannels[index])
 	go func() {
 		count := 0
 		for {
@@ -117,7 +134,9 @@ func (s *GeneratorEngine) run(index int) error {
 				break
 			}
 			events := s.generateBatchEvent()
-			streamChannel <- events
+			for _, event := range events {
+				streamChannel <- rxgo.Of(event)
+			}
 			count += len(events)
 
 			if s.Config.IntervalDelta > 0 {
@@ -136,6 +155,7 @@ func (s *GeneratorEngine) run(index int) error {
 		}
 		close(streamChannel)
 	}()
+	s.waiter.Done()
 	return nil
 }
 
@@ -143,11 +163,17 @@ func (s *GeneratorEngine) Stop() {
 	s.Finished = true
 }
 
+func (s *GeneratorEngine) GetStreams() []rxgo.Observable {
+	return s.streams
+}
+
 func (s *GeneratorEngine) Read() []common.Event {
 	result := make([]common.Event, 0)
 	for i := 0; i < s.Config.Concurrency; i++ {
-		events := <-s.streamChannels[i]
-		result = append(result, events...)
+		observable := s.streams[i].Take(1) // must after generate start
+		for item := range observable.Observe() {
+			result = append(result, item.V.(common.Event))
+		}
 	}
 
 	return result
@@ -155,6 +181,23 @@ func (s *GeneratorEngine) Read() []common.Event {
 
 func (s *GeneratorEngine) IsFinished() bool {
 	return s.Finished
+}
+
+func (s *GeneratorEngine) GetFields() []common.Field {
+	fields := make([]common.Field, len(s.Config.Fields))
+
+	for index, field := range s.Config.Fields {
+		fields[index] = common.Field{
+			Name: field.Name,
+			Type: string(field.Type),
+		}
+
+		if field.Type == FIELDTYPE_REGEX || field.Type == FIELDTYPE_GENERATE {
+			fields[index].Type = string(FIELDTYPE_STRING)
+		}
+	}
+
+	return fields
 }
 
 func makeTimestampInt(timestampDeleyMin int, timestampDeleyMax int) int64 {

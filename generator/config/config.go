@@ -24,7 +24,7 @@ var Conf = config.Map{
 		Usage:   "format of log, support json|text",
 	},
 	"log-file-path": &config.String{
-		Default: "neutron.log",
-		Usage:   "log file path, default to /tmp/neutron.log. panic will be log to a separated .panic file under the same folder",
+		Default: "generator.log",
+		Usage:   "log file path, default to generator.log. panic will be log to a separated .panic file under the same folder",
 	},
 }

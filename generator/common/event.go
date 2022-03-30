@@ -19,9 +19,6 @@ func (e Event) String() string {
 	return strings.Join(kv, ",")
 }
 
-// Make sure the header and row are returned in order
-// This is not efficient, consider not to use map here?
-
 func (e Event) GetHeader() []string {
 	header := make([]string, len(e))
 	index := 0
