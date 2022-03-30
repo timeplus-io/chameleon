@@ -1,0 +1,40 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is timeplus API server.",
+        "title": "Chameleon Generator",
+        "contact": {
+            "name": "API Support",
+            "url": "http://timeplus.io/support",
+            "email": "gang@timeplus.io"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/api/v1beta1",
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "get the status of server.",
+                "consumes": [
+                    "*/*"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health check"
+                ],
+                "summary": "Show the status of server.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

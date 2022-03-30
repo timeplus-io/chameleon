@@ -1,0 +1,27 @@
+basePath: /api/v1beta1
+info:
+  contact:
+    email: gang@timeplus.io
+    name: API Support
+    url: http://timeplus.io/support
+  description: This is timeplus API server.
+  title: Chameleon Generator
+  version: "1.0"
+paths:
+  /health:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show the status of server.
+      tags:
+      - health check
+swagger: "2.0"
