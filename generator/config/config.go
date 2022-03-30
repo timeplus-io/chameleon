@@ -27,4 +27,8 @@ var Conf = config.Map{
 		Default: "generator.log",
 		Usage:   "log file path, default to generator.log. panic will be log to a separated .panic file under the same folder",
 	},
+	"allow-origin": &config.String{
+		Default: "*",
+		Usage:   "access control allow origin",
+	},
 }

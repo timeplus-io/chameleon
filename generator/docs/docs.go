@@ -11,8 +11,6 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "API Support",
-            "url": "http://timeplus.io/support",
             "email": "gang@timeplus.io"
         },
         "version": "{{.Version}}"
@@ -20,27 +18,298 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/health": {
+        "/jobs": {
             "get": {
-                "description": "get the status of server.",
+                "description": "list all jobs.",
                 "consumes": [
-                    "*/*"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "health check"
+                    "job"
                 ],
-                "summary": "Show the status of server.",
+                "summary": "list all jobs.",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/job.Job"
+                            }
                         }
                     }
+                }
+            },
+            "post": {
+                "description": "create a job.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "Create a job.",
+                "parameters": [
+                    {
+                        "description": "job configuration",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/job.JobConfiguration"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/job.Job"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    },
+                    "500": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/jobs/{id}": {
+            "get": {
+                "description": "get job by id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "get job by id.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "job id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/job.Job"
+                        }
+                    },
+                    "404": {
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "description": "delete job by id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "delete job by id.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "job id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/jobs/{id}/start": {
+            "post": {
+                "description": "start to run a job.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "start to run a job.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "job id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/jobs/{id}/stop": {
+            "post": {
+                "description": "stop a running job.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "stop a running job.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "job id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "job.Job": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "job.JobConfiguration": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sinks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sink.Configuration"
+                    }
+                },
+                "source": {
+                    "$ref": "#/definitions/source.Configuration"
+                }
+            }
+        },
+        "sink.Configuration": {
+            "type": "object",
+            "properties": {
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "source.Configuration": {
+            "type": "object",
+            "properties": {
+                "batch_size": {
+                    "type": "integer"
+                },
+                "concurency": {
+                    "type": "integer"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/source.Field"
+                    }
+                },
+                "interval": {
+                    "type": "integer"
+                },
+                "interval_delta": {
+                    "type": "integer"
+                }
+            }
+        },
+        "source.Field": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "array",
+                    "items": {}
+                },
+                "name": {
+                    "type": "string"
+                },
+                "range": {
+                    "type": "array",
+                    "items": {}
+                },
+                "rule": {
+                    "type": "string"
+                },
+                "timestamp_delay_max": {
+                    "type": "integer"
+                },
+                "timestamp_delay_min": {
+                    "type": "integer"
+                },
+                "timestamp_format": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         }
@@ -51,10 +320,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/api/v1beta1",
+	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "Chameleon Generator",
-	Description:      "This is timeplus API server.",
+	Description:      "This is timeplus data generator api server.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

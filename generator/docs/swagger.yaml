@@ -1,27 +1,203 @@
-basePath: /api/v1beta1
+basePath: /api
+definitions:
+  job.Job:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  job.JobConfiguration:
+    properties:
+      name:
+        type: string
+      sinks:
+        items:
+          $ref: '#/definitions/sink.Configuration'
+        type: array
+      source:
+        $ref: '#/definitions/source.Configuration'
+    type: object
+  sink.Configuration:
+    properties:
+      properties:
+        additionalProperties: true
+        type: object
+      type:
+        type: string
+    type: object
+  source.Configuration:
+    properties:
+      batch_size:
+        type: integer
+      concurency:
+        type: integer
+      count:
+        type: integer
+      fields:
+        items:
+          $ref: '#/definitions/source.Field'
+        type: array
+      interval:
+        type: integer
+      interval_delta:
+        type: integer
+    type: object
+  source.Field:
+    properties:
+      limit:
+        items: {}
+        type: array
+      name:
+        type: string
+      range:
+        items: {}
+        type: array
+      rule:
+        type: string
+      timestamp_delay_max:
+        type: integer
+      timestamp_delay_min:
+        type: integer
+      timestamp_format:
+        type: string
+      type:
+        type: string
+    type: object
 info:
   contact:
     email: gang@timeplus.io
-    name: API Support
-    url: http://timeplus.io/support
-  description: This is timeplus API server.
+  description: This is timeplus data generator api server.
   title: Chameleon Generator
   version: "1.0"
 paths:
-  /health:
+  /jobs:
     get:
       consumes:
-      - '*/*'
-      description: get the status of server.
+      - application/json
+      description: list all jobs.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
-      summary: Show the status of server.
+            items:
+              $ref: '#/definitions/job.Job'
+            type: array
+      summary: list all jobs.
       tags:
-      - health check
+      - job
+    post:
+      consumes:
+      - application/json
+      description: create a job.
+      parameters:
+      - description: job configuration
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/job.JobConfiguration'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/job.Job'
+        "400":
+          description: ""
+        "500":
+          description: ""
+      summary: Create a job.
+      tags:
+      - job
+  /jobs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete job by id.
+      parameters:
+      - description: job id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "404":
+          description: ""
+      summary: delete job by id.
+      tags:
+      - job
+    get:
+      consumes:
+      - application/json
+      description: get job by id.
+      parameters:
+      - description: job id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/job.Job'
+        "404":
+          description: ""
+      summary: get job by id.
+      tags:
+      - job
+  /jobs/{id}/start:
+    post:
+      consumes:
+      - application/json
+      description: start to run a job.
+      parameters:
+      - description: job id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "404":
+          description: ""
+      summary: start to run a job.
+      tags:
+      - job
+  /jobs/{id}/stop:
+    post:
+      consumes:
+      - application/json
+      description: stop a running job.
+      parameters:
+      - description: job id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "404":
+          description: ""
+      summary: stop a running job.
+      tags:
+      - job
 swagger: "2.0"

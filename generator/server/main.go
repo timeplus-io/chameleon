@@ -27,7 +27,7 @@ import (
 
 // @contact.email gang@timeplus.io
 
-// @BasePath /api/v1beta1
+// @BasePath /api
 
 var Version = "development"
 var Commit = ""
@@ -75,6 +75,19 @@ func startServer() *http.Server {
 
 	// Routes
 	router.GET("/health", handlers.HealthCheck)
+
+	v1beta1 := router.Group("/api")
+	jobHandler := handlers.NewJobHandler()
+
+	{
+		v1beta1.POST("/jobs", jobHandler.CreateJob)
+		v1beta1.GET("/jobs", jobHandler.ListJob)
+		v1beta1.GET("/jobs/:id", jobHandler.GetJob)
+		v1beta1.DELETE("/jobs/:id", jobHandler.DeleteJob)
+
+		v1beta1.POST("/jobs/:id/start", jobHandler.StartJob)
+		v1beta1.POST("/jobs/:id/stop", jobHandler.StopJob)
+	}
 
 	address := viper.GetString("server-addr")
 	port := viper.GetInt("server-port")
