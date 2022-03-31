@@ -1,6 +1,9 @@
 package test_test
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 
@@ -71,9 +74,12 @@ var _ = Describe("Test Job", func() {
 			}
 
 			server.DeleteStream(streamDef.Name)
+
+			time.Sleep(1 * time.Second)
 			err := server.CreateStream(streamDef)
 			Expect(err).ShouldNot(HaveOccurred())
 
+			time.Sleep(1 * time.Second)
 			ingestData := neutron.IngestPayload{
 				Stream: streamDef.Name,
 				Data: neutron.IngestData{
@@ -84,10 +90,20 @@ var _ = Describe("Test Job", func() {
 					},
 				},
 			}
-
 			err = server.InsertData(ingestData)
 			Expect(err).ShouldNot(HaveOccurred())
 
+			time.Sleep(3 * time.Second)
+			sql := fmt.Sprintf("select * from table(%s)", streamDef.Name)
+			result, err := server.QueryStream(sql)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result).ShouldNot(BeNil())
+
+			for item := range result.Observe() {
+				log.Logger().Infof("got one query result %v", item)
+			}
+
+			server.DeleteStream(streamDef.Name)
 		})
 	})
 })
