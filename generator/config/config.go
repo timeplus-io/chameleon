@@ -31,4 +31,24 @@ var Conf = config.Map{
 		Default: "*",
 		Usage:   "access control allow origin",
 	},
+	"max-idle-conns": &config.Int{
+		Default: 10,
+		Usage:   "the maximum number of connections in the idle connection pool",
+	},
+	"max-open-conns": &config.Int{
+		Default: 100,
+		Usage:   "the maximum number of open connections",
+	},
+	"conn-max-lifetime": &config.Int{
+		Default: 3600,
+		Usage:   "the maximum amount of time a connection may be reused (in seconds)",
+	},
+	"conn-max-idle-time": &config.Int{
+		Default: 600,
+		Usage:   "the maximum amount of time a connection may be idle (in seconds)",
+	},
+	"http-timeout": &config.Int{
+		Default: 5,
+		Usage:   "http timeout settings",
+	},
 }

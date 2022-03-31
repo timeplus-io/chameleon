@@ -20,7 +20,7 @@ var _ = Describe("Test Job", func() {
 
 	Describe("Job test", func() {
 
-		FIt("create job and run it", func() {
+		It("create job and run it", func() {
 			config := source.DefaultConfiguration()
 			generator, err := source.NewGenarator(config)
 
@@ -34,9 +34,7 @@ var _ = Describe("Test Job", func() {
 			job := job.CreateJob("test job", generator, []sink.Sink{console})
 
 			job.Start()
-
 			time.Sleep(3 * time.Second)
-
 			job.Stop()
 		})
 

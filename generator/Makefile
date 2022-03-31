@@ -20,7 +20,7 @@ init:
 gen:
 	$(HOME)/go/bin/swag init -g server/main.go 
 
-run:
+run: gen
 	go run main.go
 
 docker: Dockerfile

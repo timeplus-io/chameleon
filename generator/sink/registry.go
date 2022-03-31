@@ -29,6 +29,9 @@ func Register(item SinkRegItem) {
 }
 
 func CreateSink(config Configuration) (Sink, error) {
+	if _, exist := sinkRegistry[config.Type]; !exist {
+		return nil, fmt.Errorf("the sink %s doesnot exist", config.Type)
+	}
 	constructor := sinkRegistry[config.Type].Constructor
 	return constructor(config.Properties)
 }
