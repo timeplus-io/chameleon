@@ -11,7 +11,7 @@ var Conf = config.Map{
 		Shorthand: "a",
 	},
 	"server-port": &config.Int{
-		Default:   8000,
+		Default:   3000,
 		Usage:     "port the server should listen on",
 		Shorthand: "p",
 	},

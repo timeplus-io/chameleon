@@ -16,7 +16,6 @@ var _ = Describe("Test Generator", func() {
 	})
 
 	Describe("Generator test", func() {
-
 		It("create generate and read data", func() {
 			config := source.DefaultConfiguration()
 			generator, err := source.NewGenarator(config)

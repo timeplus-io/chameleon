@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/timeplus-io/chameleon/generator/job"
+	"github.com/timeplus-io/chameleon/generator/plugins/console"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 
@@ -14,18 +15,20 @@ import (
 var _ = Describe("Test Job", func() {
 
 	BeforeEach(func() {
+		//console.Init()
 	})
 
 	Describe("Job test", func() {
 
-		It("create job and run it", func() {
+		FIt("create job and run it", func() {
 			config := source.DefaultConfiguration()
 			generator, err := source.NewGenarator(config)
 
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(generator).ShouldNot(BeNil())
 
-			console := sink.NewConsoleSink()
+			console, err := console.NewConsoleSink(nil)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(console).ShouldNot(BeNil())
 
 			job := job.CreateJob("test job", generator, []sink.Sink{console})
@@ -37,7 +40,7 @@ var _ = Describe("Test Job", func() {
 			job.Stop()
 		})
 
-		FIt("job crud", func() {
+		It("job crud", func() {
 			jobConfig := job.JobConfiguration{
 				Name:   "test job",
 				Source: source.DefaultConfiguration(),

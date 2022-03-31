@@ -22,3 +22,13 @@ gen:
 
 run:
 	go run main.go
+
+docker: Dockerfile
+	docker build -t $(IMAGE_NAME) .
+
+docker_run:
+	docker run -p 3000:3000 $(IMAGE_NAME)
+
+push:
+	docker tag $(IMAGE_NAME) $(FULLNAME)
+	docker push $(FULLNAME)
