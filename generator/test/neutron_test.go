@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
+	"github.com/timeplus-io/chameleon/generator/sink"
+	"github.com/timeplus-io/chameleon/generator/source"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -55,7 +58,7 @@ var _ = Describe("Test Job", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
-		FIt("Test Insert Data", func() {
+		It("Test Insert Data", func() {
 			address := "http://localhost:8000"
 			server := neutron.NewNeutronServer(address)
 
@@ -63,12 +66,12 @@ var _ = Describe("Test Job", func() {
 				Name: "testStream",
 				Columns: []neutron.ColumnDef{
 					{
-						Name: "a",
+						Name: "number",
 						Type: "int",
 					},
 					{
-						Name: "b",
-						Type: "string",
+						Name: "time",
+						Type: "datetime64(3)",
 					},
 				},
 			}
@@ -83,10 +86,10 @@ var _ = Describe("Test Job", func() {
 			ingestData := neutron.IngestPayload{
 				Stream: streamDef.Name,
 				Data: neutron.IngestData{
-					Columns: []string{"a", "b"},
-					Data: []neutron.DataRow{
-						{1, "abc"},
-						{2, "fgh"},
+					Columns: []string{"number", "time"},
+					Data: [][]interface{}{
+						{1, "2022-03-31 23:58:56.344"},
+						{2, "2022-03-31 23:58:56.344"},
 					},
 				},
 			}
@@ -103,7 +106,33 @@ var _ = Describe("Test Job", func() {
 				log.Logger().Infof("got one query result %v", item)
 			}
 
-			server.DeleteStream(streamDef.Name)
+			//server.DeleteStream(streamDef.Name)
+		})
+
+		FIt("create neutron sink job and run it", func() {
+			jobConfig := job.JobConfiguration{
+				Name:   "test",
+				Source: source.DefaultConfiguration(),
+				Sinks: []sink.Configuration{
+					{
+						Type: neutron.NEUTRON_SINK_TYPE,
+						Properties: map[string]interface{}{
+							"address": "http://localhost:8000",
+						},
+					},
+				},
+			}
+
+			manager := job.NewJobManager()
+
+			njob, err := manager.CreateJob(jobConfig)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(njob).ShouldNot(BeNil())
+			Expect(njob.Status).Should(Equal(job.STATUS_INIT))
+
+			njob.Start()
+			time.Sleep(5 * time.Second)
+			njob.Stop()
 		})
 	})
 })

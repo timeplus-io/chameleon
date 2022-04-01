@@ -6,17 +6,17 @@ import (
 	"github.com/timeplus-io/chameleon/generator/sink"
 )
 
-const CONSOLE_TYPE_NAME = "console"
+const CONSOLE_SINK_TYPE = "console"
 
 type Console struct{}
 
 func init() {
 	sinkItem := sink.SinkRegItem{
-		Name:        CONSOLE_TYPE_NAME,
+		Name:        CONSOLE_SINK_TYPE,
 		Constructor: NewConsoleSink,
 	}
 	sink.Register(sinkItem)
-	log.Logger().Infof("sink plugin %s has been registered", CONSOLE_TYPE_NAME)
+	log.Logger().Infof("sink plugin %s has been registered", CONSOLE_SINK_TYPE)
 }
 
 func Init() {
@@ -33,6 +33,6 @@ func (s *Console) Write(headers []string, rows [][]interface{}) error {
 	return nil
 }
 
-func (s *Console) Init(fields []common.Field) error {
+func (s *Console) Init(name string, fields []common.Field) error {
 	return nil
 }

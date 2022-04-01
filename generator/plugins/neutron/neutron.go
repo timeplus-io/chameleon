@@ -33,11 +33,9 @@ type StreamDef struct {
 	TTLExpression     string      `json:"ttl_expression,omitempty"`
 }
 
-type DataRow []interface{}
-
 type IngestData struct {
-	Columns []string  `json:"columns"`
-	Data    []DataRow `json:"data"`
+	Columns []string        `json:"columns"`
+	Data    [][]interface{} `json:"data"`
 }
 
 type IngestPayload struct {

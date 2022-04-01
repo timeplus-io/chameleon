@@ -3,6 +3,7 @@ package job
 import (
 	"github.com/google/uuid"
 	"github.com/timeplus-io/chameleon/generator/common"
+	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 )
@@ -55,7 +56,7 @@ func CreateJob(name string, source source.Source, sinks []sink.Sink) *Job {
 	// initialize all sinks with fields defineid in source
 	fields := job.source.GetFields()
 	for _, sink := range job.sinks {
-		sink.Init(fields)
+		sink.Init(name, fields)
 	}
 
 	return job
@@ -77,7 +78,11 @@ func (j *Job) Start() {
 				header := event.GetHeader()
 				row := event.GetRow(header)
 				for _, sink := range j.sinks {
-					sink.Write(header, [][]interface{}{row})
+					data := make([][]interface{}, 1)
+					data[0] = row
+					if err := sink.Write(header, data); err != nil {
+						log.Logger().Errorf("failed to write event : %w ", err)
+					}
 				}
 			}
 		}()

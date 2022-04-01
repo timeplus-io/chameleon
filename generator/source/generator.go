@@ -105,7 +105,7 @@ func DefaultConfiguration() Configuration {
 				Limit: []interface{}{float64(0), float64(10)},
 			},
 			{
-				Name:            "_time",
+				Name:            "time",
 				Type:            FIELDTYPE_TIMESTAMP,
 				TimestampFormat: "2006-01-02 15:04:05.000",
 			},
@@ -190,10 +190,6 @@ func (s *GeneratorEngine) GetFields() []common.Field {
 		fields[index] = common.Field{
 			Name: field.Name,
 			Type: string(field.Type),
-		}
-
-		if field.Type == FIELDTYPE_REGEX || field.Type == FIELDTYPE_GENERATE {
-			fields[index].Type = string(FIELDTYPE_STRING)
 		}
 	}
 
