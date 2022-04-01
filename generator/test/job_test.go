@@ -4,7 +4,9 @@ import (
 	"time"
 
 	"github.com/timeplus-io/chameleon/generator/job"
+	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 
@@ -15,7 +17,8 @@ import (
 var _ = Describe("Test Job", func() {
 
 	BeforeEach(func() {
-		//console.Init()
+		console.Init()
+		neutron.Init()
 	})
 
 	Describe("Job test", func() {
@@ -31,7 +34,7 @@ var _ = Describe("Test Job", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(console).ShouldNot(BeNil())
 
-			job := job.CreateJob("test job", generator, []sink.Sink{console})
+			job := job.CreateJob("test job", generator, []sink.Sink{console}, nil)
 
 			job.Start()
 			time.Sleep(3 * time.Second)
@@ -81,6 +84,29 @@ var _ = Describe("Test Job", func() {
 
 			jobs = manager.ListJob()
 			Expect(len(jobs)).Should(Equal(0))
+		})
+
+		It("test ob only job", func() {
+			jobConfig := job.JobConfiguration{
+				Name: "test job",
+				Observer: observer.Configuration{
+					Type:       "neutron",
+					Properties: map[string]interface{}{},
+				},
+			}
+
+			manager := job.NewJobManager()
+			ajob, err := manager.CreateJob(jobConfig)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(ajob).ShouldNot(BeNil())
+			Expect(ajob.Status).Should(Equal(job.STATUS_INIT))
+
+			manager.StartJob(ajob.Id)
+			Expect(ajob.Status).Should(Equal(job.STATUS_RUNNING))
+
+			time.Sleep(3 * time.Second)
+			manager.StopJob(ajob.Id)
+			Expect(ajob.Status).Should(Equal(job.STATUS_STOPPED))
 		})
 	})
 })

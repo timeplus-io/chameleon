@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
+	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 )
@@ -18,11 +19,12 @@ const (
 )
 
 type Job struct {
-	Id     string    `json:"id"`
-	Name   string    `json:"name"`
-	Status JobStatus `json:"status"`
-	source source.Source
-	sinks  []sink.Sink
+	Id       string    `json:"id"`
+	Name     string    `json:"name"`
+	Status   JobStatus `json:"status"`
+	source   source.Source
+	sinks    []sink.Sink
+	observer observer.Observer
 }
 
 func NewJob(config JobConfiguration) (*Job, error) {
@@ -40,17 +42,23 @@ func NewJob(config JobConfiguration) (*Job, error) {
 		}
 	}
 
-	return CreateJob(config.Name, source, sinks), nil
+	obs, err := observer.CreateObserver(config.Observer)
+	if err != nil {
+		return nil, err
+	}
+
+	return CreateJob(config.Name, source, sinks, obs), nil
 }
 
-func CreateJob(name string, source source.Source, sinks []sink.Sink) *Job {
+func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observer.Observer) *Job {
 	id := uuid.New().String()
 	job := &Job{
-		Id:     id,
-		Name:   name,
-		Status: STATUS_INIT,
-		source: source,
-		sinks:  sinks,
+		Id:       id,
+		Name:     name,
+		Status:   STATUS_INIT,
+		source:   source,
+		sinks:    sinks,
+		observer: obs,
 	}
 
 	// initialize all sinks with fields defineid in source
@@ -68,6 +76,7 @@ func (j *Job) ID() string {
 
 func (j *Job) Start() {
 	j.source.Start()
+	go j.observer.Observe() // start observer go routine
 	j.Status = STATUS_RUNNING
 	for _, stream := range j.source.GetStreams() {
 		go func() {

@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 )
 
 type JobConfiguration struct {
-	Name   string               `json:"name"`
-	Source source.Configuration `json:"source"`
-	Sinks  []sink.Configuration `json:"sinks"`
+	Name     string                 `json:"name"`
+	Source   source.Configuration   `json:"source,omitempty"`
+	Sinks    []sink.Configuration   `json:"sinks,omitempty"`
+	Observer observer.Configuration `json:"observer,omitempty"`
 }
 
 type JobManager struct {

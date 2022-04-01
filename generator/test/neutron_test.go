@@ -6,6 +6,7 @@ import (
 
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
+	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
@@ -109,7 +110,7 @@ var _ = Describe("Test Job", func() {
 			//server.DeleteStream(streamDef.Name)
 		})
 
-		FIt("create neutron sink job and run it", func() {
+		It("create neutron sink job and run it", func() {
 			jobConfig := job.JobConfiguration{
 				Name:   "test",
 				Source: source.DefaultConfiguration(),
@@ -119,6 +120,40 @@ var _ = Describe("Test Job", func() {
 						Properties: map[string]interface{}{
 							"address": "http://localhost:8000",
 						},
+					},
+				},
+			}
+
+			manager := job.NewJobManager()
+
+			njob, err := manager.CreateJob(jobConfig)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(njob).ShouldNot(BeNil())
+			Expect(njob.Status).Should(Equal(job.STATUS_INIT))
+
+			njob.Start()
+			time.Sleep(5 * time.Second)
+			njob.Stop()
+		})
+
+		FIt("create neutron sink/ob job and run it", func() {
+			jobConfig := job.JobConfiguration{
+				Name:   "test",
+				Source: source.DefaultConfiguration(),
+				Sinks: []sink.Configuration{
+					{
+						Type: neutron.NEUTRON_SINK_TYPE,
+						Properties: map[string]interface{}{
+							"address": "http://localhost:8000",
+						},
+					},
+				},
+				Observer: observer.Configuration{
+					Type: neutron.NEUTRON_OB_TYPE,
+					Properties: map[string]interface{}{
+						"address":    "http://localhost:8000",
+						"query":      "select * from test",
+						"timeColumn": "time",
 					},
 				},
 			}
