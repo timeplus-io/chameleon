@@ -2,7 +2,9 @@ package neutron
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/utils"
@@ -47,8 +49,15 @@ func (o *NeutronObserver) Observe() error {
 		return err
 	}
 
+	layout := "2006-01-02T15:04:05.000-07:00" // should be a config
 	for item := range resultStream.Observe() {
-		log.Logger().Infof("observe one result %v", item)
+		event := item.V.(common.Event)
+		t, err := time.Parse(layout, event[o.timeColumn].(string))
+		if err != nil {
+			continue
+		}
+		log.Logger().Debugf("observe one result %v", item)
+		log.Logger().Infof("observe latency %v", time.Until(t))
 	}
 	log.Logger().Infof("stop observing")
 	return nil

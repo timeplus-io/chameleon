@@ -138,8 +138,24 @@ var _ = Describe("Test Job", func() {
 
 		FIt("create neutron sink/ob job and run it", func() {
 			jobConfig := job.JobConfiguration{
-				Name:   "test",
-				Source: source.DefaultConfiguration(),
+				Name: "test",
+				Source: source.Configuration{
+					BatchSize:   1,
+					Concurrency: 1,
+					Interval:    1,
+					Fields: []source.Field{
+						{
+							Name:  "value",
+							Type:  "int",
+							Limit: []interface{}{float64(0), float64(10)},
+						},
+						{
+							Name:            "time",
+							Type:            "timestamp",
+							TimestampFormat: "2006-01-02 15:04:05.000000",
+						},
+					},
+				},
 				Sinks: []sink.Configuration{
 					{
 						Type: neutron.NEUTRON_SINK_TYPE,
@@ -151,22 +167,21 @@ var _ = Describe("Test Job", func() {
 				Observer: observer.Configuration{
 					Type: neutron.NEUTRON_OB_TYPE,
 					Properties: map[string]interface{}{
-						"address":    "http://localhost:8000",
-						"query":      "select * from test",
-						"timeColumn": "time",
+						"address":     "http://localhost:8000",
+						"query":       "select * from test where value >9",
+						"time_column": "time",
 					},
 				},
 			}
 
 			manager := job.NewJobManager()
-
 			njob, err := manager.CreateJob(jobConfig)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(njob).ShouldNot(BeNil())
 			Expect(njob.Status).Should(Equal(job.STATUS_INIT))
 
 			njob.Start()
-			time.Sleep(5 * time.Second)
+			time.Sleep(3 * time.Second)
 			njob.Stop()
 		})
 	})
