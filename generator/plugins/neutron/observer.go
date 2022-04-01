@@ -62,3 +62,6 @@ func (o *NeutronObserver) Observe() error {
 	log.Logger().Infof("stop observing")
 	return nil
 }
+
+func (o *NeutronObserver) Stop() {
+}

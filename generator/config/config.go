@@ -15,6 +15,16 @@ var Conf = config.Map{
 		Usage:     "port the server should listen on",
 		Shorthand: "p",
 	},
+	"run-web-server": &config.Bool{
+		Default:   false,
+		Usage:     "whether to start a web server",
+		Shorthand: "S",
+	},
+	"test-config-file": &config.String{
+		Default:   "",
+		Usage:     "a json configuration file of test target",
+		Shorthand: "f",
+	},
 	"log-level": &config.String{
 		Default: "info",
 		Usage:   "level of log, support panic|fatal|error|warn|info|debug|trace",

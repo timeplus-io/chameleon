@@ -21,7 +21,7 @@ gen:
 	$(HOME)/go/bin/swag init -g server/main.go 
 
 run: gen
-	go run main.go
+	go run main.go -f ./samples/test1.json
 
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .

@@ -2,6 +2,7 @@ package observer
 
 type Observer interface {
 	Observe() error
+	Stop()
 }
 
 type Configuration struct {

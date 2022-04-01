@@ -168,11 +168,14 @@ var _ = Describe("Test Job", func() {
 					Type: neutron.NEUTRON_OB_TYPE,
 					Properties: map[string]interface{}{
 						"address":     "http://localhost:8000",
-						"query":       "select * from test where value >9",
+						"query":       "select * from test where value>9 ",
 						"time_column": "time",
 					},
 				},
 			}
+
+			err := job.SaveConfig(jobConfig, "/tmp/test.json")
+			Expect(err).ShouldNot(HaveOccurred())
 
 			manager := job.NewJobManager()
 			njob, err := manager.CreateJob(jobConfig)

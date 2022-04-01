@@ -13,12 +13,22 @@ definitions:
     properties:
       name:
         type: string
+      observer:
+        $ref: '#/definitions/observer.Configuration'
       sinks:
         items:
           $ref: '#/definitions/sink.Configuration'
         type: array
       source:
         $ref: '#/definitions/source.Configuration'
+    type: object
+  observer.Configuration:
+    properties:
+      properties:
+        additionalProperties: true
+        type: object
+      type:
+        type: string
     type: object
   sink.Configuration:
     properties:

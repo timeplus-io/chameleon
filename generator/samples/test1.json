@@ -1,0 +1,41 @@
+{
+    "name": "test",
+    "source": {
+        "batch_size": 1,
+        "concurency": 1,
+        "interval": 1,
+        "interval_delta": 0,
+        "count": 100,
+        "fields": [
+            {
+                "name": "value",
+                "type": "int",
+                "limit": [
+                    0,
+                    10
+                ]
+            },
+            {
+                "name": "time",
+                "type": "timestamp",
+                "timestamp_format": "2006-01-02 15:04:05.000000"
+            }
+        ]
+    },
+    "sinks": [
+        {
+            "type": "neutron",
+            "properties": {
+                "address": "http://localhost:8000"
+            }
+        }
+    ],
+    "observer": {
+        "type": "neutron",
+        "properties": {
+            "address": "http://localhost:8000",
+            "query": "select * from test where value>9 ",
+            "time_column": "time"
+        }
+    }
+}

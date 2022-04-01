@@ -35,6 +35,15 @@ func (m *JobManager) CreateJob(config JobConfiguration) (*Job, error) {
 	return job, nil
 }
 
+func (m *JobManager) CreateJobFromFile(file string) (*Job, error) {
+	job, err := NewJobFromFile(file)
+	if err != nil {
+		return nil, err
+	}
+	m.jobs.Store(job.ID(), job)
+	return job, nil
+}
+
 func (m *JobManager) ListJob() []*Job {
 	result := make([]*Job, 0)
 	m.jobs.Range(func(key, value interface{}) bool {
@@ -77,5 +86,14 @@ func (m *JobManager) StopJob(id string) error {
 		return fmt.Errorf("%s job does not exist", id)
 	}
 	job.(*Job).Stop()
+	return nil
+}
+
+func (m *JobManager) WaitJob(id string) error {
+	job, ok := m.jobs.Load(id)
+	if !ok {
+		return fmt.Errorf("%s job does not exist", id)
+	}
+	job.(*Job).Wait()
 	return nil
 }

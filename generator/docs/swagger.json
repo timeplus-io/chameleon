@@ -225,6 +225,9 @@
                 "name": {
                     "type": "string"
                 },
+                "observer": {
+                    "$ref": "#/definitions/observer.Configuration"
+                },
                 "sinks": {
                     "type": "array",
                     "items": {
@@ -233,6 +236,18 @@
                 },
                 "source": {
                     "$ref": "#/definitions/source.Configuration"
+                }
+            }
+        },
+        "observer.Configuration": {
+            "type": "object",
+            "properties": {
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },

@@ -16,7 +16,10 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/timeplus-io/chameleon/generator/handlers"
+	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
+	"github.com/timeplus-io/chameleon/generator/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 
 	_ "github.com/timeplus-io/chameleon/generator/docs"
 )
@@ -61,9 +64,27 @@ func CORSMiddleware() gin.HandlerFunc {
 }
 
 func Run(_ *cobra.Command, _ []string) error {
-	server := startServer()
-	shutdown(server)
+	if viper.GetBool("run-web-server") {
+		server := startServer()
+		shutdown(server)
+	}
+
+	if testConfigFile := viper.GetString("test-config-file"); testConfigFile != "" {
+		log.Logger().Infof("run test case from file %s", testConfigFile)
+		if job, err := job.NewJobManager().CreateJobFromFile(testConfigFile); err != nil {
+			log.Logger().Infof("failed to create job : %w", err)
+		} else {
+			job.Start()
+			job.Wait()
+		}
+	}
+
 	return nil
+}
+
+func initPlugins() {
+	neutron.Init()
+	console.Init()
 }
 
 func startServer() *http.Server {

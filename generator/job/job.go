@@ -1,6 +1,12 @@
 package job
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"os"
+	"sync"
+
 	"github.com/google/uuid"
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
@@ -25,6 +31,45 @@ type Job struct {
 	source   source.Source
 	sinks    []sink.Sink
 	observer observer.Observer
+
+	jobWaiter sync.WaitGroup
+}
+
+func LoadConfig(file string) (*JobConfiguration, error) {
+	dat, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var payload JobConfiguration
+	json.NewDecoder(bytes.NewBuffer(dat)).Decode(&payload)
+	return &payload, nil
+}
+
+func SaveConfig(config JobConfiguration, file string) error {
+	f, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	w := bufio.NewWriter(f)
+	defer f.Close()
+
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	encoder.SetEscapeHTML(false)
+	if err = encoder.Encode(config); err != nil {
+		return err
+	}
+	w.Flush()
+	return nil
+}
+
+func NewJobFromFile(file string) (*Job, error) {
+	jobConfig, err := LoadConfig(file)
+	if err != nil {
+		return nil, err
+	}
+	return NewJob(*jobConfig)
 }
 
 func NewJob(config JobConfiguration) (*Job, error) {
@@ -78,7 +123,12 @@ func (j *Job) Start() {
 	j.source.Start()
 	go j.observer.Observe() // start observer go routine
 	j.Status = STATUS_RUNNING
-	for _, stream := range j.source.GetStreams() {
+
+	streams := j.source.GetStreams()
+	j.jobWaiter = sync.WaitGroup{}
+	j.jobWaiter.Add(len(streams))
+
+	for _, stream := range streams {
 		go func() {
 			// write one event to each sink
 			// should enable batch later
@@ -94,11 +144,17 @@ func (j *Job) Start() {
 					}
 				}
 			}
+			j.jobWaiter.Done()
 		}()
 	}
 }
 
+func (j *Job) Wait() {
+	j.jobWaiter.Wait()
+}
+
 func (j *Job) Stop() {
 	j.source.Stop()
+	j.observer.Stop()
 	j.Status = STATUS_STOPPED
 }
