@@ -1,0 +1,11 @@
+{
+    "name": "test",
+    "observer": {
+        "type": "neutron",
+        "properties": {
+            "address": "http://localhost:8000",
+            "query": "select * from test where value>9 ",
+            "time_column": "time"
+        }
+    }
+}

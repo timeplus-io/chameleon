@@ -3,7 +3,7 @@
     "source": {
         "batch_size": 1,
         "concurency": 1,
-        "interval": 1,
+        "interval": 100,
         "interval_delta": 0,
         "count": 100,
         "fields": [
