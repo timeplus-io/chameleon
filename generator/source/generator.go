@@ -134,9 +134,7 @@ func (s *GeneratorEngine) run(index int) error {
 				break
 			}
 			events := s.generateBatchEvent()
-			for _, event := range events {
-				streamChannel <- rxgo.Of(event)
-			}
+			streamChannel <- rxgo.Of(events)
 			count += len(events)
 
 			if s.Config.IntervalDelta > 0 {

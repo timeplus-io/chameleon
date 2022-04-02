@@ -4,16 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/reactivex/rxgo/v2"
-	"github.com/spf13/viper"
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
+	"github.com/timeplus-io/chameleon/generator/utils"
 )
 
 const TIME_FORMAT = "2006-01-02 15:04:05.000"
@@ -97,63 +95,13 @@ type NeutronServer struct {
 func NewNeutronServer(address string) *NeutronServer {
 	return &NeutronServer{
 		addres: address,
-		client: NewDefaultHttpClient(),
+		client: utils.NewDefaultHttpClient(),
 	}
-}
-
-func NewDefaultHttpClient() *http.Client {
-	t := http.DefaultTransport.(*http.Transport).Clone()
-	t.MaxIdleConns = viper.GetInt("http-max-idle-connection")
-	t.MaxConnsPerHost = viper.GetInt("http-max-connection-per-host")
-	t.MaxIdleConnsPerHost = viper.GetInt("http-max-idle-connection-per-host")
-
-	return &http.Client{
-		Timeout:   viper.GetDuration("http-timeout") * time.Second,
-		Transport: t,
-	}
-}
-
-// request will propragate error if the response code is not 2XX
-func (s *NeutronServer) request(method string, url string, payload interface{}) (int, []byte, error) {
-	var body io.Reader
-	if payload == nil {
-		body = nil
-		log.Logger().Debugf("send empty request to url %s", url)
-	} else {
-		jsonPostValue, _ := json.Marshal(payload)
-		body = bytes.NewBuffer(jsonPostValue)
-		log.Logger().Debugf("send request %s to url %s", string(jsonPostValue), url)
-	}
-
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return 0, nil, err
-	}
-	//req.SetBasicAuth(s.user, s.password)
-	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
-	res, err := s.client.Do(req)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	defer res.Body.Close()
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	if res.StatusCode > 299 || res.StatusCode < 200 {
-		return res.StatusCode, resBody, fmt.Errorf("request failed with status code %d, response body %s", res.StatusCode, resBody)
-	}
-
-	return res.StatusCode, resBody, nil
-
 }
 
 func (s *NeutronServer) CreateStream(streamDef StreamDef) error {
 	url := fmt.Sprintf("%s/api/%s/streams", s.addres, API_VERSION)
-	_, _, err := s.request(http.MethodPost, url, streamDef)
+	_, _, err := utils.HttpRequest(http.MethodPost, url, streamDef, s.client)
 	if err != nil {
 		return fmt.Errorf("failed to create stream %s: %w", streamDef.Name, err)
 	}
@@ -162,7 +110,7 @@ func (s *NeutronServer) CreateStream(streamDef StreamDef) error {
 
 func (s *NeutronServer) DeleteStream(streamName string) error {
 	url := fmt.Sprintf("%s/api/%s/streams/%s", s.addres, API_VERSION, streamName)
-	_, _, err := s.request(http.MethodDelete, url, nil)
+	_, _, err := utils.HttpRequest(http.MethodDelete, url, nil, s.client)
 	if err != nil {
 		return fmt.Errorf("failed to delete stream %s: %w", streamName, err)
 	}
@@ -171,7 +119,7 @@ func (s *NeutronServer) DeleteStream(streamName string) error {
 
 func (s *NeutronServer) ListStream() ([]StreamDef, error) {
 	url := fmt.Sprintf("%s/api/%s/streams", s.addres, API_VERSION)
-	_, respBody, err := s.request(http.MethodGet, url, nil)
+	_, respBody, err := utils.HttpRequest(http.MethodGet, url, nil, s.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list stream : %w", err)
 	}
@@ -184,7 +132,7 @@ func (s *NeutronServer) ListStream() ([]StreamDef, error) {
 
 func (s *NeutronServer) InsertData(data IngestPayload) error {
 	url := fmt.Sprintf("%s/api/%s/streams/%s/ingest", s.addres, API_VERSION, data.Stream)
-	_, _, err := s.request(http.MethodPost, url, data.Data)
+	_, _, err := utils.HttpRequest(http.MethodPost, url, data.Data, s.client)
 	if err != nil {
 		return fmt.Errorf("failed to ingest data into stream %s: %w", data.Stream, err)
 	}
@@ -208,7 +156,7 @@ func (s *NeutronServer) QueryStream(sql string) (rxgo.Observable, error) {
 	}
 
 	createQueryUrl := fmt.Sprintf("%s/api/%s/queries", s.addres, API_VERSION)
-	_, respBody, err := s.request(http.MethodPost, createQueryUrl, query)
+	_, respBody, err := utils.HttpRequest(http.MethodPost, createQueryUrl, query, s.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create query : %w", err)
 	}

@@ -136,7 +136,7 @@ var _ = Describe("Test Job", func() {
 			njob.Stop()
 		})
 
-		FIt("create neutron sink/ob job and run it", func() {
+		It("create neutron sink/ob job and run it", func() {
 			jobConfig := job.JobConfiguration{
 				Name: "test",
 				Source: source.Configuration{

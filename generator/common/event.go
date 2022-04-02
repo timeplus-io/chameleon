@@ -45,3 +45,15 @@ func (e Event) GetRow(header []string) []interface{} {
 	}
 	return row
 }
+
+func ToEvents(headers []string, rows [][]interface{}) []Event {
+	events := make([]Event, len(rows))
+	for index, row := range rows {
+		event := make(Event)
+		for i, cell := range row {
+			event[headers[i]] = cell
+		}
+		events[index] = event
+	}
+	return events
+}

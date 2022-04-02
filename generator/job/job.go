@@ -87,11 +87,7 @@ func NewJob(config JobConfiguration) (*Job, error) {
 		}
 	}
 
-	obs, err := observer.CreateObserver(config.Observer)
-	if err != nil {
-		return nil, err
-	}
-
+	obs, _ := observer.CreateObserver(config.Observer)
 	return CreateJob(config.Name, source, sinks, obs), nil
 }
 
@@ -121,7 +117,10 @@ func (j *Job) ID() string {
 
 func (j *Job) Start() {
 	j.source.Start()
-	go j.observer.Observe() // start observer go routine
+	if j.observer != nil {
+		go j.observer.Observe() // start observer go routine
+	}
+
 	j.Status = STATUS_RUNNING
 
 	streams := j.source.GetStreams()
@@ -133,12 +132,22 @@ func (j *Job) Start() {
 			// write one event to each sink
 			// should enable batch later
 			for item := range stream.Observe() {
-				event := item.V.(common.Event)
-				header := event.GetHeader()
-				row := event.GetRow(header)
+				events := item.V.([]common.Event)
+
+				if len(events) == 0 {
+					continue
+				}
+
+				header := events[0].GetHeader()
+				data := make([][]interface{}, len(events))
+				for index, event := range events {
+					row := event.GetRow(header)
+					data[index] = row
+				}
+
 				for _, sink := range j.sinks {
-					data := make([][]interface{}, 1)
-					data[0] = row
+					// data := make([][]interface{}, 1)
+					// data[0] = row
 					if err := sink.Write(header, data); err != nil {
 						log.Logger().Errorf("failed to write event : %w ", err)
 					}
@@ -155,6 +164,8 @@ func (j *Job) Wait() {
 
 func (j *Job) Stop() {
 	j.source.Stop()
-	j.observer.Stop()
+	if j.observer != nil {
+		j.observer.Stop()
+	}
 	j.Status = STATUS_STOPPED
 }
