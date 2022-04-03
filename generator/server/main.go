@@ -20,6 +20,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/plugins/console"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
+	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
 
 	_ "github.com/timeplus-io/chameleon/generator/docs"
 )
@@ -64,6 +65,8 @@ func CORSMiddleware() gin.HandlerFunc {
 }
 
 func Run(_ *cobra.Command, _ []string) error {
+	initPlugins()
+
 	if viper.GetBool("run-web-server") {
 		server := startServer()
 		shutdown(server)
@@ -84,6 +87,7 @@ func Run(_ *cobra.Command, _ []string) error {
 
 func initPlugins() {
 	neutron.Init()
+	splunk.Init()
 	console.Init()
 }
 

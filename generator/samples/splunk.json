@@ -1,0 +1,33 @@
+{
+    "name": "test",
+    "source": {
+        "batch_size": 512,
+        "concurency": 16,
+        "interval": 1,
+        "interval_delta": 0,
+        "count": 0,
+        "fields": [
+            {
+                "name": "value",
+                "type": "int",
+                "limit": [
+                    0,
+                    1000
+                ]
+            },
+            {
+                "name": "time",
+                "type": "timestamp",
+                "timestamp_format": "2006-01-02 15:04:05.000000"
+            }
+        ]
+    },
+    "sinks": [
+        {
+            "type": "splunk",
+            "properties": {
+                "hec_token": "abcd1234"
+            }
+        }
+    ]
+}

@@ -20,7 +20,7 @@ var _ = Describe("Test Splunk", func() {
 
 	Describe("Splunk test", func() {
 
-		FIt("create splunk sink job and run it", func() {
+		It("create splunk sink job and run it", func() {
 			jobConfig := job.JobConfiguration{
 				Name:   "test",
 				Source: source.DefaultConfiguration(),
@@ -44,6 +44,19 @@ var _ = Describe("Test Splunk", func() {
 			njob.Start()
 			time.Sleep(5 * time.Second)
 			njob.Stop()
+		})
+
+		FIt("create splunk search observer", func() {
+			properties := map[string]interface{}{
+				"search": "search *",
+			}
+
+			splunkOb, err := splunk.NewSplunkObserver(properties)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			err = splunkOb.Observe()
+			Expect(err).ShouldNot(HaveOccurred())
+			splunkOb.Stop()
 		})
 	})
 })
