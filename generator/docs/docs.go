@@ -244,6 +244,9 @@ const docTemplate = `{
                 },
                 "source": {
                     "$ref": "#/definitions/source.Configuration"
+                },
+                "timeout": {
+                    "type": "integer"
                 }
             }
         },

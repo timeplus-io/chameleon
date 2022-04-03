@@ -19,10 +19,13 @@ import (
 const SPLUNK_OB_TYPE = "splunk"
 
 type SplunkObserver struct {
-	client *http.Client
-	search string
-	host   string
-	port   int
+	client     *http.Client
+	search     string
+	host       string
+	port       int
+	username   string
+	password   string
+	timeFormat string
 }
 
 type SplunkResult map[string]interface{}
@@ -49,11 +52,29 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	username, err := utils.GetWithDefault(properties, "username", "admin")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	password, err := utils.GetWithDefault(properties, "password", "Password!")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	timeFormat, err := utils.GetWithDefault(properties, "time_format", "2006-01-02 15:04:05.000000")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	return &SplunkObserver{
-		client: utils.NewDefaultHttpClient(),
-		search: search,
-		host:   host,
-		port:   port,
+		client:     utils.NewDefaultHttpClient(),
+		search:     search,
+		host:       host,
+		port:       port,
+		username:   username,
+		password:   password,
+		timeFormat: timeFormat,
 	}, nil
 }
 
@@ -61,28 +82,26 @@ func (o *SplunkObserver) Observe() error {
 	log.Logger().Infof("start observing")
 	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
 	searchReq := &url.Values{}
-	searchReq.Add("search", `search index=main source="my_source"   value=100 | eval eventtime=_time | eval indextime=_indextime`)
+	searchReq.Add("search", o.search)
 	searchReq.Add("search_mode", "realtime")
 	searchReq.Add("earliest_time", "rt")
 	searchReq.Add("latest_time", "rt")
 	searchReq.Add("output_mode", "json")
 
-	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, "admin", "Password!")
+	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, o.username, o.password)
 	if err != nil {
 		return fmt.Errorf("failed to create search : %w", err)
 	}
-
-	layout := "2006-01-02 15:04:05.000000" // should be a config
 
 	for item := range stream.Observe() {
 		event := item.V.(SplunkEvents)
 		raw := event.Result["_raw"]
 		var rawEvent map[string]interface{}
 		json.NewDecoder(bytes.NewBuffer([]byte(raw.(string)))).Decode(&rawEvent)
-		log.Logger().Debugf("get one search result raw : %v ", rawEvent)
+		log.Logger().Infof("get one search result raw : %v ", rawEvent)
 
 		eventTime := rawEvent["time"].(string)
-		t, err := time.Parse(layout, eventTime)
+		t, err := time.Parse(o.timeFormat, eventTime)
 		if err != nil {
 			continue
 		}

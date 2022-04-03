@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/timeplus-io/chameleon/generator/common"
@@ -25,14 +26,15 @@ const (
 )
 
 type Job struct {
-	Id       string    `json:"id"`
-	Name     string    `json:"name"`
-	Status   JobStatus `json:"status"`
-	source   source.Source
-	sinks    []sink.Sink
-	observer observer.Observer
+	Id     string    `json:"id"`
+	Name   string    `json:"name"`
+	Status JobStatus `json:"status"`
 
+	source    source.Source
+	sinks     []sink.Sink
+	observer  observer.Observer
 	jobWaiter sync.WaitGroup
+	timeout   int
 }
 
 func LoadConfig(file string) (*JobConfiguration, error) {
@@ -88,10 +90,10 @@ func NewJob(config JobConfiguration) (*Job, error) {
 	}
 
 	obs, _ := observer.CreateObserver(config.Observer)
-	return CreateJob(config.Name, source, sinks, obs), nil
+	return CreateJob(config.Name, source, sinks, obs, config.Timeout), nil
 }
 
-func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observer.Observer) *Job {
+func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observer.Observer, timeout int) *Job {
 	id := uuid.New().String()
 	job := &Job{
 		Id:       id,
@@ -100,6 +102,7 @@ func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observe
 		source:   source,
 		sinks:    sinks,
 		observer: obs,
+		timeout:  timeout,
 	}
 
 	// initialize all sinks with fields defineid in source
@@ -116,6 +119,7 @@ func (j *Job) ID() string {
 }
 
 func (j *Job) Start() {
+	startTime := time.Now()
 	j.source.Start()
 	if j.observer != nil {
 		go j.observer.Observe() // start observer go routine
@@ -146,8 +150,6 @@ func (j *Job) Start() {
 				}
 
 				for _, sink := range j.sinks {
-					// data := make([][]interface{}, 1)
-					// data[0] = row
 					if err := sink.Write(header, data); err != nil {
 						log.Logger().Errorf("failed to write event : %w ", err)
 					}
@@ -155,6 +157,17 @@ func (j *Job) Start() {
 			}
 			j.jobWaiter.Done()
 		}()
+	}
+
+	if j.timeout != 0 {
+		for {
+			time.Sleep(1 * time.Second)
+			if -time.Until(startTime).Seconds() > float64(j.timeout) {
+				log.Logger().Infof("timeout and exit data generating")
+				j.Stop()
+				break
+			}
+		}
 	}
 }
 

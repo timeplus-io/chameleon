@@ -48,7 +48,7 @@ var _ = Describe("Test Splunk", func() {
 
 		FIt("create splunk search observer", func() {
 			properties := map[string]interface{}{
-				"search": "search *",
+				"search": `search index=main source="my_source" value=90000 | eval eventtime=_time | eval indextime=_indextime`,
 			}
 
 			splunkOb, err := splunk.NewSplunkObserver(properties)

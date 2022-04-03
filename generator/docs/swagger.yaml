@@ -21,6 +21,8 @@ definitions:
         type: array
       source:
         $ref: '#/definitions/source.Configuration'
+      timeout:
+        type: integer
     type: object
   observer.Configuration:
     properties:

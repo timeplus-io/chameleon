@@ -14,6 +14,7 @@ type JobConfiguration struct {
 	Source   source.Configuration   `json:"source,omitempty"`
 	Sinks    []sink.Configuration   `json:"sinks,omitempty"`
 	Observer observer.Configuration `json:"observer,omitempty"`
+	Timeout  int                    `json:"timeout,omitempty"`
 }
 
 type JobManager struct {

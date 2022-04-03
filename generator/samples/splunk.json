@@ -1,5 +1,6 @@
 {
     "name": "test",
+    "timeout": 10,
     "source": {
         "batch_size": 512,
         "concurency": 16,
@@ -12,7 +13,7 @@
                 "type": "int",
                 "limit": [
                     0,
-                    1000
+                    1000000
                 ]
             },
             {
