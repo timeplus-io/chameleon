@@ -26,6 +26,8 @@ type SplunkObserver struct {
 	username   string
 	password   string
 	timeFormat string
+	timeField  string
+	isStopped  bool
 }
 
 type SplunkResult map[string]interface{}
@@ -67,14 +69,24 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	timeField, err := utils.GetWithDefault(properties, "time_field", "time")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	httpClient := utils.NewDefaultHttpClient()
+	httpClient.Timeout = 60 * 60 * time.Second
+
 	return &SplunkObserver{
-		client:     utils.NewDefaultHttpClient(),
+		client:     httpClient,
 		search:     search,
 		host:       host,
 		port:       port,
 		username:   username,
 		password:   password,
 		timeFormat: timeFormat,
+		timeField:  timeField,
+		isStopped:  false,
 	}, nil
 }
 
@@ -87,6 +99,11 @@ func (o *SplunkObserver) Observe() error {
 	searchReq.Add("earliest_time", "rt")
 	searchReq.Add("latest_time", "rt")
 	searchReq.Add("output_mode", "json")
+	searchReq.Add("auto_cancel", "0")
+	searchReq.Add("auto_finalize_ec", "0")
+	searchReq.Add("max_time", "0")
+
+	log.Logger().Infof("observe splunk search %v", searchReq)
 
 	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, o.username, o.password)
 	if err != nil {
@@ -94,13 +111,18 @@ func (o *SplunkObserver) Observe() error {
 	}
 
 	for item := range stream.Observe() {
+		if o.isStopped {
+			log.Logger().Infof("stop status is %v", o.isStopped)
+			log.Logger().Infof("stop splunk observing")
+			break
+		}
 		event := item.V.(SplunkEvents)
 		raw := event.Result["_raw"]
 		var rawEvent map[string]interface{}
 		json.NewDecoder(bytes.NewBuffer([]byte(raw.(string)))).Decode(&rawEvent)
 		log.Logger().Infof("get one search result raw : %v ", rawEvent)
 
-		eventTime := rawEvent["time"].(string)
+		eventTime := rawEvent[o.timeField].(string)
 		t, err := time.Parse(o.timeFormat, eventTime)
 		if err != nil {
 			continue
@@ -113,6 +135,8 @@ func (o *SplunkObserver) Observe() error {
 }
 
 func (o *SplunkObserver) Stop() {
+	log.Logger().Infof("call splunk stop observing")
+	o.isStopped = true
 }
 
 func HttpRequestStreamWithUser(method string, url string, payload *url.Values, client *http.Client, username string, password string) (rxgo.Observable, error) {
@@ -148,6 +172,7 @@ func HttpRequestStreamWithUser(method string, url string, payload *url.Values, c
 			streamChannel <- rxgo.Of(event)
 			// check stop here
 		}
+		log.Logger().Infof("No more splunk stream event")
 		close(streamChannel)
 	}()
 

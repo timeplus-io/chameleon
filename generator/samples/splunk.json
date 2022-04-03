@@ -1,6 +1,5 @@
 {
     "name": "test",
-    "timeout": 10,
     "source": {
         "batch_size": 512,
         "concurency": 16,
@@ -13,7 +12,7 @@
                 "type": "int",
                 "limit": [
                     0,
-                    1000000
+                    100000
                 ]
             },
             {
@@ -27,6 +26,7 @@
         {
             "type": "splunk",
             "properties": {
+                "hec_address": "https://localhost:8088/services/collector/event",
                 "hec_token": "abcd1234"
             }
         }

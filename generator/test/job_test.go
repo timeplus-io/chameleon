@@ -34,7 +34,7 @@ var _ = Describe("Test Job", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(console).ShouldNot(BeNil())
 
-			job := job.CreateJob("test job", generator, []sink.Sink{console}, nil)
+			job := job.CreateJob("test job", generator, []sink.Sink{console}, nil, 0)
 
 			job.Start()
 			time.Sleep(3 * time.Second)
