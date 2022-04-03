@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/reactivex/rxgo/v2"
 	"github.com/timeplus-io/chameleon/generator/log"
+	"github.com/timeplus-io/chameleon/generator/metrics"
 	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/utils"
 )
@@ -28,6 +30,9 @@ type SplunkObserver struct {
 	timeFormat string
 	timeField  string
 	isStopped  bool
+	obWaiter   sync.WaitGroup
+
+	metricsManager *metrics.Manager
 }
 
 type SplunkResult map[string]interface{}
@@ -78,20 +83,24 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 	httpClient.Timeout = 60 * 60 * time.Second
 
 	return &SplunkObserver{
-		client:     httpClient,
-		search:     search,
-		host:       host,
-		port:       port,
-		username:   username,
-		password:   password,
-		timeFormat: timeFormat,
-		timeField:  timeField,
-		isStopped:  false,
+		client:         httpClient,
+		search:         search,
+		host:           host,
+		port:           port,
+		username:       username,
+		password:       password,
+		timeFormat:     timeFormat,
+		timeField:      timeField,
+		isStopped:      false,
+		obWaiter:       sync.WaitGroup{},
+		metricsManager: metrics.NewManager(),
 	}, nil
 }
 
 func (o *SplunkObserver) Observe() error {
 	log.Logger().Infof("start observing")
+	o.metricsManager.Add("latency")
+
 	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
 	searchReq := &url.Values{}
 	searchReq.Add("search", o.search)
@@ -110,9 +119,9 @@ func (o *SplunkObserver) Observe() error {
 		return fmt.Errorf("failed to create search : %w", err)
 	}
 
+	o.obWaiter.Add(1)
 	for item := range stream.Observe() {
 		if o.isStopped {
-			log.Logger().Infof("stop status is %v", o.isStopped)
 			log.Logger().Infof("stop splunk observing")
 			break
 		}
@@ -120,7 +129,7 @@ func (o *SplunkObserver) Observe() error {
 		raw := event.Result["_raw"]
 		var rawEvent map[string]interface{}
 		json.NewDecoder(bytes.NewBuffer([]byte(raw.(string)))).Decode(&rawEvent)
-		log.Logger().Infof("get one search result raw : %v ", rawEvent)
+		log.Logger().Debugf("get one search result raw : %v ", rawEvent)
 
 		eventTime := rawEvent[o.timeField].(string)
 		t, err := time.Parse(o.timeFormat, eventTime)
@@ -128,15 +137,19 @@ func (o *SplunkObserver) Observe() error {
 			continue
 		}
 		log.Logger().Infof("observe latency %v", time.Until(t))
+		o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
 	}
 
 	log.Logger().Infof("stop observing")
+	o.metricsManager.Save("splunk")
+	o.obWaiter.Done()
 	return nil
 }
 
 func (o *SplunkObserver) Stop() {
 	log.Logger().Infof("call splunk stop observing")
 	o.isStopped = true
+	o.obWaiter.Wait()
 }
 
 func HttpRequestStreamWithUser(method string, url string, payload *url.Values, client *http.Client, username string, password string) (rxgo.Observable, error) {

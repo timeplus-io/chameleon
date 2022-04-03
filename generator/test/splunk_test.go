@@ -48,14 +48,17 @@ var _ = Describe("Test Splunk", func() {
 
 		FIt("create splunk search observer", func() {
 			properties := map[string]interface{}{
-				"search": `search index=main source="my_source" value=90000 | eval eventtime=_time | eval indextime=_indextime`,
+				"search": `search index=main source="my_source" value=9000 | eval eventtime=_time | eval indextime=_indextime`,
 			}
-
 			splunkOb, err := splunk.NewSplunkObserver(properties)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			err = splunkOb.Observe()
-			Expect(err).ShouldNot(HaveOccurred())
+			go func() {
+				err = splunkOb.Observe()
+				Expect(err).ShouldNot(HaveOccurred())
+			}()
+
+			time.Sleep(20 * time.Second)
 			splunkOb.Stop()
 		})
 	})
