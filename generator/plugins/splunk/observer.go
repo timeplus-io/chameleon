@@ -154,7 +154,7 @@ func (o *SplunkObserver) observeThroughput() error {
 	o.metricsManager.Add("throughput")
 	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
 	searchReq := &url.Values{}
-	searchReq.Add("search", `search index=main source="my_source"   | eval eventtime=_time | eval indextime=_indextime | stats count`)
+	searchReq.Add("search", o.search)
 	searchReq.Add("search_mode", "realtime")
 	searchReq.Add("earliest_time", "rt-1s")
 	searchReq.Add("latest_time", "rt")

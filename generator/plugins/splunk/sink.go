@@ -81,8 +81,8 @@ func (s *SplunkSink) Write(headers []string, rows [][]interface{}, index int) er
 	events := s.ToSplunkEvents(common.ToEvents(headers, rows))
 	log.Logger().Debugf("Write one event to splunk %v", events)
 
-	hecUrl := "http://localhost:8088/services/collector/event"
-	_, respBody, err := utils.HttpRequestWithAuth(http.MethodPost, hecUrl, events, client, "Splunk abcd1234")
+	hecUrl := s.hecAddress
+	_, respBody, err := utils.HttpRequestWithAuth(http.MethodPost, hecUrl, events, client, fmt.Sprintf("Splunk %s", s.hecToken))
 	if err != nil {
 		return fmt.Errorf("failed to insert data : %w", err)
 	}
