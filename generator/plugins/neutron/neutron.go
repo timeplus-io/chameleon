@@ -200,7 +200,7 @@ func (s *NeutronServer) QueryStream(sql string) (rxgo.Observable, error) {
 			var messagePayload []interface{}
 			json.NewDecoder(bytes.NewBuffer(message)).Decode(&messagePayload)
 			event := toEvent(queryResult.Result.Header, messagePayload)
-			log.Logger().Debugf("read message from websocket : %v", event)
+			log.Logger().Infof("read message from websocket : %v", event)
 			streamChannel <- rxgo.Of(event)
 		}
 	}()

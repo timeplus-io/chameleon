@@ -22,18 +22,17 @@ import (
 const SPLUNK_OB_TYPE = "splunk"
 
 type SplunkObserver struct {
-	client     *http.Client
-	search     string
-	host       string
-	port       int
-	username   string
-	password   string
-	metric     string
-	timeFormat string
-	timeField  string
-	isStopped  bool
-	obWaiter   sync.WaitGroup
-
+	client         *http.Client
+	search         string
+	host           string
+	port           int
+	username       string
+	password       string
+	metric         string
+	timeFormat     string
+	timeField      string
+	isStopped      bool
+	obWaiter       sync.WaitGroup
 	metricsManager *metrics.Manager
 }
 
@@ -106,7 +105,7 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 	}, nil
 }
 
-func (o *SplunkObserver) latecnyObserve() error {
+func (o *SplunkObserver) observeLatency() error {
 	log.Logger().Infof("start observing latency")
 	o.metricsManager.Add("latency")
 	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
@@ -150,7 +149,7 @@ func (o *SplunkObserver) latecnyObserve() error {
 	return nil
 }
 
-func (o *SplunkObserver) throughputObserve() error {
+func (o *SplunkObserver) observeThroughput() error {
 	log.Logger().Infof("start observing throughput")
 	o.metricsManager.Add("throughput")
 	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
@@ -192,11 +191,11 @@ func (o *SplunkObserver) throughputObserve() error {
 func (o *SplunkObserver) Observe() error {
 	log.Logger().Infof("start observing")
 	if o.metric == "latency" {
-		go o.latecnyObserve()
+		go o.observeLatency()
 	}
 
 	if o.metric == "throughput" {
-		go o.throughputObserve()
+		go o.observeThroughput()
 	}
 
 	return nil

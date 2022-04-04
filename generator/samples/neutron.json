@@ -1,18 +1,18 @@
 {
     "name": "test",
     "source": {
-        "batch_size": 1,
-        "concurency": 1,
+        "batch_size": 1024,
+        "concurency": 8,
         "interval": 100,
         "interval_delta": 0,
-        "count": 100,
+        "count": 0,
         "fields": [
             {
                 "name": "value",
                 "type": "int",
                 "limit": [
                     0,
-                    10
+                    100000
                 ]
             },
             {
@@ -29,13 +29,5 @@
                 "address": "http://localhost:8000"
             }
         }
-    ],
-    "observer": {
-        "type": "neutron",
-        "properties": {
-            "address": "http://localhost:8000",
-            "query": "select * from test where value>9 ",
-            "time_column": "time"
-        }
-    }
+    ]
 }

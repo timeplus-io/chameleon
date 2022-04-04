@@ -23,10 +23,16 @@ gen:
 run: gen
 	go run main.go -f ./samples/splunk_ob.json
 
-run_splunk: gen
+run_neutron:
+	go run main.go -f ./samples/neutron.json
+
+run_neutron_ob:
+	go run main.go -f ./samples/neutron_ob_throughput.json
+
+run_splunk:
 	go run main.go -f ./samples/splunk.json
 
-run_splunk_ob: gen
+run_splunk_ob:
 	go run main.go -f ./samples/splunk_ob_throughput.json
 
 docker: Dockerfile
