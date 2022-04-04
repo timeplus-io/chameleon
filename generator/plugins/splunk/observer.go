@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -27,6 +28,7 @@ type SplunkObserver struct {
 	port       int
 	username   string
 	password   string
+	metric     string
 	timeFormat string
 	timeField  string
 	isStopped  bool
@@ -38,9 +40,10 @@ type SplunkObserver struct {
 type SplunkResult map[string]interface{}
 
 type SplunkEvents struct {
-	Preview bool         `json:"preview"`
-	Offset  int          `json:"offset"`
-	Result  SplunkResult `json:"result"`
+	Preview bool         `json:"preview,omitempty"`
+	Offset  int          `json:"offset,omitempty"`
+	Result  SplunkResult `json:"result,omitempty"`
+	Lastrow bool         `json:"lastrow,omitempty"`
 }
 
 func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, error) {
@@ -69,6 +72,11 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metric, err := utils.GetWithDefault(properties, "metric", "latency")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	timeFormat, err := utils.GetWithDefault(properties, "time_format", "2006-01-02 15:04:05.000000")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
@@ -89,6 +97,7 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 		port:           port,
 		username:       username,
 		password:       password,
+		metric:         metric,
 		timeFormat:     timeFormat,
 		timeField:      timeField,
 		isStopped:      false,
@@ -97,10 +106,9 @@ func NewSplunkObserver(properties map[string]interface{}) (observer.Observer, er
 	}, nil
 }
 
-func (o *SplunkObserver) Observe() error {
-	log.Logger().Infof("start observing")
+func (o *SplunkObserver) latecnyObserve() error {
+	log.Logger().Infof("start observing latency")
 	o.metricsManager.Add("latency")
-
 	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
 	searchReq := &url.Values{}
 	searchReq.Add("search", o.search)
@@ -113,7 +121,6 @@ func (o *SplunkObserver) Observe() error {
 	searchReq.Add("max_time", "0")
 
 	log.Logger().Infof("observe splunk search %v", searchReq)
-
 	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, o.username, o.password)
 	if err != nil {
 		return fmt.Errorf("failed to create search : %w", err)
@@ -139,10 +146,59 @@ func (o *SplunkObserver) Observe() error {
 		log.Logger().Infof("observe latency %v", time.Until(t))
 		o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
 	}
-
-	log.Logger().Infof("stop observing")
-	o.metricsManager.Save("splunk")
 	o.obWaiter.Done()
+	return nil
+}
+
+func (o *SplunkObserver) throughputObserve() error {
+	log.Logger().Infof("start observing throughput")
+	o.metricsManager.Add("throughput")
+	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
+	searchReq := &url.Values{}
+	searchReq.Add("search", `search index=main source="my_source"   | eval eventtime=_time | eval indextime=_indextime | stats count`)
+	searchReq.Add("search_mode", "realtime")
+	searchReq.Add("earliest_time", "rt-1s")
+	searchReq.Add("latest_time", "rt")
+	searchReq.Add("output_mode", "json")
+	searchReq.Add("auto_cancel", "0")
+	searchReq.Add("auto_finalize_ec", "0")
+	searchReq.Add("max_time", "0")
+
+	log.Logger().Infof("observe splunk search %v", searchReq)
+	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, o.username, o.password)
+	if err != nil {
+		return fmt.Errorf("failed to create search : %w", err)
+	}
+
+	o.obWaiter.Add(1)
+	for item := range stream.Observe() {
+		if o.isStopped {
+			log.Logger().Infof("stop splunk observing")
+			break
+		}
+		event := item.V.(SplunkEvents)
+		count := event.Result["count"].(string)
+		log.Logger().Debugf("get one search result count : %v ", count)
+		if s, err := strconv.ParseFloat(count, 64); err == nil {
+			log.Logger().Infof("observe throughput %f", s)
+			o.metricsManager.Observe("throughput", s)
+		}
+
+	}
+	o.obWaiter.Done()
+	return nil
+}
+
+func (o *SplunkObserver) Observe() error {
+	log.Logger().Infof("start observing")
+	if o.metric == "latency" {
+		go o.latecnyObserve()
+	}
+
+	if o.metric == "throughput" {
+		go o.throughputObserve()
+	}
+
 	return nil
 }
 
@@ -150,6 +206,8 @@ func (o *SplunkObserver) Stop() {
 	log.Logger().Infof("call splunk stop observing")
 	o.isStopped = true
 	o.obWaiter.Wait()
+	log.Logger().Infof("stop observing")
+	o.metricsManager.Save("splunk")
 }
 
 func HttpRequestStreamWithUser(method string, url string, payload *url.Values, client *http.Client, username string, password string) (rxgo.Observable, error) {
@@ -179,6 +237,8 @@ func HttpRequestStreamWithUser(method string, url string, payload *url.Values, c
 		defer res.Body.Close()
 		for scanner.Scan() {
 			text := []byte(scanner.Text())
+			log.Logger().Infof("the returned splunk result is %v", string(text))
+
 			var event SplunkEvents
 			json.NewDecoder(bytes.NewBuffer(text)).Decode(&event)
 

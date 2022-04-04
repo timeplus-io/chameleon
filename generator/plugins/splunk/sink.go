@@ -16,7 +16,7 @@ import (
 const SPLUNK_SINK_TYPE = "splunk"
 
 type SplunkSink struct {
-	client     *http.Client
+	client     []*http.Client
 	hecAddress string
 	hecToken   string
 	source     string
@@ -57,8 +57,13 @@ func NewSplunkSink(properties map[string]interface{}) (sink.Sink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	clients := make([]*http.Client, 32)
+	for i := 0; i < len(clients); i++ {
+		clients[i] = utils.NewDefaultHttpClient()
+	}
+
 	return &SplunkSink{
-		client:     utils.NewDefaultHttpClient(),
+		client:     clients,
 		hecAddress: hecAddress,
 		hecToken:   hecToken,
 		source:     source,
@@ -71,19 +76,24 @@ func (s *SplunkSink) Init(name string, fields []common.Field) error {
 	return nil
 }
 
-func (s *SplunkSink) Write(headers []string, rows [][]interface{}) error {
+func (s *SplunkSink) Write(headers []string, rows [][]interface{}, index int) error {
+	client := s.client[index]
 	events := s.ToSplunkEvents(common.ToEvents(headers, rows))
 	log.Logger().Debugf("Write one event to splunk %v", events)
 
 	hecUrl := "http://localhost:8088/services/collector/event"
-	_, respBody, err := utils.HttpRequestWithAuth(http.MethodPost, hecUrl, events, s.client, "Splunk abcd1234")
+	_, respBody, err := utils.HttpRequestWithAuth(http.MethodPost, hecUrl, events, client, "Splunk abcd1234")
 	if err != nil {
 		return fmt.Errorf("failed to insert data : %w", err)
 	}
 
 	var queryResult map[string]interface{}
 	json.NewDecoder(bytes.NewBuffer(respBody)).Decode(&queryResult)
-	log.Logger().Debugf("the insert result is %v", queryResult)
+	log.Logger().Debugf("the insert result is %d:%v", index, queryResult)
+	if queryResult["code"].(float64) != 0.0 {
+		log.Logger().Errorf("failed to insert data %d:%v", queryResult)
+	}
+
 	return nil
 }
 

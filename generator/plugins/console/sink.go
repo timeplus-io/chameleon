@@ -28,7 +28,7 @@ func NewConsoleSink(properties map[string]interface{}) (sink.Sink, error) {
 	return &Console{}, nil
 }
 
-func (s *Console) Write(headers []string, rows [][]interface{}) error {
+func (s *Console) Write(headers []string, rows [][]interface{}, index int) error {
 	log.Logger().Infof("Write one event to console %v:%v", headers, rows)
 	return nil
 }

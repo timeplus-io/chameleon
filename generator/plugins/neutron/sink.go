@@ -68,7 +68,7 @@ func (s *NeutronSink) Init(name string, fields []common.Field) error {
 	return s.server.CreateStream(streamDef)
 }
 
-func (s *NeutronSink) Write(headers []string, rows [][]interface{}) error {
+func (s *NeutronSink) Write(headers []string, rows [][]interface{}, index int) error {
 	log.Logger().Debugf("Write one event to stream %s %v:%v", s.streamName, headers, rows)
 	ingestData := IngestPayload{
 		Stream: s.streamName,

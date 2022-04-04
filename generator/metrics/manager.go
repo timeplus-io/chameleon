@@ -72,7 +72,7 @@ func (m *Manager) Save(namesapce string) {
 
 func (m *Manager) save(namesapce string, name string, metric *Metric) {
 	ts := time.Now().Unix()
-	filePath := fmt.Sprintf("/tmp/%s_%s_report_%d.csv", namesapce, name, ts)
+	filePath := fmt.Sprintf("%s_%s_report_%d.csv", namesapce, name, ts)
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {

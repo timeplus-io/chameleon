@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"math/rand"
 	"os"
 	"sync"
 	"time"
@@ -131,8 +132,9 @@ func (j *Job) Start() {
 	j.jobWaiter = sync.WaitGroup{}
 	j.jobWaiter.Add(len(streams))
 
-	for _, stream := range streams {
-		go func() {
+	for i, stream := range streams {
+		time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
+		go func(i int) {
 			// write one event to each sink
 			// should enable batch later
 			for item := range stream.Observe() {
@@ -150,13 +152,13 @@ func (j *Job) Start() {
 				}
 
 				for _, sink := range j.sinks {
-					if err := sink.Write(header, data); err != nil {
+					if err := sink.Write(header, data, i); err != nil {
 						log.Logger().Errorf("failed to write event : %w ", err)
 					}
 				}
 			}
 			j.jobWaiter.Done()
-		}()
+		}(i)
 	}
 
 	if j.timeout != 0 {
