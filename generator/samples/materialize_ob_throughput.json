@@ -1,0 +1,11 @@
+{
+    "name": "test",
+    "timeout": 120,
+    "observer": {
+        "type": "materialize",
+        "properties": {
+            "metric": "throughput",
+            "query": "SELECT '1' as a, count(*) FROM test WHERE mz_logical_timestamp()  < timestamp + 1000 GROUP BY a"
+        }
+    }
+}

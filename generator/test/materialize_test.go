@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/timeplus-io/chameleon/generator/job"
-	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
+	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 
@@ -12,21 +12,21 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Test Splunk", func() {
+var _ = Describe("Test Materialize", func() {
 
 	BeforeEach(func() {
-		//console.Init()
+		materialize.Init()
 	})
 
-	Describe("Splunk test", func() {
+	Describe("Materialize test", func() {
 
-		It("create splunk sink job and run it", func() {
+		It("create Materialize sink job and run it", func() {
 			jobConfig := job.JobConfiguration{
 				Name:   "test",
 				Source: source.DefaultConfiguration(),
 				Sinks: []sink.Configuration{
 					{
-						Type: splunk.SPLUNK_SINK_TYPE,
+						Type: materialize.MATERIALIZE_SINK_TYPE,
 						Properties: map[string]interface{}{
 							"hec_token": "abcd1234",
 						},
@@ -46,21 +46,38 @@ var _ = Describe("Test Splunk", func() {
 			njob.Stop()
 		})
 
-		It("create splunk search observer", func() {
+		It("create materialize latency observer", func() {
 			properties := map[string]interface{}{
-				"metric": "throughput",
-				"search": `search index=main source="my_source" | eval eventtime=_time | eval indextime=_indextime | stats count`,
+				"metric": "latency",
+				"query":  `select value, time from test where value=9`,
 			}
-			splunkOb, err := splunk.NewSplunkObserver(properties)
+			ob, err := materialize.NewMaterializeObserver(properties)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			go func() {
-				err = splunkOb.Observe()
+				err = ob.Observe()
 				Expect(err).ShouldNot(HaveOccurred())
 			}()
 
 			time.Sleep(20 * time.Second)
-			splunkOb.Stop()
+			ob.Stop()
+		})
+
+		FIt("create materialize throghput observer", func() {
+			properties := map[string]interface{}{
+				"metric": "throughput",
+				"query":  "SELECT '1' as a, count(*) FROM test WHERE mz_logical_timestamp()  < timestamp + 1000 GROUP BY a",
+			}
+			ob, err := materialize.NewMaterializeObserver(properties)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			go func() {
+				err = ob.Observe()
+				Expect(err).ShouldNot(HaveOccurred())
+			}()
+
+			time.Sleep(20 * time.Second)
+			ob.Stop()
 		})
 	})
 })

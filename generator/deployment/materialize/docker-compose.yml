@@ -1,0 +1,9 @@
+
+version: "3.7"
+services:
+  materialize:
+    image: materialize/materialized:v0.17.0
+    container_name: materialize
+    ports:
+      - "6875:6875"
+    command: --workers 3

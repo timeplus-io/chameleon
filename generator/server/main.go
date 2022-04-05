@@ -19,6 +19,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
 
@@ -77,6 +78,7 @@ func Run(_ *cobra.Command, _ []string) error {
 		if job, err := job.NewJobManager().CreateJobFromFile(testConfigFile); err != nil {
 			log.Logger().Infof("failed to create job : %w", err)
 		} else {
+			log.Logger().Info("start job")
 			job.Start()
 			job.Wait()
 		}
@@ -88,6 +90,7 @@ func Run(_ *cobra.Command, _ []string) error {
 func initPlugins() {
 	neutron.Init()
 	splunk.Init()
+	materialize.Init()
 	console.Init()
 }
 

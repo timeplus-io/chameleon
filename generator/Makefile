@@ -35,6 +35,12 @@ run_splunk:
 run_splunk_ob:
 	go run main.go -f ./samples/splunk_ob_throughput.json
 
+run_materialize:
+	go run main.go -f ./samples/materialize.json
+
+run_materialize_client:
+	docker run -it --rm jbergknoff/postgresql-client postgresql://materialize@host.docker.internal:6875/materialize
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 

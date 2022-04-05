@@ -17,15 +17,16 @@ type FieldType string
 type TimestampFormatType string
 
 const (
-	FIELDTYPE_TIMESTAMP FieldType = "timestamp"
-	FIELDTYPE_STRING    FieldType = "string"
-	FIELDTYPE_INT       FieldType = "int"
-	FIELDTYPE_FLOAT     FieldType = "float"
-	FIELDTYPE_BOOL      FieldType = "bool"
-	FIELDTYPE_MAP       FieldType = "map"
-	FIELDTYPE_ARRAY     FieldType = "array"
-	FIELDTYPE_GENERATE  FieldType = "generate"
-	FIELDTYPE_REGEX     FieldType = "regex"
+	FIELDTYPE_TIMESTAMP     FieldType = "timestamp"
+	FIELDTYPE_TIMESTAMP_INT FieldType = "timestamp_int"
+	FIELDTYPE_STRING        FieldType = "string"
+	FIELDTYPE_INT           FieldType = "int"
+	FIELDTYPE_FLOAT         FieldType = "float"
+	FIELDTYPE_BOOL          FieldType = "bool"
+	FIELDTYPE_MAP           FieldType = "map"
+	FIELDTYPE_ARRAY         FieldType = "array"
+	FIELDTYPE_GENERATE      FieldType = "generate"
+	FIELDTYPE_REGEX         FieldType = "regex"
 )
 
 type Field struct {
@@ -296,6 +297,9 @@ func makeValue(sourceType FieldType, sourceRange []interface{}, sourceLimit []in
 		} else {
 			return makeTimestampString(timestampFormat, timestampDelayMin, timestampDelayMax)
 		}
+
+	case FIELDTYPE_TIMESTAMP_INT:
+		return makeTimestampInt(timestampDelayMin, timestampDelayMax)
 
 	case FIELDTYPE_STRING:
 		ranges := make([]string, len(sourceRange))

@@ -90,7 +90,11 @@ func NewJob(config JobConfiguration) (*Job, error) {
 		}
 	}
 
-	obs, _ := observer.CreateObserver(config.Observer)
+	obs, err := observer.CreateObserver(config.Observer)
+	if err != nil {
+		log.Logger().Errorf("failed to create observer %s", config.Observer.Type)
+	}
+
 	return CreateJob(config.Name, source, sinks, obs, config.Timeout), nil
 }
 
@@ -109,7 +113,7 @@ func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observe
 	// initialize all sinks with fields defineid in source
 	fields := job.source.GetFields()
 	for _, sink := range job.sinks {
-		sink.Init(name, fields)
+		sink.Init(name, fields) // todo : check init status here
 	}
 
 	return job
@@ -122,7 +126,9 @@ func (j *Job) ID() string {
 func (j *Job) Start() {
 	startTime := time.Now()
 	j.source.Start()
+
 	if j.observer != nil {
+		log.Logger().Infof("start observer")
 		go j.observer.Observe() // start observer go routine
 	}
 
