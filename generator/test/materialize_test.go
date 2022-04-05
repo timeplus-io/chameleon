@@ -63,7 +63,7 @@ var _ = Describe("Test Materialize", func() {
 			ob.Stop()
 		})
 
-		FIt("create materialize throghput observer", func() {
+		It("create materialize throghput observer", func() {
 			properties := map[string]interface{}{
 				"metric": "throughput",
 				"query":  "SELECT '1' as a, count(*) FROM test WHERE mz_logical_timestamp()  < timestamp + 1000 GROUP BY a",

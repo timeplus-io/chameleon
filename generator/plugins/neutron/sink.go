@@ -65,6 +65,8 @@ func (s *NeutronSink) Init(name string, fields []common.Field) error {
 			Type: convertedType,
 		}
 	}
+
+	s.server.DeleteStream(streamDef.Name)
 	return s.server.CreateStream(streamDef)
 }
 

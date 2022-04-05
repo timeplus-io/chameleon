@@ -147,6 +147,7 @@ func (s *GeneratorEngine) run(index int) error {
 
 			if s.Config.Count != 0 {
 				if count >= s.Config.Count {
+					log.Logger().Infof("Generated count is %d", count)
 					s.Finished = true // notify source generation completed
 					break
 				}

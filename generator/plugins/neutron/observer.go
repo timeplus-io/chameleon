@@ -77,7 +77,7 @@ func (o *NeutronObserver) observeLatency() error {
 	o.obWaiter.Add(1)
 	for item := range resultStream.Observe() {
 		if o.isStopped {
-			log.Logger().Infof("stop neutron observing")
+			log.Logger().Infof("stop neutron latecny observing")
 			break
 		}
 		event := item.V.(common.Event)
@@ -108,7 +108,7 @@ func (o *NeutronObserver) observeThroughput() error {
 	o.obWaiter.Add(1)
 	for item := range resultStream.Observe() {
 		if o.isStopped {
-			log.Logger().Infof("stop neutron observing")
+			log.Logger().Infof("stop neutron throughput observing")
 			break
 		}
 		event := item.V.(common.Event)
@@ -121,6 +121,34 @@ func (o *NeutronObserver) observeThroughput() error {
 	return nil
 }
 
+func (o *NeutronObserver) observeAvailability() error {
+	log.Logger().Infof("start observing availability")
+	o.metricsManager.Add("availability")
+	o.obWaiter.Add(1)
+
+	for {
+		if o.isStopped {
+			log.Logger().Infof("stop neutron availability observing")
+			break
+		}
+
+		result, err := o.server.SyncQuery(o.query)
+		if err != nil {
+			log.Logger().Errorf("failed to run query : %w", err)
+			continue
+		}
+
+		count := result.Data[0][0]
+		log.Logger().Infof("observing availability with count = %v", count)
+		o.metricsManager.Observe("availability", count.(float64))
+		time.Sleep(1 * time.Second)
+	}
+
+	log.Logger().Infof("stop observing availability")
+	o.obWaiter.Done()
+	return nil
+}
+
 func (o *NeutronObserver) Observe() error {
 	log.Logger().Infof("start observing")
 	if o.metric == "latency" {
@@ -128,6 +156,9 @@ func (o *NeutronObserver) Observe() error {
 	}
 	if o.metric == "throughput" {
 		go o.observeThroughput()
+	}
+	if o.metric == "availability" {
+		go o.observeAvailability()
 	}
 	return nil
 }
@@ -138,4 +169,8 @@ func (o *NeutronObserver) Stop() {
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
 	o.metricsManager.Save("neutron")
+}
+
+func (o *NeutronObserver) Wait() {
+	o.obWaiter.Wait()
 }

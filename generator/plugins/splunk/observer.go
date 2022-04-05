@@ -209,6 +209,10 @@ func (o *SplunkObserver) Stop() {
 	o.metricsManager.Save("splunk")
 }
 
+func (o *SplunkObserver) Wait() {
+	o.obWaiter.Wait()
+}
+
 func HttpRequestStreamWithUser(method string, url string, payload *url.Values, client *http.Client, username string, password string) (rxgo.Observable, error) {
 	// note: this is specific for splunk search
 	var body io.Reader

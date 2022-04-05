@@ -64,6 +64,11 @@ type QueryInfo struct {
 	Result       QueryResult `json:"result"`
 }
 
+type SQLRequest struct {
+	SQL     string `json:"sql"`
+	Timeout int    `json:"timeout"`
+}
+
 type QueryResult struct {
 	Header []ColumnDef     `json:"header"`
 	Data   [][]interface{} `json:"data"`
@@ -97,6 +102,24 @@ func NewNeutronServer(address string) *NeutronServer {
 		addres: address,
 		client: utils.NewDefaultHttpClient(),
 	}
+}
+
+func (s *NeutronServer) SyncQuery(sql string) (*QueryResult, error) {
+	url := fmt.Sprintf("%s/api/%s/sql", s.addres, API_VERSION)
+
+	req := SQLRequest{
+		SQL:     sql,
+		Timeout: 1000,
+	}
+
+	_, respBody, err := utils.HttpRequest(http.MethodPost, url, req, s.client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to run SQL %s: %w", req.SQL, err)
+	}
+
+	var payload QueryResult
+	json.NewDecoder(bytes.NewBuffer(respBody)).Decode(&payload)
+	return &payload, nil
 }
 
 func (s *NeutronServer) CreateStream(streamDef StreamDef) error {

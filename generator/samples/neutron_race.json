@@ -1,11 +1,11 @@
 {
     "name": "test",
+    "timeout": 30,
     "source": {
-        "batch_size": 128,
-        "concurency": 1,
+        "batch_size": 1024,
+        "concurency": 16,
         "interval": 100,
-        "interval_delta": 0,
-        "count": 0,
+        "count": 100000,
         "fields": [
             {
                 "name": "value",
@@ -29,5 +29,13 @@
                 "address": "http://localhost:8000"
             }
         }
-    ]
+    ],
+    "observer": {
+        "type": "neutron",
+        "properties": {
+            "address": "http://localhost:8000",
+            "metric": "availability",
+            "query": "SELECT count(*) FROM table(test)"
+        }
+    }
 }

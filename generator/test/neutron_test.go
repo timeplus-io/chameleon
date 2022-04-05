@@ -187,5 +187,22 @@ var _ = Describe("Test Job", func() {
 			time.Sleep(3 * time.Second)
 			njob.Stop()
 		})
+
+		FIt("create neutron availability observer", func() {
+			properties := map[string]interface{}{
+				"metric": "availability",
+				"query":  "SELECT count(*) FROM table(test)",
+			}
+			ob, err := neutron.NewNeutronObserver(properties)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			go func() {
+				err = ob.Observe()
+				Expect(err).ShouldNot(HaveOccurred())
+			}()
+
+			time.Sleep(20 * time.Second)
+			ob.Stop()
+		})
 	})
 })

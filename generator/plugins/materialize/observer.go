@@ -257,3 +257,7 @@ func (o *MaterializeObserver) Stop() {
 	log.Logger().Infof("stop observing")
 	o.metricsManager.Save("materialize")
 }
+
+func (o *MaterializeObserver) Wait() {
+	o.obWaiter.Wait()
+}
