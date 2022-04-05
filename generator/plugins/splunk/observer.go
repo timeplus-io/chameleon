@@ -191,18 +191,37 @@ func (o *SplunkObserver) observeThroughput() error {
 func (o *SplunkObserver) observeAvailability() error {
 	log.Logger().Infof("start observing availability")
 	o.metricsManager.Add("availability")
-	o.obWaiter.Add(1)
+	splunkUrl := fmt.Sprintf("https://%s:%d/services/search/jobs/export", o.host, o.port)
+	searchReq := &url.Values{}
+	searchReq.Add("search", o.search)
+	searchReq.Add("search_mode", "realtime")
+	searchReq.Add("earliest_time", "rt-1h")
+	searchReq.Add("latest_time", "rt")
+	searchReq.Add("output_mode", "json")
+	searchReq.Add("auto_cancel", "0")
+	searchReq.Add("auto_finalize_ec", "0")
+	searchReq.Add("max_time", "0")
 
-	for {
+	log.Logger().Infof("observe splunk availability search %v", searchReq)
+	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, o.username, o.password)
+	if err != nil {
+		return fmt.Errorf("failed to create search : %w", err)
+	}
+
+	o.obWaiter.Add(1)
+	for item := range stream.Observe() {
 		if o.isStopped {
 			log.Logger().Infof("stop splunk availability observing")
 			break
 		}
-
-		time.Sleep(1 * time.Second)
+		event := item.V.(SplunkEvents)
+		count := event.Result["count"].(string)
+		log.Logger().Debugf("get one search result count : %v ", count)
+		if s, err := strconv.ParseFloat(count, 64); err == nil {
+			log.Logger().Infof("observe availability %f", s)
+			o.metricsManager.Observe("availability", s)
+		}
 	}
-
-	log.Logger().Infof("stop observing availability")
 	o.obWaiter.Done()
 	return nil
 }
