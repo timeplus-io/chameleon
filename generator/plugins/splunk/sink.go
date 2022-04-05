@@ -24,13 +24,6 @@ type SplunkSink struct {
 	index      string
 }
 
-type Event struct {
-	time   int64        `json:"time"`
-	host   string       `json:"host"`
-	source string       `json:"source"`
-	event  common.Event `json:"event"`
-}
-
 func NewSplunkSink(properties map[string]interface{}) (sink.Sink, error) {
 	hecAddress, err := utils.GetWithDefault(properties, "hec_address", "https://localhost:8088/services/collector/event")
 	if err != nil {
