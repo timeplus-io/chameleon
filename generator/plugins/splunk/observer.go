@@ -188,6 +188,25 @@ func (o *SplunkObserver) observeThroughput() error {
 	return nil
 }
 
+func (o *SplunkObserver) observeAvailability() error {
+	log.Logger().Infof("start observing availability")
+	o.metricsManager.Add("availability")
+	o.obWaiter.Add(1)
+
+	for {
+		if o.isStopped {
+			log.Logger().Infof("stop splunk availability observing")
+			break
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	log.Logger().Infof("stop observing availability")
+	o.obWaiter.Done()
+	return nil
+}
+
 func (o *SplunkObserver) Observe() error {
 	log.Logger().Infof("start observing")
 	if o.metric == "latency" {
@@ -196,6 +215,10 @@ func (o *SplunkObserver) Observe() error {
 
 	if o.metric == "throughput" {
 		go o.observeThroughput()
+	}
+
+	if o.metric == "availability" {
+		go o.observeAvailability()
 	}
 
 	return nil

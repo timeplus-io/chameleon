@@ -13,7 +13,7 @@ medium
 1/10000
 
 
-big
+large
 "batch_size": 1024,
 "concurency": 16,
 "interval": 100,
@@ -30,3 +30,11 @@ xlarge
 
 avilability 
 neutron M 100352*16 
+
+    "observer": {
+        "type": "materialize",
+        "properties": {
+            "metric": "availability",
+            "query": "SELECT count(*) FROM test"
+        }
+    }

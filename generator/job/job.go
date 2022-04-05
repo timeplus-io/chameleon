@@ -181,7 +181,9 @@ func (j *Job) Start() {
 
 func (j *Job) Wait() {
 	j.jobWaiter.Wait()
-	j.observer.Wait()
+	if j.observer != nil {
+		j.observer.Wait()
+	}
 }
 
 func (j *Job) Stop() {

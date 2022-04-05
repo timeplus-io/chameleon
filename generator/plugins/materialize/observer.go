@@ -29,6 +29,7 @@ type MaterializeObserver struct {
 	metric     string
 	timeFormat string
 
+	conn           *pgx.Conn
 	isStopped      bool
 	obWaiter       sync.WaitGroup
 	metricsManager *metrics.Manager
@@ -77,6 +78,11 @@ func NewMaterializeObserver(properties map[string]interface{}) (observer.Observe
 
 	url := fmt.Sprintf("postgres://%s@%s:%d/%s", user, host, port, db)
 
+	conn, err := pgx.Connect(context.Background(), url)
+	if err != nil {
+		log.Logger().Fatal("failed to connect to materialize")
+	}
+
 	return &MaterializeObserver{
 		host:           host,
 		port:           port,
@@ -87,6 +93,7 @@ func NewMaterializeObserver(properties map[string]interface{}) (observer.Observe
 		view:           view,
 		metric:         metric,
 		timeFormat:     timeFormat,
+		conn:           conn,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
 		metricsManager: metrics.NewManager(),
@@ -105,24 +112,22 @@ func (c *MaterializeObserver) getConn() *pgx.Conn {
 func (o *MaterializeObserver) observeLatency() error {
 	log.Logger().Infof("start observing latency")
 	o.metricsManager.Add("latency")
-	conn := o.getConn()
-	defer conn.Close(context.Background())
 
 	deleteViewSQL := fmt.Sprintf("DROP VIEW %s", o.view)
-	if _, err := conn.Exec(context.Background(), deleteViewSQL); err != nil {
+	if _, err := o.conn.Exec(context.Background(), deleteViewSQL); err != nil {
 		log.Logger().Warnf("drop view failed %w", err)
 	}
 
 	condition := fmt.Sprintf("time > '%s'", time.Now().UTC().Format(o.timeFormat))
 	createViewSQl := fmt.Sprintf("CREATE MATERIALIZED VIEW %s AS %s AND %s", o.view, o.query, condition)
 	log.Logger().Infof("create view sql is %s", createViewSQl)
-	if _, err := conn.Exec(context.Background(), createViewSQl); err != nil {
+	if _, err := o.conn.Exec(context.Background(), createViewSQl); err != nil {
 		log.Logger().Warnf("create view failed %w", err)
 		return err
 	}
 
 	ctx := context.Background()
-	tx, err := conn.Begin(ctx)
+	tx, err := o.conn.Begin(ctx)
 	if err != nil {
 		log.Logger().Warnf("create view failed %w", err)
 		return err
@@ -239,6 +244,44 @@ func (o *MaterializeObserver) observeThroughput() error {
 	return nil
 }
 
+func (o *MaterializeObserver) observeAvailability() error {
+	log.Logger().Infof("start observing availability")
+	o.metricsManager.Add("availability")
+	o.obWaiter.Add(1)
+
+	for {
+		if o.isStopped {
+			log.Logger().Infof("stop neutron availability observing")
+			break
+		}
+
+		rows, err := o.conn.Query(context.Background(), o.query)
+		if err != nil {
+			log.Logger().Warnf("failed to run query %w", err)
+			continue
+		}
+
+		for rows.Next() {
+			var count interface{}
+			err := rows.Scan(&count)
+			if err != nil {
+				log.Logger().Errorf("failed to scan result : %w", err)
+				continue
+			}
+
+			log.Logger().Infof("count is %v", count)
+			o.metricsManager.Observe("availability", float64(count.(int64)))
+		}
+
+		// add observation here
+		time.Sleep(1 * time.Second)
+	}
+
+	log.Logger().Infof("stop observing availability")
+	o.obWaiter.Done()
+	return nil
+}
+
 func (o *MaterializeObserver) Observe() error {
 	log.Logger().Infof("start observing")
 	if o.metric == "latency" {
@@ -247,11 +290,14 @@ func (o *MaterializeObserver) Observe() error {
 	if o.metric == "throughput" {
 		go o.observeThroughput()
 	}
+	if o.metric == "availability" {
+		go o.observeAvailability()
+	}
 	return nil
 }
 
 func (o *MaterializeObserver) Stop() {
-	log.Logger().Infof("call neutron stop observing")
+	log.Logger().Infof("call materialize stop observing")
 	o.isStopped = true
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")

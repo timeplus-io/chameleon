@@ -136,7 +136,9 @@ func (s *GeneratorEngine) run(index int) error {
 			}
 			events := s.generateBatchEvent()
 			streamChannel <- rxgo.Of(events)
+
 			count += len(events)
+			//log.Logger().Infof("Generated event get %d : %d", index, count)
 
 			if s.Config.IntervalDelta > 0 {
 				interval := faker.IntRange(s.Config.Interval-s.Config.IntervalDelta, s.Config.Interval+s.Config.IntervalDelta)
@@ -147,7 +149,7 @@ func (s *GeneratorEngine) run(index int) error {
 
 			if s.Config.Count != 0 {
 				if count >= s.Config.Count {
-					log.Logger().Infof("Generated count is %d", count)
+					log.Logger().Warnf("Generated count is %d : %d", index, count)
 					s.Finished = true // notify source generation completed
 					break
 				}

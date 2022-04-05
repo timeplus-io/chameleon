@@ -1,0 +1,11 @@
+{
+    "name": "test",
+    "timeout": 100,
+    "observer": {
+        "type": "materialize",
+        "properties": {
+            "metric": "availability",
+            "query": "SELECT count(*) FROM test"
+        }
+    }
+}

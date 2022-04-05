@@ -188,7 +188,7 @@ var _ = Describe("Test Job", func() {
 			njob.Stop()
 		})
 
-		FIt("create neutron availability observer", func() {
+		It("create neutron availability observer", func() {
 			properties := map[string]interface{}{
 				"metric": "availability",
 				"query":  "SELECT count(*) FROM table(test)",

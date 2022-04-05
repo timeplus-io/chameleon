@@ -79,5 +79,22 @@ var _ = Describe("Test Materialize", func() {
 			time.Sleep(20 * time.Second)
 			ob.Stop()
 		})
+
+		FIt("create materialize availability observer", func() {
+			properties := map[string]interface{}{
+				"metric": "availability",
+				"query":  "SELECT count(*) FROM test",
+			}
+			ob, err := materialize.NewMaterializeObserver(properties)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			go func() {
+				err = ob.Observe()
+				Expect(err).ShouldNot(HaveOccurred())
+			}()
+
+			time.Sleep(20 * time.Second)
+			ob.Stop()
+		})
 	})
 })
