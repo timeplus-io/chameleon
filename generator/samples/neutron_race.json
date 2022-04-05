@@ -5,7 +5,7 @@
         "batch_size": 1024,
         "concurency": 16,
         "interval": 100,
-        "count": 100000,
+        "batch_number": 100,
         "fields": [
             {
                 "name": "value",

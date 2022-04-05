@@ -5,7 +5,6 @@
         "concurency": 4,
         "interval": 100,
         "interval_delta": 0,
-        "count": 0,
         "fields": [
             {
                 "name": "value",

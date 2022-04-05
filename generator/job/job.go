@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/reactivex/rxgo/v2"
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/observer"
@@ -135,14 +136,13 @@ func (j *Job) Start() {
 	j.Status = STATUS_RUNNING
 
 	streams := j.source.GetStreams()
+
 	j.jobWaiter = sync.WaitGroup{}
 	j.jobWaiter.Add(len(streams))
 
 	for i, stream := range streams {
 		time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
-		go func(i int) {
-			// write one event to each sink
-			// should enable batch later
+		go func(i int, stream rxgo.Observable) {
 			for item := range stream.Observe() {
 				events := item.V.([]common.Event)
 
@@ -164,7 +164,7 @@ func (j *Job) Start() {
 				}
 			}
 			j.jobWaiter.Done()
-		}(i)
+		}(i, stream)
 	}
 
 	if j.timeout != 0 {

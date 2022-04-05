@@ -1,11 +1,11 @@
 {
     "name": "test",
-    "timeout": 120,
+    "timeout": 60,
     "source": {
         "batch_size": 1024,
         "concurency": 16,
         "interval": 100,
-        "count": 100000,
+        "batch_number": 100,
         "fields": [
             {
                 "name": "value",
@@ -31,5 +31,12 @@
             "type": "materialize",
             "properties": {}
         }
-    ]
+    ],
+    "observer": {
+        "type": "materialize",
+        "properties": {
+            "metric": "availability",
+            "query": "SELECT count(*) FROM test"
+        }
+    }
 }

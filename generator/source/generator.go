@@ -45,7 +45,7 @@ type Configuration struct {
 	Concurrency   int     `json:"concurency"`
 	Interval      int     `json:"interval"`
 	IntervalDelta int     `json:"interval_delta"`
-	Count         int     `json:"count"`
+	BatchNumber   int     `json:"batch_number"`
 	Fields        []Field `json:"fields"`
 }
 
@@ -57,6 +57,7 @@ type GeneratorEngine struct {
 	streams        []rxgo.Observable
 
 	waiter sync.WaitGroup
+	lock   sync.Mutex
 }
 
 var faker *fake.Faker
@@ -79,6 +80,8 @@ func NewGenarator(config Configuration) (*GeneratorEngine, error) {
 	streams := make([]rxgo.Observable, config.Concurrency)
 
 	for i := 0; i < config.Concurrency; i++ {
+		streamChannel := make(chan rxgo.Item)
+		streamChannels[i] = streamChannel
 		streams[i] = rxgo.FromChannel(streamChannels[i])
 	}
 
@@ -91,6 +94,7 @@ func NewGenarator(config Configuration) (*GeneratorEngine, error) {
 		streamChannels: streamChannels,
 		streams:        streams,
 		waiter:         waiter,
+		lock:           sync.Mutex{},
 	}, nil
 }
 
@@ -118,46 +122,30 @@ func DefaultConfiguration() Configuration {
 func (s *GeneratorEngine) Start() {
 	s.Finished = false // lock?
 	for i := 0; i < s.Config.Concurrency; i++ {
-		go s.run(i)
+		go func(index int) {
+			s.run(index)
+		}(i)
 	}
-	s.waiter.Wait()
 }
 
 func (s *GeneratorEngine) run(index int) error {
 	log.Logger().Infof("start generate routine with index %d", index)
-	streamChannel := make(chan rxgo.Item)
-	s.streamChannels[index] = streamChannel
-	s.streams[index] = rxgo.FromChannel(s.streamChannels[index])
-	go func() {
-		count := 0
-		for {
-			if s.Finished {
-				break
-			}
-			events := s.generateBatchEvent()
-			streamChannel <- rxgo.Of(events)
-
-			count += len(events)
-			//log.Logger().Infof("Generated event get %d : %d", index, count)
-
-			if s.Config.IntervalDelta > 0 {
-				interval := faker.IntRange(s.Config.Interval-s.Config.IntervalDelta, s.Config.Interval+s.Config.IntervalDelta)
-				time.Sleep(time.Duration(interval) * time.Millisecond)
-			} else {
-				time.Sleep(time.Duration(s.Config.Interval) * time.Millisecond)
-			}
-
-			if s.Config.Count != 0 {
-				if count >= s.Config.Count {
-					log.Logger().Warnf("Generated count is %d : %d", index, count)
-					s.Finished = true // notify source generation completed
-					break
-				}
-			}
+	streamChannel := s.streamChannels[index]
+	for i := 0; i < s.Config.BatchNumber; i++ {
+		if s.Finished {
+			log.Logger().Warnf("run generator finished %d", index)
+			break
 		}
-		close(streamChannel)
-	}()
-	s.waiter.Done()
+		events := s.generateBatchEvent()
+		streamChannel <- rxgo.Of(events)
+		if s.Config.IntervalDelta > 0 {
+			interval := faker.IntRange(s.Config.Interval-s.Config.IntervalDelta, s.Config.Interval+s.Config.IntervalDelta)
+			time.Sleep(time.Duration(interval) * time.Millisecond)
+		} else {
+			time.Sleep(time.Duration(s.Config.Interval) * time.Millisecond)
+		}
+	}
+	close(streamChannel)
 	return nil
 }
 
