@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/timeplus-io/chameleon/generator/plugins/elastic_search"
 
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "github.com/timeplus-io/chameleon/generator/docs"
 	"github.com/timeplus-io/chameleon/generator/handlers"
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
@@ -22,8 +24,6 @@ import (
 	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
-
-	_ "github.com/timeplus-io/chameleon/generator/docs"
 )
 
 // @title Chameleon Generator
@@ -90,6 +90,7 @@ func Run(_ *cobra.Command, _ []string) error {
 func initPlugins() {
 	neutron.Init()
 	splunk.Init()
+	elastic_search.Init()
 	materialize.Init()
 	console.Init()
 }

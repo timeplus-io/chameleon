@@ -41,6 +41,12 @@ run_materialize:
 run_materialize_client:
 	docker run -it --rm jbergknoff/postgresql-client postgresql://materialize@host.docker.internal:6875/materialize
 
+run_elastic_search:
+	go run main.go -f ./samples/elastic_search.json
+
+run_elastic_search_ob:
+	go run main.go -f ./samples/elastic_search_ob_throughput.json
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 

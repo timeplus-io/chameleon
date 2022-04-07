@@ -1,0 +1,14 @@
+{
+    "name": "test",
+    "timeout": 120,
+    "observer": {
+        "type": "elastic_search",
+        "properties": {
+            "search": "{\"query\": {\"bool\": {\"filter\": {\"range\": {\"event.value\": {\"gte\": 9000}}}}}}",
+            "addresses": ["http://localhost:9200"],
+            "index": "test",
+            "time_field": "time",
+            "metric": "latency"
+        }
+    }
+}

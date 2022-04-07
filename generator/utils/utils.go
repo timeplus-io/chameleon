@@ -33,6 +33,27 @@ func GetWithDefault(properties map[string]interface{}, field string, defaultValu
 	return "", fmt.Errorf("value of %s field is not a string", field)
 }
 
+func GetStringListWithDefault(properties map[string]interface{}, field string, defaultValue []string) ([]string, error) {
+	v, exists := properties[field]
+	if !exists {
+		return defaultValue, nil
+	}
+
+	addresses := []string{}
+
+	if vv, ok := v.([]interface{}); ok {
+		for _, vaddr := range vv {
+			addr, oka := vaddr.(string)
+			if oka {
+				addresses = append(addresses, addr)
+			}
+		}
+		return addresses, nil
+	}
+
+	return nil, fmt.Errorf("value of %s field is not a string", field)
+}
+
 func GetIntWithDefault(properties map[string]interface{}, field string, defaultValue int) (int, error) {
 	v, exists := properties[field]
 	if !exists {
