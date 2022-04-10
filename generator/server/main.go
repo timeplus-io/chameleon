@@ -19,6 +19,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/plugins/kafka"
 	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
@@ -91,6 +92,7 @@ func initPlugins() {
 	neutron.Init()
 	splunk.Init()
 	materialize.Init()
+	kafka.Init()
 	console.Init()
 }
 

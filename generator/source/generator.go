@@ -101,6 +101,7 @@ func NewGenarator(config Configuration) (*GeneratorEngine, error) {
 func DefaultConfiguration() Configuration {
 	defaultConfiguration := Configuration{
 		BatchSize:   3,
+		BatchNumber: 100,
 		Concurrency: 1,
 		Interval:    1000,
 		Fields: []Field{

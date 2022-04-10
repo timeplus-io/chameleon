@@ -1,18 +1,18 @@
 {
     "name": "test",
     "source": {
-        "batch_size": 1,
-        "concurency": 1,
-        "interval": 100,
+        "batch_size": 512,
+        "concurency": 4,
+        "interval": 1,
         "interval_delta": 0,
-        "count": 100,
+        "batch_number": 10000000,
         "fields": [
             {
                 "name": "value",
                 "type": "int",
                 "limit": [
                     0,
-                    10
+                    100000
                 ]
             },
             {
@@ -24,9 +24,9 @@
     },
     "sinks": [
         {
-            "type": "neutron",
+            "type": "kafka",
             "properties": {
-                "address": "http://localhost:8000"
+                "brokers": "localhost:9092"
             }
         }
     ]

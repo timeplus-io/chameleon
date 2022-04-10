@@ -80,7 +80,7 @@ var _ = Describe("Test Materialize", func() {
 			ob.Stop()
 		})
 
-		FIt("create materialize availability observer", func() {
+		It("create materialize availability observer", func() {
 			properties := map[string]interface{}{
 				"metric": "availability",
 				"query":  "SELECT count(*) FROM test",

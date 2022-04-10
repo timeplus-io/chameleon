@@ -3,8 +3,9 @@
     "source": {
         "batch_size": 512,
         "concurency": 4,
-        "interval": 100,
+        "interval": 1,
         "interval_delta": 0,
+        "batch_number": 10000000,
         "fields": [
             {
                 "name": "value",

@@ -41,6 +41,11 @@ run_materialize:
 run_materialize_client:
 	docker run -it --rm jbergknoff/postgresql-client postgresql://materialize@host.docker.internal:6875/materialize
 
+
+kafka_consume:
+	docker exec -it kafka /usr/bin/kafka-console-consumer \
+		--topic test --bootstrap-server localhost:9092
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 

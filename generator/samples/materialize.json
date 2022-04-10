@@ -1,9 +1,10 @@
 {
     "name": "test",
     "source": {
-        "batch_size": 512,
-        "concurency": 4,
+        "batch_size": 1024,
+        "concurency": 16,
         "interval": 100,
+        "batch_number": 102400000,
         "interval_delta": 0,
         "count": 0,
         "fields": [
