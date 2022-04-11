@@ -19,8 +19,7 @@ var _ = Describe("Test Splunk", func() {
 	})
 
 	Describe("Kafka test", func() {
-
-		FIt("create kafka sink job and run it", func() {
+		It("create kafka sink job and run it", func() {
 			jobConfig := job.JobConfiguration{
 				Name:   "test",
 				Source: source.DefaultConfiguration(),
@@ -42,6 +41,23 @@ var _ = Describe("Test Splunk", func() {
 			njob.Start()
 			time.Sleep(10 * time.Second)
 			njob.Stop()
+		})
+
+		FIt("create kafka latency observer", func() {
+			properties := map[string]interface{}{
+				"metric": "latency",
+				"topic":  "test",
+			}
+			kafkaOb, err := kafka.NewKafkaObserver(properties)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			go func() {
+				err = kafkaOb.Observe()
+				Expect(err).ShouldNot(HaveOccurred())
+			}()
+
+			time.Sleep(30 * time.Second)
+			kafkaOb.Stop()
 		})
 	})
 })

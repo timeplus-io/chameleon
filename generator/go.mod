@@ -23,9 +23,9 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/lib/pq v1.10.4
-	github.com/mitchellh/mapstructure v1.4.3
 	github.com/reactivex/rxgo/v2 v2.5.0
 	github.com/twmb/franz-go v1.4.2
+	github.com/twmb/franz-go/pkg/kadm v0.0.0-20220331035613-01d0c45d69d2
 )
 
 require (
@@ -61,6 +61,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect

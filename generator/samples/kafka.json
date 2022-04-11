@@ -1,9 +1,9 @@
 {
     "name": "test",
     "source": {
-        "batch_size": 512,
-        "concurency": 4,
-        "interval": 1,
+        "batch_size": 128,
+        "concurency": 1,
+        "interval": 100,
         "interval_delta": 0,
         "batch_number": 10000000,
         "fields": [
@@ -12,13 +12,17 @@
                 "type": "int",
                 "limit": [
                     0,
-                    100000
+                    1000
                 ]
             },
             {
                 "name": "time",
                 "type": "timestamp",
                 "timestamp_format": "2006-01-02 15:04:05.000000"
+            },
+            {
+                "name": "timestamp",
+                "type": "timestamp_int"
             }
         ]
     },
