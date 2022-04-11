@@ -106,6 +106,7 @@ func (o *KafkaObserver) deleteGroup() error {
 func (o *KafkaObserver) observeLatency() error {
 	log.Logger().Infof("start observing latency")
 	o.metricsManager.Add("latency")
+	o.obWaiter.Add(1)
 
 	for {
 		if o.isStopped {
@@ -139,12 +140,39 @@ func (o *KafkaObserver) observeLatency() error {
 		}
 	}
 
+	o.obWaiter.Done()
 	return nil
 }
 
 func (o *KafkaObserver) observeThroughput() error {
 	log.Logger().Infof("start observing throughput")
 	o.metricsManager.Add("throughput")
+	preOffset := int64(0)
+	for {
+		if o.isStopped {
+			log.Logger().Infof("stop kafka throughput observing")
+			break
+		}
+
+		admClient := kadm.NewClient(o.client)
+		offsets, err := admClient.ListEndOffsets(o.ctx, o.topic)
+		if err != nil {
+			log.Logger().Warnf("failed to describe groups, %w", err)
+			continue
+		}
+
+		// TODO: support multiple partitions
+		offset := offsets[o.topic][0].Offset
+		throughput := offset - int64(preOffset)
+
+		log.Logger().Debugf("the offset is %v", offset)
+		log.Logger().Infof("the throughput is %v", throughput)
+		if preOffset != 0 {
+			o.metricsManager.Observe("throughput", float64(throughput))
+		}
+		preOffset = offset
+		time.Sleep(1 * time.Second)
+	}
 	return nil
 }
 

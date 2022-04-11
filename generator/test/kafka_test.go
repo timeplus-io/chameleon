@@ -43,9 +43,26 @@ var _ = Describe("Test Splunk", func() {
 			njob.Stop()
 		})
 
-		FIt("create kafka latency observer", func() {
+		It("create kafka latency observer", func() {
 			properties := map[string]interface{}{
 				"metric": "latency",
+				"topic":  "test",
+			}
+			kafkaOb, err := kafka.NewKafkaObserver(properties)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			go func() {
+				err = kafkaOb.Observe()
+				Expect(err).ShouldNot(HaveOccurred())
+			}()
+
+			time.Sleep(30 * time.Second)
+			kafkaOb.Stop()
+		})
+
+		FIt("create kafka throughput observer", func() {
+			properties := map[string]interface{}{
+				"metric": "throughput",
 				"topic":  "test",
 			}
 			kafkaOb, err := kafka.NewKafkaObserver(properties)
