@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/twmb/franz-go/pkg/kadm"
 	"github.com/twmb/franz-go/pkg/kgo"
 
 	"github.com/timeplus-io/chameleon/generator/common"
@@ -48,7 +49,11 @@ func (s *KafkaSink) Init(name string, fields []common.Field) error {
 	}
 
 	s.client = client
-	s.client.PurgeTopicsFromClient(s.topic)
+
+	admClient := kadm.NewClient(s.client)
+	admClient.DeleteTopics(s.ctx, s.topic)
+
+	//s.client.PurgeTopicsFromClient(s.topic)
 	return nil
 }
 

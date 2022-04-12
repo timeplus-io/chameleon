@@ -24,6 +24,7 @@ require (
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/lib/pq v1.10.4
 	github.com/reactivex/rxgo/v2 v2.5.0
+	github.com/rmoff/ksqldb-go v0.0.0-20211103102223-35d4fd2fc474
 	github.com/twmb/franz-go v1.4.2
 	github.com/twmb/franz-go/pkg/kadm v0.0.0-20220331035613-01d0c45d69d2
 )

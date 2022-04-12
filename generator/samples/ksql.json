@@ -1,0 +1,43 @@
+{
+    "name": "test",
+    "source": {
+        "batch_size": 2048,
+        "concurency": 32,
+        "interval": 100,
+        "interval_delta": 0,
+        "batch_number": 10000000,
+        "fields": [
+            {
+                "name": "value",
+                "type": "int",
+                "limit": [
+                    0,
+                    100000
+                ]
+            },
+            {
+                "name": "g",
+                "type": "string",
+                "range": [
+                    "a"
+                ]
+            },
+            {
+                "name": "time",
+                "type": "timestamp",
+                "timestamp_format": "2006-01-02 15:04:05.000000"
+            }
+        ]
+    },
+    "sinks": [
+        {
+            "type": "ksql",
+            "properties": {
+                "brokers": "localhost:9092",
+                "use_broker": true,
+                "host": "localhost",
+                "port": 8088
+            }
+        }
+    ]
+}

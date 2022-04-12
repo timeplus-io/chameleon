@@ -46,6 +46,9 @@ kafka_consume:
 	docker exec -it kafka /usr/bin/kafka-console-consumer \
 		--topic test --bootstrap-server localhost:9092
 
+ksql_client:
+	docker exec -it ksqldb-cli ksql http://ksqldb-server:8088
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 

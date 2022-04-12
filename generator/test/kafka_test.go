@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Test Splunk", func() {
+var _ = Describe("Test Kafka", func() {
 
 	BeforeEach(func() {
 		kafka.Init()
@@ -60,7 +60,7 @@ var _ = Describe("Test Splunk", func() {
 			kafkaOb.Stop()
 		})
 
-		FIt("create kafka throughput observer", func() {
+		It("create kafka throughput observer", func() {
 			properties := map[string]interface{}{
 				"metric": "throughput",
 				"topic":  "test",
