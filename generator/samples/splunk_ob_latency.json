@@ -1,0 +1,12 @@
+{
+    "name": "test",
+    "timeout": 120,
+    "observer": {
+        "type": "splunk",
+        "properties": {
+            "search": "search index=main source=\"my_source\" value=9 | eval eventtime=_time | eval indextime=_indextime",
+            "time_field": "time",
+            "metric": "latency"
+        }
+    }
+}

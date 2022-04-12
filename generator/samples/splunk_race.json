@@ -1,0 +1,41 @@
+{
+    "name": "test",
+    "timeout": 60,
+    "source": {
+        "batch_size": 1024,
+        "concurency": 16,
+        "interval": 100,
+        "batch_number": 100,
+        "fields": [
+            {
+                "name": "value",
+                "type": "int",
+                "limit": [
+                    0,
+                    1000000
+                ]
+            },
+            {
+                "name": "time",
+                "type": "timestamp",
+                "timestamp_format": "2006-01-02 15:04:05.000000"
+            }
+        ]
+    },
+    "sinks": [
+        {
+            "type": "splunk",
+            "properties": {
+                "hec_address": "https://localhost:8088/services/collector/event",
+                "hec_token": "abcd1234"
+            }
+        }
+    ],
+    "observer": {
+        "type": "splunk",
+        "properties": {
+            "search": "search index=main source=\"my_source\"  | stats count",
+            "metric": "availability"
+        }
+    }
+}

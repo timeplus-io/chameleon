@@ -1,0 +1,4 @@
+*.log
+*.panic
+*.csv
+.vscode/

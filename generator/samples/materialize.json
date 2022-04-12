@@ -1,0 +1,36 @@
+{
+    "name": "test",
+    "source": {
+        "batch_size": 1024,
+        "concurency": 16,
+        "interval": 100,
+        "batch_number": 102400000,
+        "interval_delta": 0,
+        "count": 0,
+        "fields": [
+            {
+                "name": "value",
+                "type": "int",
+                "limit": [
+                    0,
+                    100000
+                ]
+            },
+            {
+                "name": "time",
+                "type": "timestamp",
+                "timestamp_format": "2006-01-02 15:04:05.000000"
+            },
+            {
+                "name": "timestamp",
+                "type": "timestamp_int"
+            }
+        ]
+    },
+    "sinks": [
+        {
+            "type": "materialize",
+            "properties": {}
+        }
+    ]
+}

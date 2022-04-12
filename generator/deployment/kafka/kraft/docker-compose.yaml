@@ -1,0 +1,8 @@
+version: "3.6"
+
+services:
+  kafka:
+    image: bashj79/kafka-kraft
+    hostname: kafka
+    ports:
+      - "9092:9092"

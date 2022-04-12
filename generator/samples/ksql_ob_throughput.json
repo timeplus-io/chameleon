@@ -1,0 +1,11 @@
+{
+    "name": "test",
+    "timeout": 120,
+    "observer": {
+        "type": "ksql",
+        "properties": {
+            "metric": "throughput",
+            "query": "SELECT count(*), g FROM test GROUP BY g"
+        }
+    }
+}
