@@ -27,6 +27,7 @@ require (
 	github.com/rmoff/ksqldb-go v0.0.0-20211103102223-35d4fd2fc474
 	github.com/twmb/franz-go v1.4.2
 	github.com/twmb/franz-go/pkg/kadm v0.0.0-20220331035613-01d0c45d69d2
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (

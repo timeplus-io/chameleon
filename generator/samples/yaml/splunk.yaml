@@ -1,0 +1,22 @@
+---
+name: test
+source:
+  batch_size: 512
+  concurency: 4
+  interval: 1
+  interval_delta: 0
+  batch_number: 10000000
+  fields:
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 100000
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+sinks:
+- type: splunk
+  properties:
+    hec_address: https://localhost:8088/services/collector/event
+    hec_token: abcd1234

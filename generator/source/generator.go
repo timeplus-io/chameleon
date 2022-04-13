@@ -13,6 +13,9 @@ import (
 	"github.com/timeplus-io/chameleon/generator/log"
 )
 
+const MaxUint = ^uint(0)
+const MaxInt = int(MaxUint >> 1)
+
 type FieldType string
 type TimestampFormatType string
 
@@ -87,6 +90,10 @@ func NewGenarator(config Configuration) (*GeneratorEngine, error) {
 
 	waiter := sync.WaitGroup{}
 	waiter.Add(config.Concurrency)
+
+	if config.BatchNumber == 0 {
+		config.BatchNumber = MaxInt
+	}
 
 	return &GeneratorEngine{
 		Config:         config,
