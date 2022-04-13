@@ -4,13 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/reactivex/rxgo/v2"
+	"sigs.k8s.io/yaml"
+
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/observer"
@@ -46,8 +50,19 @@ func LoadConfig(file string) (*JobConfiguration, error) {
 	}
 
 	var payload JobConfiguration
-	json.NewDecoder(bytes.NewBuffer(dat)).Decode(&payload)
-	return &payload, nil
+	if strings.HasSuffix(file, ".json") {
+		json.NewDecoder(bytes.NewBuffer(dat)).Decode(&payload)
+		return &payload, nil
+	} else if strings.HasSuffix(file, ".yaml") || strings.HasSuffix(file, ".yml") {
+		err := yaml.Unmarshal(dat, &payload)
+		if err != nil {
+			return nil, err
+		}
+		return &payload, nil
+	}
+
+	return nil, fmt.Errorf("configuration has to be json or yaml")
+
 }
 
 func SaveConfig(config JobConfiguration, file string) error {
@@ -73,6 +88,8 @@ func NewJobFromFile(file string) (*Job, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Logger().Infof("using configuration : %v", jobConfig)
 	return NewJob(*jobConfig)
 }
 

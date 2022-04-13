@@ -21,31 +21,14 @@ gen:
 	$(HOME)/go/bin/swag init -g server/main.go 
 
 run: gen
-	go run main.go -f ./samples/splunk_ob.json
-
-run_neutron:
-	go run main.go -f ./samples/neutron.json
-
-run_neutron_ob:
-	go run main.go -f ./samples/neutron_ob_throughput.json
-
-run_splunk:
-	go run main.go -f ./samples/splunk.json
-
-run_splunk_ob:
-	go run main.go -f ./samples/splunk_ob_throughput.json
-
-run_materialize:
-	go run main.go -f ./samples/materialize.json
+	go run main.go -f ./samples/yaml/splunk.yaml
 
 run_materialize_client:
 	docker run -it --rm jbergknoff/postgresql-client postgresql://materialize@host.docker.internal:6875/materialize
 
-
 kafka_consume:
 	docker exec -it kafka /usr/bin/kafka-console-consumer \
 		--topic test --bootstrap-server localhost:9092
-
 ksql_client:
 	docker exec -it ksqldb-cli ksql http://ksqldb-server:8088
 
@@ -57,4 +40,6 @@ docker_run:
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)
+	docker tag $(IMAGE_NAME) $(DOCKER_ID_USER)/${BIN_NAME}:latest
 	docker push $(FULLNAME)
+	docker push $(DOCKER_ID_USER)/${BIN_NAME}:latest
