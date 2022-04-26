@@ -1,0 +1,22 @@
+---
+name: test
+source:
+  batch_size: 2048
+  concurency: 32
+  interval: 100
+  interval_delta: 0
+  fields:
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 1000
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: timestamp
+    type: timestamp_int
+sinks:
+- type: kafka
+  properties:
+    brokers: localhost:9092
