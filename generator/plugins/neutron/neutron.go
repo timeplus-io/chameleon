@@ -208,7 +208,7 @@ func (s *NeutronServer) QueryStream(sql string) (rxgo.Observable, error) {
 	}
 
 	streamChannel := make(chan rxgo.Item)
-	resultStream := rxgo.FromChannel(streamChannel)
+	resultStream := rxgo.FromChannel(streamChannel, rxgo.WithPublishStrategy())
 
 	go func() {
 		defer close(streamChannel)

@@ -1,10 +1,12 @@
 package neutron
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/reactivex/rxgo/v2"
 	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/metrics"
@@ -22,6 +24,7 @@ type NeutronObserver struct {
 	metric     string
 
 	isStopped      bool
+	cancel         rxgo.Disposable
 	obWaiter       sync.WaitGroup
 	metricsManager *metrics.Manager
 }
@@ -75,21 +78,23 @@ func (o *NeutronObserver) observeLatency() error {
 	}
 
 	o.obWaiter.Add(1)
-	for item := range resultStream.Observe() {
-		if o.isStopped {
-			log.Logger().Infof("stop neutron latecny observing")
-			break
-		}
-		event := item.V.(common.Event)
+	disposed := resultStream.ForEach(func(v interface{}) {
+		event := v.(common.Event)
 		t, err := time.Parse(o.timeFormat, event[o.timeColumn].(string))
 		if err != nil {
 			log.Logger().Errorf("failed to parse time column", err)
-			continue
 		}
-		log.Logger().Debugf("observe one result %v", item)
 		log.Logger().Infof("observe latency %v", time.Until(t))
 		o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
-	}
+	}, func(err error) {
+		log.Logger().Error("query failed", err)
+	}, func() {
+		log.Logger().Debugf("query %s closed")
+	})
+
+	_, cancel := resultStream.Connect(context.Background())
+	o.cancel = cancel
+	<-disposed
 	log.Logger().Infof("stop observing latecny")
 	o.obWaiter.Done()
 	return nil
@@ -106,16 +111,19 @@ func (o *NeutronObserver) observeThroughput() error {
 	}
 
 	o.obWaiter.Add(1)
-	for item := range resultStream.Observe() {
-		if o.isStopped {
-			log.Logger().Infof("stop neutron throughput observing")
-			break
-		}
-		event := item.V.(common.Event)
-		log.Logger().Debugf("observe one result %v", item)
+	disposed := resultStream.ForEach(func(v interface{}) {
+		event := v.(common.Event)
 		log.Logger().Infof("observe throughput %v", event["count"]) // TODO: make col configurable
 		o.metricsManager.Observe("throughput", event["count"].(float64))
-	}
+	}, func(err error) {
+		log.Logger().Error("query failed", err)
+	}, func() {
+		log.Logger().Debugf("query %s closed")
+	})
+
+	_, cancel := resultStream.Connect(context.Background())
+	o.cancel = cancel
+	<-disposed
 	log.Logger().Infof("stop observing throughput")
 	o.obWaiter.Done()
 	return nil
@@ -166,6 +174,8 @@ func (o *NeutronObserver) Observe() error {
 func (o *NeutronObserver) Stop() {
 	log.Logger().Infof("call neutron stop observing")
 	o.isStopped = true
+	log.Logger().Infof("set stopped")
+	o.cancel()
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
 	o.metricsManager.Save("neutron")

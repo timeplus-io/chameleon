@@ -1,5 +1,6 @@
 {
     "name": "test",
+    "timeout": 120,
     "source": {
         "batch_size": 1024,
         "concurency": 16,
@@ -29,5 +30,14 @@
                 "address": "http://localhost:8000"
             }
         }
-    ]
+    ],
+    "observer": {
+        "type": "neutron",
+        "properties": {
+            "address": "http://localhost:8000",
+            "query": "select * from test where value=9",
+            "time_column": "time",
+            "metric": "latency"
+        }
+    }
 }
