@@ -1,6 +1,6 @@
 ---
 name: test
-timeout: 120
+timeout: 20
 source:
   batch_size: 512
   concurency: 8
@@ -24,6 +24,6 @@ observer:
   type: neutron
   properties:
     address: http://localhost:8000
-    query: select * from test where value=9
+    query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start
     time_column: time
-    metric: latency
+    metric: throughput

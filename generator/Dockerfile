@@ -5,8 +5,9 @@ WORKDIR /build
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o ./server ./main.go
 
 FROM alpine:3.13.6
-COPY --from=builder /build/server ./server
+WORKDIR /timeplus
+COPY --from=builder /build/server /timeplus/server
 
 EXPOSE 3000
 
-ENTRYPOINT [ "./server" ]
+ENTRYPOINT [ "/timeplus/server" ]
