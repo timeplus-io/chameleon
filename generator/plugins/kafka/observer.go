@@ -27,6 +27,7 @@ const KAFKA_OB_TYPE = "kafka"
 type KafkaObserver struct {
 	brokers       []string
 	topic         string
+	tls           bool
 	sasl          string
 	saslUsername  string
 	saslPassword  string
@@ -47,6 +48,11 @@ type KafkaResult map[string]interface{}
 
 func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, error) {
 	brokers, err := utils.GetWithDefault(properties, "brokers", "localhost:9092")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	enableTls, err := utils.GetBoolWithDefault(properties, "tls", false)
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
@@ -93,13 +99,16 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	tlsDialer := &tls.Dialer{NetDialer: &net.Dialer{Timeout: 10 * time.Second}}
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(brokers),
 		kgo.ConsumerGroup(consumerGroup),
 		kgo.ConsumeResetOffset(kgo.NewOffset().AtEnd()),
 		kgo.ConsumeTopics(topic),
-		kgo.Dialer(tlsDialer.DialContext),
+	}
+
+	if enableTls {
+		tlsDialer := &tls.Dialer{NetDialer: &net.Dialer{Timeout: 10 * time.Second}}
+		opts = append(opts, kgo.Dialer(tlsDialer.DialContext))
 	}
 
 	if sasl == KAFKA_SASL_TYPE_PLAIN {
