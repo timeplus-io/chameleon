@@ -31,4 +31,4 @@ source:
 sinks:
 - type: kafka
   properties:
-    brokers: b-1.demo-msk-cluster.6dsa3u.c4.kafka.us-west-1.amazonaws.com:9092
+    brokers: localhost:9092
