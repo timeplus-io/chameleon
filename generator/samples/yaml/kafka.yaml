@@ -1,22 +1,34 @@
 ---
-name: test
+name: order
 source:
-  batch_size: 2048
-  concurency: 32
-  interval: 100
+  batch_size: 1
+  concurency: 1
+  interval: 1000
   interval_delta: 0
   fields:
-  - name: value
-    type: int
-    limit:
-    - 0
-    - 1000
-  - name: time
-    type: timestamp
-    timestamp_format: '2006-01-02 15:04:05.000000'
-  - name: timestamp
+  - name: ordertime
     type: timestamp_int
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: orderid
+    type: generate
+    rule: "O{number:1,1000}"
+  - name: itemid
+    type: generate
+    rule: "I{number:1,1000}"
+  - name: orderunits
+    type: float
+    limit: [0.0, 10.0]
+  - name: city
+    type: generate
+    rule: "{city}"
+  - name: state
+    type: generate
+    rule: "{state}"
+  - name: zipcode
+    type: generate
+    rule: "{zip}"
+  
 sinks:
 - type: kafka
   properties:
-    brokers: localhost:9092
+    brokers: b-1.demo-msk-cluster.6dsa3u.c4.kafka.us-west-1.amazonaws.com:9092
