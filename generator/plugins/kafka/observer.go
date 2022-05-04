@@ -3,8 +3,10 @@ package kafka
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +18,8 @@ import (
 	"github.com/timeplus-io/chameleon/generator/utils"
 	"github.com/twmb/franz-go/pkg/kadm"
 	"github.com/twmb/franz-go/pkg/kgo"
+	"github.com/twmb/franz-go/pkg/sasl/plain"
+	"github.com/twmb/franz-go/pkg/sasl/scram"
 )
 
 const KAFKA_OB_TYPE = "kafka"
@@ -23,6 +27,9 @@ const KAFKA_OB_TYPE = "kafka"
 type KafkaObserver struct {
 	brokers       []string
 	topic         string
+	sasl          string
+	saslUsername  string
+	saslPassword  string
 	consumerGroup string
 	valueHit      int
 	timeColumn    string
@@ -49,6 +56,21 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	sasl, err := utils.GetWithDefault(properties, "sasl", KAFKA_SASL_TYPE_NONE)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	saslUsername, err := utils.GetWithDefault(properties, "username", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	saslPassword, err := utils.GetWithDefault(properties, "password", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	consumerGroup := fmt.Sprintf("my-group-%s", uuid.Must(uuid.NewRandom()).String())
 
 	metric, err := utils.GetWithDefault(properties, "metric", "latency")
@@ -71,12 +93,28 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	client, err := kgo.NewClient(
+	tlsDialer := &tls.Dialer{NetDialer: &net.Dialer{Timeout: 10 * time.Second}}
+	opts := []kgo.Opt{
 		kgo.SeedBrokers(brokers),
 		kgo.ConsumerGroup(consumerGroup),
 		kgo.ConsumeResetOffset(kgo.NewOffset().AtEnd()),
 		kgo.ConsumeTopics(topic),
-	)
+		kgo.Dialer(tlsDialer.DialContext),
+	}
+
+	if sasl == KAFKA_SASL_TYPE_PLAIN {
+		opts = append(opts, kgo.SASL(plain.Auth{
+			User: saslUsername,
+			Pass: saslPassword,
+		}.AsMechanism()))
+	} else if sasl == KAFKA_SASL_TYPE_SCRAM {
+		opts = append(opts, kgo.SASL(scram.Auth{
+			User: saslUsername,
+			Pass: saslPassword,
+		}.AsSha512Mechanism()))
+	}
+
+	client, err := kgo.NewClient(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +122,9 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 	return &KafkaObserver{
 		brokers:        strings.Split(brokers, ","),
 		topic:          topic,
+		sasl:           sasl,
+		saslUsername:   saslUsername,
+		saslPassword:   saslPassword,
 		consumerGroup:  consumerGroup,
 		metric:         metric,
 		valueHit:       valueHit,
