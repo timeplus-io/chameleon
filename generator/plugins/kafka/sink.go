@@ -25,6 +25,7 @@ const KAFKA_SINK_TYPE = "kafka"
 type KafkaSink struct {
 	brokers      []string
 	topic        string
+	tls          bool
 	sasl         string
 	saslUsername string
 	saslPassword string
@@ -35,6 +36,11 @@ type KafkaSink struct {
 
 func NewKafkaSink(properties map[string]interface{}) (sink.Sink, error) {
 	brokers, err := utils.GetWithDefault(properties, "brokers", "localhost:9092")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	tls, err := utils.GetBoolWithDefault(properties, "tls", false)
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
@@ -56,6 +62,7 @@ func NewKafkaSink(properties map[string]interface{}) (sink.Sink, error) {
 
 	return &KafkaSink{
 		brokers:      strings.Split(brokers, ","),
+		tls:          tls,
 		sasl:         sasl,
 		saslUsername: saslUsername,
 		saslPassword: saslPassword,
@@ -65,12 +72,14 @@ func NewKafkaSink(properties map[string]interface{}) (sink.Sink, error) {
 
 func (s *KafkaSink) Init(name string, fields []common.Field) error {
 	s.topic = name
-
-	tlsDialer := &tls.Dialer{NetDialer: &net.Dialer{Timeout: 10 * time.Second}}
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(s.brokers...),
 		kgo.AllowAutoTopicCreation(),
-		kgo.Dialer(tlsDialer.DialContext),
+	}
+
+	if s.tls {
+		tlsDialer := &tls.Dialer{NetDialer: &net.Dialer{Timeout: 10 * time.Second}}
+		opts = append(opts, kgo.Dialer(tlsDialer.DialContext))
 	}
 
 	if s.sasl == KAFKA_SASL_TYPE_PLAIN {

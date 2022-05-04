@@ -1,5 +1,6 @@
 ---
 name: order
+timeout: 120
 source:
   batch_size: 1
   concurency: 1
@@ -27,8 +28,27 @@ source:
   - name: zipcode
     type: generate
     rule: "{zip}"
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+    timestamp_locale: 'America/Los_Angeles'
+  - name: timestamp
+    type: timestamp_int
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 10
   
 sinks:
 - type: kafka
   properties:
     brokers: localhost:9092
+
+observer:
+  type: kafka
+  properties:
+    topic: order
+    brokers: localhost:9092
+    metric: latency
+

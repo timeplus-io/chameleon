@@ -40,6 +40,7 @@ type Field struct {
 	TimestampFormat   string        `json:"timestamp_format,omitempty"`
 	TimestampDelayMin int           `json:"timestamp_delay_min,omitempty"`
 	TimestampDelayMax int           `json:"timestamp_delay_max,omitempty"`
+	TimestampLocale   string        `json:"timestamp_locale,omitempty"`
 	Rule              string        `json:"rule,omitempty"`
 }
 
@@ -208,10 +209,21 @@ func makeTimestamp(timestampDeleyMin int, timestampDeleyMax int) time.Time {
 	return tm
 }
 
-func makeTimestampString(format string, timestampDeleyMin int, timestampDeleyMax int) string {
+func makeTimestampString(format string, timestampDeleyMin int, timestampDeleyMax int, locale string) string {
 	t := makeTimestampInt(timestampDeleyMin, timestampDeleyMax)
-	timestamp := time.UnixMilli(int64(t)).UTC()
 
+	// location: "America/Los_Angeles"
+	if locale != "" {
+		location, err := time.LoadLocation(locale)
+		if err != nil {
+			panic(err)
+		}
+
+		timestamp := time.UnixMilli(int64(t)).In(location)
+		return timestamp.Format(format)
+	}
+
+	timestamp := time.UnixMilli(int64(t)).UTC()
 	return timestamp.Format(format)
 }
 
@@ -263,7 +275,7 @@ func makeMap() map[string]interface{} {
 	result["key2"] = makeInt([]int{}, []int{0, 10})
 	result["key3"] = makeString([]string{})
 	result["key4"] = makeTimestamp(0, 0)
-	result["key5"] = makeTimestampString("2006-01-02 15:04:05.000", 0, 0)
+	result["key5"] = makeTimestampString("2006-01-02 15:04:05.000", 0, 0, "")
 
 	return result
 }
@@ -286,7 +298,7 @@ func makeRegex(rule string) string {
 }
 
 func makeValue(sourceType FieldType, sourceRange []interface{}, sourceLimit []interface{},
-	timestampFormat string, timestampDelayMin int, timestampDelayMax int, rule string) interface{} {
+	timestampFormat string, timestampDelayMin int, timestampDelayMax int, timestampLocale string, rule string) interface{} {
 	switch s := sourceType; s {
 	case FIELDTYPE_TIMESTAMP:
 		if timestampFormat == "" {
@@ -294,7 +306,7 @@ func makeValue(sourceType FieldType, sourceRange []interface{}, sourceLimit []in
 		} else if timestampFormat == "int" {
 			return makeTimestampInt(timestampDelayMin, timestampDelayMax)
 		} else {
-			return makeTimestampString(timestampFormat, timestampDelayMin, timestampDelayMax)
+			return makeTimestampString(timestampFormat, timestampDelayMin, timestampDelayMax, timestampLocale)
 		}
 
 	case FIELDTYPE_TIMESTAMP_INT:
@@ -349,7 +361,7 @@ func (s *GeneratorEngine) generateEvent() common.Event {
 	fields := s.Config.Fields
 
 	for _, f := range fields {
-		value[f.Name] = makeValue(f.Type, f.Range, f.Limit, f.TimestampFormat, f.TimestampDelayMin, f.TimestampDelayMax, f.Rule)
+		value[f.Name] = makeValue(f.Type, f.Range, f.Limit, f.TimestampFormat, f.TimestampDelayMin, f.TimestampDelayMax, f.TimestampLocale, f.Rule)
 	}
 	return value
 }
