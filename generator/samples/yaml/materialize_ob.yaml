@@ -1,0 +1,27 @@
+---
+name: test
+timeout: 40
+source:
+  batch_size: 1024
+  concurency: 16
+  interval: 100
+  batch_number: 100
+  fields:
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 10000
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: timestamp
+    type: timestamp_int
+sinks:
+- type: materialize
+  properties: {}
+observer:
+  type: materialize
+  properties:
+    metric: availability
+    query: SELECT count(*) FROM test

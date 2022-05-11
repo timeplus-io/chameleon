@@ -1,4 +1,5 @@
 *.log
 *.panic
 *.csv
+*.zip
 .vscode/
