@@ -175,7 +175,7 @@ func (o *NeutronObserver) Stop() {
 	log.Logger().Infof("call neutron stop observing")
 	o.isStopped = true
 	log.Logger().Infof("set stopped")
-	o.cancel()
+	//o.cancel()  // a bug with cancel when timeout
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
 	o.metricsManager.Save("neutron")
