@@ -1,6 +1,6 @@
 ---
 name: order
-timeout: 120
+timeout: 120000
 source:
   batch_size: 1
   concurency: 1

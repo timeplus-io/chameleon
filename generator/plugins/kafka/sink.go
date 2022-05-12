@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net"
 	"strings"
 	"time"
@@ -21,6 +22,8 @@ import (
 )
 
 const KAFKA_SINK_TYPE = "kafka"
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 type KafkaSink struct {
 	brokers      []string
@@ -110,12 +113,21 @@ func (s *KafkaSink) cleanTopic() {
 	s.client.PurgeTopicsFromClient(s.topic)
 }
 
+func randStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
 func (s *KafkaSink) Write(headers []string, rows [][]interface{}, index int) error {
 	events := common.ToEvents(headers, rows)
 	for _, event := range events {
 		log.Logger().Debugf("writing event to kafka topic %s, event %s", s.topic, fmt.Sprintf("%v", event))
 		eventValue, _ := json.Marshal(event)
-		record := &kgo.Record{Topic: s.topic, Value: eventValue}
+		key := []byte(randStringBytes(8))
+		record := &kgo.Record{Topic: s.topic, Value: eventValue, Key: key}
 		s.client.Produce(s.ctx, record, func(_ *kgo.Record, err error) {
 			if err != nil {
 				log.Logger().Errorf("record had a produce error: %w", err)
