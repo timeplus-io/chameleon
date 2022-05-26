@@ -277,13 +277,13 @@ const docTemplate = `{
         "source.Configuration": {
             "type": "object",
             "properties": {
+                "batch_number": {
+                    "type": "integer"
+                },
                 "batch_size": {
                     "type": "integer"
                 },
                 "concurency": {
-                    "type": "integer"
-                },
-                "count": {
                     "type": "integer"
                 },
                 "fields": {
@@ -324,6 +324,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "timestamp_format": {
+                    "type": "string"
+                },
+                "timestamp_locale": {
                     "type": "string"
                 },
                 "type": {

@@ -1,0 +1,51 @@
+---
+name: test
+timeout: 20
+source:
+  batch_size: 150
+  concurency: 4
+  interval: 100
+  fields:
+  - name: ordertime
+    type: timestamp
+  - name: orderid
+    type: generate
+    rule: "O{number:1,1000}"
+  - name: itemid
+    type: generate
+    rule: "I{number:1,1000}"
+  - name: orderunits
+    type: float
+    limit: [0.0, 10.0]
+  - name: city
+    type: generate
+    rule: "{city}"
+  - name: state
+    type: generate
+    rule: "{state}"
+  - name: zipcode
+    type: generate
+    rule: "{zip}"
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02T15:04:05.000Z'
+  - name: timestamp
+    type: timestamp_int
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 1000
+
+sinks:
+- type: neutron
+  properties:
+    address: http://localhost:8000
+    
+observer:
+  type: neutron
+  properties:
+    address: http://localhost:8000
+    query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start
+    time_column: time
+    metric: throughput

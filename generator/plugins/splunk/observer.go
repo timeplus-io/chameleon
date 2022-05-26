@@ -156,7 +156,7 @@ func (o *SplunkObserver) observeThroughput() error {
 	searchReq := &url.Values{}
 	searchReq.Add("search", o.search)
 	searchReq.Add("search_mode", "realtime")
-	searchReq.Add("earliest_time", "rt-1s")
+	searchReq.Add("earliest_time", "rt-10s")
 	searchReq.Add("latest_time", "rt")
 	searchReq.Add("output_mode", "json")
 	searchReq.Add("auto_cancel", "0")
@@ -164,6 +164,9 @@ func (o *SplunkObserver) observeThroughput() error {
 	searchReq.Add("max_time", "0")
 
 	log.Logger().Infof("observe splunk search %v", searchReq)
+	time.Sleep(3 * time.Second)
+	log.Logger().Infof("waited 3 seconds")
+
 	stream, err := HttpRequestStreamWithUser(http.MethodPost, splunkUrl, searchReq, o.client, o.username, o.password)
 	if err != nil {
 		return fmt.Errorf("failed to create search : %w", err)
@@ -176,13 +179,14 @@ func (o *SplunkObserver) observeThroughput() error {
 			break
 		}
 		event := item.V.(SplunkEvents)
-		count := event.Result["count"].(string)
-		log.Logger().Debugf("get one search result count : %v ", count)
-		if s, err := strconv.ParseFloat(count, 64); err == nil {
-			log.Logger().Infof("observe throughput %f", s)
-			o.metricsManager.Observe("throughput", s)
+		if event.Result["count"] != nil {
+			count := event.Result["count"].(string)
+			log.Logger().Debugf("get one search result count : %v ", count)
+			if s, err := strconv.ParseFloat(count, 64); err == nil {
+				log.Logger().Infof("observe throughput %f", s)
+				o.metricsManager.Observe("throughput", s)
+			}
 		}
-
 	}
 	o.obWaiter.Done()
 	return nil
@@ -282,7 +286,7 @@ func HttpRequestStreamWithUser(method string, url string, payload *url.Values, c
 		defer res.Body.Close()
 		for scanner.Scan() {
 			text := []byte(scanner.Text())
-			log.Logger().Infof("the returned splunk result is %v", string(text))
+			log.Logger().Debugf("the returned splunk result is %v", string(text))
 
 			var event SplunkEvents
 			json.NewDecoder(bytes.NewBuffer(text)).Decode(&event)

@@ -1,0 +1,49 @@
+---
+name: test
+timeout: 20
+source:
+  batch_size: 150
+  concurency: 4
+  interval: 100
+  fields:
+  - name: ordertime
+    type: timestamp_int
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: orderid
+    type: generate
+    rule: "O{number:1,1000}"
+  - name: itemid
+    type: generate
+    rule: "I{number:1,1000}"
+  - name: orderunits
+    type: float
+    limit: [0.0, 10.0]
+  - name: city
+    type: generate
+    rule: "{city}"
+  - name: state
+    type: generate
+    rule: "{state}"
+  - name: zipcode
+    type: generate
+    rule: "{zip}"
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: timestamp
+    type: timestamp_int
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 1000
+
+sinks:
+- type: materialize
+  properties: {}
+
+observer:
+  type: materialize
+  properties:
+    metric: throughput
+    query: SELECT '1' as a, count(*)/10 FROM test WHERE mz_logical_timestamp()  < timestamp + 10000 GROUP BY a
