@@ -1,6 +1,6 @@
 ---
 name: order
-timeout: 120
+timeout: 120000
 source:
   batch_size: 1
   concurency: 1
@@ -31,7 +31,7 @@ source:
   - name: time
     type: timestamp
     timestamp_format: '2006-01-02 15:04:05.000000'
-    timestamp_locale: 'America/Los_Angeles'
+    timestamp_locale: 'America/Vancouver'
   - name: timestamp
     type: timestamp_int
   - name: value
