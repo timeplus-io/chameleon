@@ -80,12 +80,14 @@ func (o *NeutronObserver) observeLatency() error {
 	o.obWaiter.Add(1)
 	disposed := resultStream.ForEach(func(v interface{}) {
 		event := v.(common.Event)
+		log.Logger().Debugf("the event is %v", event)
 		t, err := time.Parse(o.timeFormat, event[o.timeColumn].(string))
 		if err != nil {
 			log.Logger().Errorf("failed to parse time column", err)
+		} else {
+			log.Logger().Infof("observe latency %v", time.Until(t))
+			o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
 		}
-		log.Logger().Infof("observe latency %v", time.Until(t))
-		o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
@@ -175,7 +177,7 @@ func (o *NeutronObserver) Stop() {
 	log.Logger().Infof("call neutron stop observing")
 	o.isStopped = true
 	log.Logger().Infof("set stopped")
-	//o.cancel()  // a bug with cancel when timeout
+	o.cancel() // a bug with cancel when timeout
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
 	o.metricsManager.Save("neutron")

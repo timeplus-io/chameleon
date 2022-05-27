@@ -31,6 +31,8 @@ func convertType(sourceType string) string {
 	switch sourceType {
 	case string(source.FIELDTYPE_TIMESTAMP):
 		return "datetime64(3)"
+	case string(source.FIELDTYPE_TIMESTAMP_INT):
+		return "int"
 	case string(source.FIELDTYPE_STRING):
 		return "string"
 	case string(source.FIELDTYPE_INT):
@@ -79,6 +81,8 @@ func (s *NeutronSink) Write(headers []string, rows [][]interface{}, index int) e
 			Data:    rows,
 		},
 	}
+
+	//log.Logger().Infof("Write one event to stream %v", ingestData)
 
 	return s.server.InsertData(ingestData)
 }

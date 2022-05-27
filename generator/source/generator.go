@@ -224,7 +224,8 @@ func makeTimestampString(format string, timestampDeleyMin int, timestampDeleyMax
 	}
 
 	timestamp := time.UnixMilli(int64(t)).UTC()
-	return timestamp.Format(format)
+	result := timestamp.Format(format)
+	return result
 }
 
 func makeInt(ranges []int, limits []int) int {
@@ -303,8 +304,6 @@ func makeValue(sourceType FieldType, sourceRange []interface{}, sourceLimit []in
 	case FIELDTYPE_TIMESTAMP:
 		if timestampFormat == "" {
 			return makeTimestamp(timestampDelayMin, timestampDelayMax)
-		} else if timestampFormat == "int" {
-			return makeTimestampInt(timestampDelayMin, timestampDelayMax)
 		} else {
 			return makeTimestampString(timestampFormat, timestampDelayMin, timestampDelayMax, timestampLocale)
 		}
