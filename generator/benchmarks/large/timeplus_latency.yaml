@@ -1,10 +1,10 @@
 ---
 name: test
-timeout: 20
+timeout: 1800
 source:
-  batch_size: 1875
-  concurency: 32
-  interval: 100
+  batch_size: 200
+  concurency: 64
+  interval: 10
   fields:
   - name: ordertime
     type: timestamp

@@ -1,9 +1,9 @@
 ---
 name: test
-timeout: 20
+timeout: 1800
 source:
-  batch_size: 6
-  concurency: 1
+  batch_size: 300
+  concurency: 10
   interval: 100
   fields:
   - name: ordertime
@@ -36,7 +36,7 @@ source:
     type: int
     limit:
     - 0
-    - 10
+    - 1000
 sinks:
 - type: splunk
   properties:
