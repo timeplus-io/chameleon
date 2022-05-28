@@ -23,6 +23,9 @@ gen:
 run: gen
 	go run main.go -f ./samples/yaml/splunk.yaml
 
+build:
+	go build 
+
 run_materialize_client:
 	docker run -it --rm jbergknoff/postgresql-client postgresql://materialize@host.docker.internal:6875/materialize
 

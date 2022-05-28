@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	swaggerFiles "github.com/swaggo/files"
@@ -69,6 +70,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func Run(_ *cobra.Command, _ []string) error {
 	initPlugins()
+	defer profile.Start(profile.ProfilePath(".")).Stop()
 
 	if viper.GetBool("run-web-server") {
 		server := startServer()
