@@ -51,6 +51,7 @@ type Configuration struct {
 	IntervalDelta int     `json:"interval_delta"`
 	BatchNumber   int     `json:"batch_number"`
 	Fields        []Field `json:"fields"`
+	RandomEvent   bool    `json:"random_event"`
 }
 
 type GeneratorEngine struct {
@@ -62,6 +63,8 @@ type GeneratorEngine struct {
 
 	waiter sync.WaitGroup
 	lock   sync.Mutex
+
+	cache []common.Event
 }
 
 var faker *fake.Faker
@@ -103,6 +106,7 @@ func NewGenarator(config Configuration) (*GeneratorEngine, error) {
 		streams:        streams,
 		waiter:         waiter,
 		lock:           sync.Mutex{},
+		cache:          nil,
 	}, nil
 }
 
@@ -367,10 +371,17 @@ func (s *GeneratorEngine) generateEvent() common.Event {
 
 func (s *GeneratorEngine) generateBatchEvent() []common.Event {
 	batchSize := s.Config.BatchSize
+
+	// incase of disable random event, using cached events
+	if !s.Config.RandomEvent && s.cache != nil {
+		return s.cache
+	}
 	events := make([]common.Event, batchSize)
 
 	for i := 0; i < batchSize; i++ {
 		events[i] = s.generateEvent()
 	}
+
+	s.cache = events
 	return events
 }

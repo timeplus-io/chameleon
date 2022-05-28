@@ -30,6 +30,8 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
+require github.com/pkg/profile v1.6.0
+
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
