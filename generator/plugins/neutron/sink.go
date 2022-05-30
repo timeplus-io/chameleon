@@ -68,8 +68,9 @@ func (s *NeutronSink) Init(name string, fields []common.Field) error {
 		}
 	}
 
-	s.server.DeleteStream(streamDef.Name)
-	return s.server.CreateStream(streamDef)
+	//s.server.DeleteStream(streamDef.Name)
+	s.server.CreateStream(streamDef) // ignore error here
+	return nil
 }
 
 func (s *NeutronSink) Write(headers []string, rows [][]interface{}, index int) error {

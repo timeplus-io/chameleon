@@ -50,7 +50,7 @@ func NewSplunkSink(properties map[string]interface{}) (sink.Sink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	clients := make([]*http.Client, 32)
+	clients := make([]*http.Client, 64)
 	for i := 0; i < len(clients); i++ {
 		clients[i] = utils.NewDefaultHttpClient()
 	}
