@@ -362,7 +362,10 @@ func makeValue(sourceType FieldType, sourceRange []interface{}, sourceLimit []in
 func (s *GeneratorEngine) generateEvent() common.Event {
 	// cache event expect time fields
 	if !s.Config.RandomEvent && s.cache != nil {
-		event := s.cache
+		event := make(common.Event)
+		for k, v := range s.cache {
+			event[k] = v
+		}
 		for _, f := range s.Config.Fields {
 			if f.Name == "time" {
 				event[f.Name] = makeValue(f.Type, f.Range, f.Limit, f.TimestampFormat, f.TimestampDelayMin, f.TimestampDelayMax, f.TimestampLocale, f.Rule)
