@@ -28,6 +28,10 @@ var Conf = config.Map{
 		Default: false,
 		Usage:   "wait 10s for service ready",
 	},
+	"wait-service-time": &config.String{
+		Default: "10s",
+		Usage:   "wait service to be ready, default 10s",
+	},
 	"test-config-file": &config.String{
 		Default:   "",
 		Usage:     "a json configuration file of test target",

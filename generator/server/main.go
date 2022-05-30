@@ -81,7 +81,8 @@ func Run(_ *cobra.Command, _ []string) error {
 	}
 
 	if viper.GetBool("wait-service-ready") {
-		time.Sleep(10 * time.Second)
+		waitTime := viper.GetDuration("wait-service-time")
+		time.Sleep(waitTime)
 	}
 
 	if testConfigFile := viper.GetString("test-config-file"); testConfigFile != "" {
