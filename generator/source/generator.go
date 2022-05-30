@@ -64,7 +64,7 @@ type GeneratorEngine struct {
 	waiter sync.WaitGroup
 	lock   sync.Mutex
 
-	cache []common.Event
+	cache common.Event
 }
 
 var faker *fake.Faker
@@ -360,28 +360,34 @@ func makeValue(sourceType FieldType, sourceRange []interface{}, sourceLimit []in
 }
 
 func (s *GeneratorEngine) generateEvent() common.Event {
+	// cache event expect time fields
+	if !s.Config.RandomEvent && s.cache != nil {
+		event := s.cache
+		for _, f := range s.Config.Fields {
+			if f.Name == "time" {
+				event[f.Name] = makeValue(f.Type, f.Range, f.Limit, f.TimestampFormat, f.TimestampDelayMin, f.TimestampDelayMax, f.TimestampLocale, f.Rule)
+			}
+		}
+		return event
+	}
+
 	value := make(common.Event)
 	fields := s.Config.Fields
 
 	for _, f := range fields {
 		value[f.Name] = makeValue(f.Type, f.Range, f.Limit, f.TimestampFormat, f.TimestampDelayMin, f.TimestampDelayMax, f.TimestampLocale, f.Rule)
 	}
+
+	s.cache = value
 	return value
 }
 
 func (s *GeneratorEngine) generateBatchEvent() []common.Event {
 	batchSize := s.Config.BatchSize
-
-	// incase of disable random event, using cached events
-	if !s.Config.RandomEvent && s.cache != nil {
-		return s.cache
-	}
 	events := make([]common.Event, batchSize)
 
 	for i := 0; i < batchSize; i++ {
 		events[i] = s.generateEvent()
 	}
-
-	s.cache = events
 	return events
 }
