@@ -20,6 +20,10 @@ var Conf = config.Map{
 		Usage:     "whether to start a web server",
 		Shorthand: "S",
 	},
+	"enable-profile": &config.Bool{
+		Default: false,
+		Usage:   "whether to enable profile",
+	},
 	"wait-service-ready": &config.Bool{
 		Default: false,
 		Usage:   "wait 10s for service ready",

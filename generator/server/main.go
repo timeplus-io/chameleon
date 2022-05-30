@@ -70,7 +70,10 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func Run(_ *cobra.Command, _ []string) error {
 	initPlugins()
-	defer profile.Start(profile.ProfilePath(".")).Stop()
+
+	if viper.GetBool("enable-profile") {
+		defer profile.Start(profile.ProfilePath(".")).Stop()
+	}
 
 	if viper.GetBool("run-web-server") {
 		server := startServer()
