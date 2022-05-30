@@ -366,8 +366,10 @@ func (s *GeneratorEngine) generateEvent() common.Event {
 		for k, v := range s.cache {
 			event[k] = v
 		}
+
+		// keep time and value random as these are critical for latency caculation
 		for _, f := range s.Config.Fields {
-			if f.Name == "time" {
+			if f.Name == "time" || f.Name == "value" {
 				event[f.Name] = makeValue(f.Type, f.Range, f.Limit, f.TimestampFormat, f.TimestampDelayMin, f.TimestampDelayMax, f.TimestampLocale, f.Rule)
 			}
 		}
