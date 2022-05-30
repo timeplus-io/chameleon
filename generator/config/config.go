@@ -20,6 +20,10 @@ var Conf = config.Map{
 		Usage:     "whether to start a web server",
 		Shorthand: "S",
 	},
+	"wait-service-ready": &config.Bool{
+		Default: false,
+		Usage:   "wait 10s for service ready",
+	},
 	"test-config-file": &config.String{
 		Default:   "",
 		Usage:     "a json configuration file of test target",

@@ -77,6 +77,10 @@ func Run(_ *cobra.Command, _ []string) error {
 		shutdown(server)
 	}
 
+	if viper.GetBool("wait-service-ready") {
+		time.Sleep(10 * time.Second)
+	}
+
 	if testConfigFile := viper.GetString("test-config-file"); testConfigFile != "" {
 		log.Logger().Infof("run test case from file %s", testConfigFile)
 		if job, err := job.NewJobManager().CreateJobFromFile(testConfigFile); err != nil {
