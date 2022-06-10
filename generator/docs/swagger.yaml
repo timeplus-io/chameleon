@@ -56,6 +56,8 @@ definitions:
         type: integer
       interval_delta:
         type: integer
+      random_event:
+        type: boolean
     type: object
   source.Field:
     properties:

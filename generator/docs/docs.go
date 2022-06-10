@@ -297,6 +297,9 @@ const docTemplate = `{
                 },
                 "interval_delta": {
                     "type": "integer"
+                },
+                "random_event": {
+                    "type": "boolean"
                 }
             }
         },
