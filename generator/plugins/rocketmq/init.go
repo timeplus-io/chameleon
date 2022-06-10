@@ -2,6 +2,7 @@ package rocketmq
 
 import (
 	"github.com/timeplus-io/chameleon/generator/log"
+	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/sink"
 )
 
@@ -12,6 +13,13 @@ func init() {
 	}
 	sink.Register(sinkItem)
 	log.Logger().Infof("sink plugin %s has been registered", ROCKETMQ_SINK_TYPE)
+
+	obItem := observer.ObRegItem{
+		Name:        ROCKETMQ_OB_TYPE,
+		Constructor: NewRocketMQObserver,
+	}
+	observer.Register(obItem)
+	log.Logger().Infof("observer plugin %s has been registered", ROCKETMQ_OB_TYPE)
 }
 
 func Init() {

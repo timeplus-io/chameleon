@@ -1,9 +1,9 @@
 ---
 name: test
 source:
-  batch_size: 512
-  concurency: 4
-  interval: 1
+  batch_size: 1
+  concurency: 1
+  interval: 4
   interval_delta: 0
   batch_number: 10000000
   fields:
@@ -20,3 +20,10 @@ sinks:
 - type: rocketmq
   properties:
     brokers: 127.0.0.1:9876
+
+observer:
+  type: rocketmq
+  properties:
+    metric: latency
+    brokers: 127.0.0.1:9876
+    topic: test
