@@ -24,6 +24,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/plugins/ksql"
 	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
 	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
+	"github.com/timeplus-io/chameleon/generator/plugins/rocketmq"
 	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
 
 	_ "github.com/timeplus-io/chameleon/generator/docs"
@@ -106,6 +107,7 @@ func initPlugins() {
 	kafka.Init()
 	ksql.Init()
 	console.Init()
+	rocketmq.Init()
 }
 
 func startServer() *http.Server {

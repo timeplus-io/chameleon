@@ -1,0 +1,29 @@
+---
+name: test
+source:
+  batch_size: 1
+  concurency: 1
+  interval: 4
+  interval_delta: 0
+  batch_number: 10000000
+  fields:
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 100000
+  - name: time
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+
+sinks:
+- type: rocketmq
+  properties:
+    brokers: 127.0.0.1:9876
+
+observer:
+  type: rocketmq
+  properties:
+    metric: latency
+    brokers: 127.0.0.1:9876
+    topic: test

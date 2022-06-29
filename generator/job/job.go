@@ -102,6 +102,7 @@ func NewJob(config JobConfiguration) (*Job, error) {
 	sinks := make([]sink.Sink, len(config.Sinks))
 	for index, sinkConfig := range config.Sinks {
 		if sink, err := sink.CreateSink(sinkConfig); err != nil {
+			log.Logger().WithError(err).Errorf("failed to create sink")
 			return nil, err
 		} else {
 			sinks[index] = sink
