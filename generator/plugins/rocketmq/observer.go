@@ -89,9 +89,7 @@ func (o *RocketMQObserver) observeLatency() error {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
+
 	time.Sleep(time.Hour)
 	err = o.consumer.Shutdown()
 	if err != nil {
