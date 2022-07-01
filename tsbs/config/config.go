@@ -5,9 +5,47 @@ import (
 )
 
 var Conf = config.Map{
-	"server-addr": &config.String{
-		Default:   "0.0.0.0",
-		Usage:     "ip interface the server should listen on",
+	"source": &config.String{
+		Default:   "./data/devops-data-devops.gz",
+		Usage:     "tsbs data file",
+		Shorthand: "f",
+	},
+	"timeplus-address": &config.String{
+		Default:   "http://localhost:8000",
+		Usage:     "the server address of timeplus",
 		Shorthand: "a",
+	},
+	"timeplus-apikey": &config.String{
+		Default:   "",
+		Usage:     "the apikey of timeplus",
+		Shorthand: "k",
+	},
+	"skip-create-streams": &config.Bool{
+		Default: false,
+		Usage:   "whether to skip stream creation",
+	},
+	"clean-streams": &config.Bool{
+		Default: true,
+		Usage:   "whether to clean existing streams",
+	},
+	"http-timeout": &config.Int{
+		Default: 10,
+		Usage:   "HTTP timeout in seconds, default to 10",
+	},
+	"http-max-connection-per-host": &config.Int{
+		Default: 100,
+		Usage:   "HTTP max connection per host, default to 100",
+	},
+	"http-max-idle-connection": &config.Int{
+		Default: 100,
+		Usage:   "HTTP max idle connection, default to 100",
+	},
+	"http-max-idle-connection-per-host": &config.Int{
+		Default: 100,
+		Usage:   "HTTP max idle connection per host, default to 100",
+	},
+	"log-level": &config.String{
+		Default: "info",
+		Usage:   "level of log, support panic|fatal|error|warn|info|debug|trace",
 	},
 }

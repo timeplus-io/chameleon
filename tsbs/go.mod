@@ -8,6 +8,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/usvc/go-config v0.4.1
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
 require (
