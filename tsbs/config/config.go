@@ -24,10 +24,6 @@ var Conf = config.Map{
 		Default: false,
 		Usage:   "whether to skip stream creation",
 	},
-	"clean-streams": &config.Bool{
-		Default: true,
-		Usage:   "whether to clean existing streams",
-	},
 	"http-timeout": &config.Int{
 		Default: 10,
 		Usage:   "HTTP timeout in seconds, default to 10",
