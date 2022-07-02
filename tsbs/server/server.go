@@ -184,7 +184,7 @@ func processExtraTags(metrics []common.Metric, payloads []common.Payload) []comm
 
 		for _, tag := range payload.Tags {
 			if !contains(metricsCopy[index].Tags, tag) {
-				log.Logger().Infof("find new tags %s", tag)
+				log.Logger().Debugf("find new tags %s", tag)
 				newTag := common.Tag{
 					Name: tag,
 					Type: "string",
