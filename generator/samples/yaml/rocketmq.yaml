@@ -21,9 +21,9 @@ sinks:
   properties:
     brokers: 127.0.0.1:9876
 
-observer:
-  type: rocketmq
-  properties:
-    metric: latency
-    brokers: 127.0.0.1:9876
-    topic: test
+# observer:
+#   type: rocketmq
+#   properties:
+#     metric: latency
+#     brokers: 127.0.0.1:9876
+#     topic: test
