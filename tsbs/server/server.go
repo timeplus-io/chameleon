@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/timeplus-io/chameleon/tsbs/common"
+	"github.com/timeplus-io/chameleon/tsbs/loader"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
 
@@ -15,52 +17,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Metric struct {
-	Name   string
-	Values []MeausreValue
-	Tags   []Tag
-}
-
-type Payload struct {
-	Name      string
-	Timestamp string
-	Data      []interface{}
-	Tags      []string
-}
-
-type MeausreValue struct {
-	Name string
-	Type string
-}
-
-type Tag struct {
-	Name string
-	Type string
-}
-
-func (m *Metric) getHeader() []string {
-	header := []string{}
-
-	header = append(header, "ts")
-
-	for _, tag := range m.Tags {
-		header = append(header, tag.Name)
-	}
-
-	for _, measure := range m.Values {
-		header = append(header, measure.Name)
-	}
-
-	return header
-}
-
 func Run(_ *cobra.Command, _ []string) error {
 	dataFile := viper.GetString("source")
-
 	metrics, payloads := loadDataFile(dataFile)
 	log.Logger().Infof("got metrcis %v", metrics)
 	log.Logger().Infof("got payloads %d", len(payloads))
-	log.Logger().Infof("got payloads sample %v", payloads[123])
 
 	metrics = processExtraTags(metrics, payloads)
 
@@ -68,124 +29,33 @@ func Run(_ *cobra.Command, _ []string) error {
 	tmieplusApiKey := viper.GetString("timeplus-apikey")
 	server := timeplus.NewNeutronServer(timeplusAddress, tmieplusApiKey)
 
-	if !viper.GetBool("skip-create-streams") {
-		deleteStreams(server, metrics)
+	var dataloader loader.DataLoader
+	if viper.GetString("metrics-schema") == "single" {
+		dataloader = loader.NewSingleStreamStoreLoader(server, metrics)
+	} else {
+		dataloader = loader.NewMultipleStreamStoreLoader(server, metrics)
+	}
 
-		if err := createStreams(server, metrics); err != nil {
+	if !viper.GetBool("skip-create-streams") {
+		dataloader.DeleteStreams()
+
+		if err := dataloader.CreateStreams(); err != nil {
 			log.Logger().WithError(err).Warn("failed to create stream")
 		}
 	}
 
-	//ingest(server, metrics, payloads)
+	dataloader.Ingest(payloads)
 
 	return nil
 }
 
-func deleteStreams(server *timeplus.NeutronServer, metrics []Metric) {
-	for _, metric := range metrics {
-		if err := server.DeleteStream(metric.Name); err != nil {
-			log.Logger().WithError(err).Warnf("failed to delete stream %s", metric.Name)
-		} else {
-			log.Logger().Infof("stream %s deleted", metric.Name)
-		}
-	}
-}
-
-func createStreams(server *timeplus.NeutronServer, metrics []Metric) error {
-	for _, metric := range metrics {
-		if err := createStream(server, metric); err != nil {
-			return err
-		} else {
-			log.Logger().Infof("stream %s created", metric.Name)
-		}
-	}
-	return nil
-}
-
-func createStream(server *timeplus.NeutronServer, metric Metric) error {
-	streamDef := timeplus.StreamDef{
-		Name: metric.Name,
-	}
-
-	cols := []timeplus.ColumnDef{}
-	timeCol := timeplus.ColumnDef{
-		Name: "ts",
-		Type: "string",
-	}
-	cols = append(cols, timeCol)
-
-	for _, tag := range metric.Tags {
-		col := timeplus.ColumnDef{
-			Name: tag.Name,
-			Type: "string", // use string type for all tag for now
-		}
-		cols = append(cols, col)
-	}
-
-	for _, measure := range metric.Values {
-		col := timeplus.ColumnDef{
-			Name: measure.Name,
-			Type: measure.Type,
-		}
-		cols = append(cols, col)
-	}
-
-	streamDef.Columns = cols
-	return server.CreateStream(streamDef)
-}
-
-func findMetricByName(metrics []Metric, name string) *Metric {
-	for index, metric := range metrics {
-		if metric.Name == name {
-			return &metrics[index]
-		}
-	}
-
-	log.Logger().Fatalf("not such metrics %s", name)
-	return nil
-}
-
-func findMetricIndexByName(metrics []Metric, name string) int {
-	for index, metric := range metrics {
-		if metric.Name == name {
-			return index
-		}
-	}
-
-	log.Logger().Fatalf("not such metrics %s", name)
-	return -1
-}
-
-func ingest(server *timeplus.NeutronServer, metrics []Metric, payloads []Payload) {
-	for _, payload := range payloads {
-		metricName := payload.Name
-		metric := findMetricByName(metrics, metricName)
-		headers := metric.getHeader()
-
-		data := make([][]interface{}, 1)
-		data[0] = payload.Data
-
-		load := timeplus.IngestPayload{
-			Stream: metricName,
-			Data: timeplus.IngestData{
-				Columns: headers,
-				Data:    data,
-			},
-		}
-
-		if err := server.InsertData(load); err != nil {
-			log.Logger().WithError(err).Fatalf("failed to ingest")
-		}
-	}
-}
-
-func buildTags(tagLine string) []Tag {
-	tags := []Tag{}
+func buildTags(tagLine string) []common.Tag {
+	tags := []common.Tag{}
 	tokens := strings.Split(tagLine, ",")
 	for _, token := range tokens[1:] {
 		tag := strings.Split(token, " ")
 
-		tagStrcut := Tag{
+		tagStrcut := common.Tag{
 			Name: tag[0],
 			Type: tag[1],
 		}
@@ -194,13 +64,13 @@ func buildTags(tagLine string) []Tag {
 	return tags
 }
 
-func buildMetric(measureLine string, tags []Tag) Metric {
-	metric := Metric{}
+func buildMetric(measureLine string, tags []common.Tag) common.Metric {
+	metric := common.Metric{}
 	tokens := strings.Split(measureLine, ",")
 	metric.Name = tokens[0]
-	metric.Values = []MeausreValue{}
+	metric.Values = []common.MeausreValue{}
 	for _, token := range tokens[1:] {
-		mv := MeausreValue{
+		mv := common.MeausreValue{
 			Name: token,
 			Type: "float64",
 		}
@@ -211,8 +81,8 @@ func buildMetric(measureLine string, tags []Tag) Metric {
 	return metric
 }
 
-func buildPayload(tagline string, measureLine string) Payload {
-	payload := Payload{}
+func buildPayload(tagline string, measureLine string) common.Payload {
+	payload := common.Payload{}
 
 	tags := strings.Split(tagline, ",")
 	measures := strings.Split(measureLine, ",")
@@ -247,9 +117,9 @@ func buildPayload(tagline string, measureLine string) Payload {
 	return payload
 }
 
-func loadDataFile(file string) ([]Metric, []Payload) {
+func loadDataFile(file string) ([]common.Metric, []common.Payload) {
 	log.Logger().Debugf("loading file %s", file)
-	metrics := []Metric{}
+	metrics := []common.Metric{}
 	dat, err := os.ReadFile(file)
 	if err != nil {
 		log.Logger().Fatal("failed to read file %s", file)
@@ -282,7 +152,7 @@ func loadDataFile(file string) ([]Metric, []Payload) {
 		log.Logger().Debugf("got one metric %v", metric)
 	}
 
-	payloads := []Payload{}
+	payloads := []common.Payload{}
 	for {
 		if !scanner.Scan() {
 			break
@@ -305,34 +175,29 @@ func loadDataFile(file string) ([]Metric, []Payload) {
 	return metrics, payloads
 }
 
-func processExtraTags(metrics []Metric, payloads []Payload) []Metric {
-	metricsCopy := make([]Metric, 0)
+func processExtraTags(metrics []common.Metric, payloads []common.Payload) []common.Metric {
+	metricsCopy := make([]common.Metric, 0)
 	metricsCopy = append(metricsCopy, metrics...)
 
 	for _, payload := range payloads {
-		index := findMetricIndexByName(metricsCopy, payload.Name)
+		index := common.FindMetricIndexByName(metricsCopy, payload.Name)
 
 		for _, tag := range payload.Tags {
 			if !contains(metricsCopy[index].Tags, tag) {
 				log.Logger().Infof("find new tags %s", tag)
-				newTag := Tag{
+				newTag := common.Tag{
 					Name: tag,
 					Type: "string",
 				}
-				log.Logger().Infof("the metric before %v", metricsCopy[index])
 				metricsCopy[index].Tags = append(metricsCopy[index].Tags, newTag)
-				log.Logger().Infof("the metric after %v", metricsCopy[index])
-				log.Logger().Infof("the metrics after %v", metricsCopy)
-
 			}
 		}
 
 	}
-	log.Logger().Infof("processed metrics is: %v", metricsCopy)
 	return metricsCopy
 }
 
-func contains(tags []Tag, tagName string) bool {
+func contains(tags []common.Tag, tagName string) bool {
 	for _, tag := range tags {
 		if tag.Name == tagName {
 			return true

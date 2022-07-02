@@ -20,6 +20,10 @@ var Conf = config.Map{
 		Usage:     "the apikey of timeplus",
 		Shorthand: "k",
 	},
+	"metrics-schema": &config.String{
+		Default: "single",
+		Usage:   "the metrics store schema, default to single, support single|multiple",
+	},
 	"skip-create-streams": &config.Bool{
 		Default: false,
 		Usage:   "whether to skip stream creation",
