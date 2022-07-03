@@ -40,7 +40,7 @@ func (l *SingleStreamStoreLoader) CreateStreams() error {
 			},
 			{
 				Name: "tags",
-				Type: "map(string, string)",
+				Type: "json",
 			},
 			{
 				Name: "value",
