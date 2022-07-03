@@ -1,8 +1,6 @@
 package loader
 
 import (
-	"strconv"
-
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
@@ -36,7 +34,7 @@ func (l *SingleStreamStoreLoader) CreateStreams() error {
 			},
 			{
 				Name: "timestamp",
-				Type: "float64",
+				Type: "string",
 			},
 			{
 				Name: "tags",
@@ -47,6 +45,7 @@ func (l *SingleStreamStoreLoader) CreateStreams() error {
 				Type: "float64",
 			},
 		},
+		EventTimeColumn: "to_datetime64(timestamp,9)",
 	}
 
 	return l.server.CreateStream(streamDef)
@@ -89,11 +88,8 @@ func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]i
 		row = append(row, payload.Name)
 
 		// timestamp cell
-		if s, err := strconv.ParseFloat(payload.Timestamp, 64); err == nil {
-			row = append(row, s)
-		} else {
-			row = append(row, 0)
-		}
+		row = append(row, payload.Timestamp)
+
 		// tags cell
 		tags := map[string]interface{}{}
 		tags["category"] = metric.Values[index].Name
