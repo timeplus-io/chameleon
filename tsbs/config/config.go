@@ -6,7 +6,7 @@ import (
 
 var Conf = config.Map{
 	"source": &config.String{
-		Default:   "./data/devops-data-devops.gz",
+		Default:   "./data/devops-data.gz",
 		Usage:     "tsbs data file",
 		Shorthand: "f",
 	},

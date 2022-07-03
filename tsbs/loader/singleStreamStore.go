@@ -78,7 +78,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 
 func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]interface{} {
 	tagSize := len(payload.Tags)
-	tagNames := payload.Data[1 : 1+tagSize]
+	tagValues := payload.Data[1 : 1+tagSize]
 	values := payload.Data[1+tagSize:]
 	metric := common.FindMetricByName(l.metrics, payload.Name)
 	result := make([][]interface{}, len(values))
@@ -97,8 +97,8 @@ func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]i
 		// tags cell
 		tags := map[string]interface{}{}
 		tags["category"] = metric.Values[index].Name
-		for tagIndex, tagName := range tagNames {
-			tags[tagName.(string)] = payload.Tags[tagIndex]
+		for tagIndex, tagValue := range tagValues {
+			tags[payload.Tags[tagIndex]] = tagValue.(string)
 		}
 		row = append(row, tags)
 

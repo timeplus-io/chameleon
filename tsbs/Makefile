@@ -15,7 +15,7 @@ generate-devops-data:
     --timestamp-start="2016-01-01T00:00:00Z" \
     --timestamp-end="2016-01-02T00:00:00Z" \
     --log-interval="60s" --format="timescaledb" \
-	| gzip > ./data/devops-data-devops.gz
+	| gzip > ./data/devops-data.gz
 
 generate-iot-data:
 	docker run -it --rm --entrypoint /tsbs_generate_data timeplus/tsbs:20220629 \
@@ -23,7 +23,7 @@ generate-iot-data:
     --timestamp-start="2016-01-01T00:00:00Z" \
     --timestamp-end="2016-01-02T00:00:00Z" \
     --log-interval="60s" --format="timescaledb" \
-	| gzip > ./data/iot-data-devops.gz
+	| gzip > ./data/iot-data.gz
 
 
 generate-queries:
