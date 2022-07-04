@@ -93,7 +93,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 	}
 
 	if err := l.server.InsertData(load); err != nil {
-		log.Logger().WithError(err).Fatalf("failed to ingest")
+		log.Logger().WithError(err).Warnf("failed to ingest")
 	}
 }
 
@@ -111,9 +111,9 @@ func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]i
 
 		// timestamp cell
 		if l.realtimeIngest {
-			row = append(row, payload.Timestamp)
-		} else {
 			row = append(row, utils.GetTimestamp())
+		} else {
+			row = append(row, payload.Timestamp)
 		}
 
 		// tags cell
