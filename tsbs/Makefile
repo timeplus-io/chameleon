@@ -40,6 +40,9 @@ build:
 run:
 	go run main.go
 
+runm:
+	go run main.go --metrics-schema multiple
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 

@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"sync"
+
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
@@ -52,6 +54,17 @@ func (l *SingleStreamStoreLoader) CreateStreams() error {
 }
 
 func (l *SingleStreamStoreLoader) Ingest(payloads []common.Payload) {
+	var wg sync.WaitGroup
+	splittedPayloads := common.SplitPayloads(payloads)
+	for key := range splittedPayloads {
+		wg.Add(1)
+		go l.ingestProcess(splittedPayloads[key], &wg)
+	}
+	wg.Wait()
+}
+
+func (l *SingleStreamStoreLoader) ingestProcess(payloads []common.Payload, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for _, payload := range payloads {
 		l.ingest(payload)
 	}
@@ -71,7 +84,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 	}
 
 	if err := l.server.InsertData(load); err != nil {
-		log.Logger().WithError(err).Fatalf("failed to ingest")
+		log.Logger().WithError(err).Errorf("failed to ingest")
 	}
 }
 

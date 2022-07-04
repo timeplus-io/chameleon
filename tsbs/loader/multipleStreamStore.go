@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"sync"
+
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
@@ -41,12 +43,13 @@ func (l *MultipleStreamStoreLoader) CreateStreams() error {
 
 func (l *MultipleStreamStoreLoader) createStream(metric common.Metric) error {
 	streamDef := timeplus.StreamDef{
-		Name: metric.Name,
+		Name:            metric.Name,
+		EventTimeColumn: "to_datetime64(timestamp,9)",
 	}
 
 	cols := []timeplus.ColumnDef{}
 	timeCol := timeplus.ColumnDef{
-		Name: "ts",
+		Name: "timestamp",
 		Type: "string",
 	}
 	cols = append(cols, timeCol)
@@ -72,13 +75,25 @@ func (l *MultipleStreamStoreLoader) createStream(metric common.Metric) error {
 }
 
 func (l *MultipleStreamStoreLoader) Ingest(payloads []common.Payload) {
+	var wg sync.WaitGroup
+	splittedPayloads := common.SplitPayloads(payloads)
+	for key := range splittedPayloads {
+		wg.Add(1)
+		go l.ingestProcess(splittedPayloads[key], &wg)
+	}
+	wg.Wait()
+}
+
+func (l *MultipleStreamStoreLoader) ingestProcess(payloads []common.Payload, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	for _, payload := range payloads {
 		metricName := payload.Name
 		metric := common.FindMetricByName(l.metrics, metricName)
 		measureNames := metric.GetMeasureNames()
 		tagNames := payload.Tags
 
-		headers := append([]string{"ts"}, tagNames...)
+		headers := append([]string{"timestamp"}, tagNames...)
 		headers = append(headers, measureNames...)
 
 		data := make([][]interface{}, 1)
@@ -93,7 +108,8 @@ func (l *MultipleStreamStoreLoader) Ingest(payloads []common.Payload) {
 		}
 
 		if err := l.server.InsertData(load); err != nil {
-			log.Logger().WithError(err).Fatalf("failed to ingest")
+			log.Logger().WithError(err).Errorf("failed to ingest")
 		}
 	}
+
 }
