@@ -6,17 +6,20 @@ import (
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
+	"github.com/timeplus-io/chameleon/tsbs/utils"
 )
 
 type MultipleStreamStoreLoader struct {
-	server  *timeplus.NeutronServer
-	metrics []common.Metric
+	server         *timeplus.NeutronServer
+	metrics        []common.Metric
+	realtimeIngest bool
 }
 
-func NewMultipleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric) *MultipleStreamStoreLoader {
+func NewMultipleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric, realtimeIngest bool) *MultipleStreamStoreLoader {
 	return &MultipleStreamStoreLoader{
-		server:  server,
-		metrics: metrics,
+		server:         server,
+		metrics:        metrics,
+		realtimeIngest: realtimeIngest,
 	}
 }
 
@@ -87,28 +90,38 @@ func (l *MultipleStreamStoreLoader) Ingest(payloads []common.Payload) {
 func (l *MultipleStreamStoreLoader) ingestProcess(payloads []common.Payload, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for _, payload := range payloads {
-		metricName := payload.Name
-		metric := common.FindMetricByName(l.metrics, metricName)
-		measureNames := metric.GetMeasureNames()
-		tagNames := payload.Tags
+	for {
+		for _, payload := range payloads {
+			metricName := payload.Name
+			metric := common.FindMetricByName(l.metrics, metricName)
+			measureNames := metric.GetMeasureNames()
+			tagNames := payload.Tags
 
-		headers := append([]string{"timestamp"}, tagNames...)
-		headers = append(headers, measureNames...)
+			headers := append([]string{"timestamp"}, tagNames...)
+			headers = append(headers, measureNames...)
 
-		data := make([][]interface{}, 1)
-		data[0] = payload.Data
+			data := make([][]interface{}, 1)
+			data[0] = payload.Data
 
-		load := timeplus.IngestPayload{
-			Stream: metricName,
-			Data: timeplus.IngestData{
-				Columns: headers,
-				Data:    data,
-			},
+			if l.realtimeIngest {
+				data[0][0] = utils.GetTimestamp()
+			}
+
+			load := timeplus.IngestPayload{
+				Stream: metricName,
+				Data: timeplus.IngestData{
+					Columns: headers,
+					Data:    data,
+				},
+			}
+
+			if err := l.server.InsertData(load); err != nil {
+				log.Logger().WithError(err).Errorf("failed to ingest")
+			}
 		}
 
-		if err := l.server.InsertData(load); err != nil {
-			log.Logger().WithError(err).Errorf("failed to ingest")
+		if !l.realtimeIngest {
+			break
 		}
 	}
 

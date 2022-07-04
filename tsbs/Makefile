@@ -43,6 +43,9 @@ run:
 runm:
 	go run main.go --metrics-schema multiple
 
+run-iot:
+	go run main.go -f ./data/iot-data.gz -m iot -r
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 

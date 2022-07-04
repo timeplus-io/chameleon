@@ -29,23 +29,23 @@ func Run(_ *cobra.Command, _ []string) error {
 	tmieplusApiKey := viper.GetString("timeplus-apikey")
 	server := timeplus.NewNeutronServer(timeplusAddress, tmieplusApiKey)
 
+	realtimeIngest := viper.GetBool("realtime-ingest")
 	var dataloader loader.DataLoader
 	if viper.GetString("metrics-schema") == "single" {
-		dataloader = loader.NewSingleStreamStoreLoader(server, metrics)
+		name := viper.GetString("metrics-name")
+		dataloader = loader.NewSingleStreamStoreLoader(server, metrics, name, realtimeIngest)
 	} else {
-		dataloader = loader.NewMultipleStreamStoreLoader(server, metrics)
+		dataloader = loader.NewMultipleStreamStoreLoader(server, metrics, realtimeIngest)
 	}
 
 	if !viper.GetBool("skip-create-streams") {
 		dataloader.DeleteStreams()
-
 		if err := dataloader.CreateStreams(); err != nil {
 			log.Logger().WithError(err).Warn("failed to create stream")
 		}
 	}
 
 	dataloader.Ingest(payloads)
-
 	return nil
 }
 

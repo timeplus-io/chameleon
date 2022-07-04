@@ -6,29 +6,33 @@ import (
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
+	"github.com/timeplus-io/chameleon/tsbs/utils"
 )
 
-const SingleStoreStreamName = "metrics"
-
 type SingleStreamStoreLoader struct {
-	server  *timeplus.NeutronServer
-	metrics []common.Metric
+	server         *timeplus.NeutronServer
+	metrics        []common.Metric
+	name           string
+	realtimeIngest bool
 }
 
-func NewSingleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric) *SingleStreamStoreLoader {
+func NewSingleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric, name string, realtimeIngest bool) *SingleStreamStoreLoader {
 	return &SingleStreamStoreLoader{
-		server:  server,
-		metrics: metrics,
+		server:         server,
+		metrics:        metrics,
+		name:           name,
+		realtimeIngest: realtimeIngest,
 	}
 }
 
 func (l *SingleStreamStoreLoader) DeleteStreams() {
-	l.server.DeleteStream(SingleStoreStreamName)
+	l.server.DeleteStream(l.name)
 }
 
 func (l *SingleStreamStoreLoader) CreateStreams() error {
+	log.Logger().Infof("Create stream with name %s", l.name)
 	streamDef := timeplus.StreamDef{
-		Name: SingleStoreStreamName,
+		Name: l.name,
 		Columns: []timeplus.ColumnDef{
 			{
 				Name: "metric",
@@ -65,8 +69,13 @@ func (l *SingleStreamStoreLoader) Ingest(payloads []common.Payload) {
 
 func (l *SingleStreamStoreLoader) ingestProcess(payloads []common.Payload, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for _, payload := range payloads {
-		l.ingest(payload)
+	for {
+		for _, payload := range payloads {
+			l.ingest(payload)
+		}
+		if !l.realtimeIngest {
+			break
+		}
 	}
 }
 
@@ -76,7 +85,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 	data := l.buildPayloadData(payload)
 
 	load := timeplus.IngestPayload{
-		Stream: SingleStoreStreamName,
+		Stream: l.name,
 		Data: timeplus.IngestData{
 			Columns: headers,
 			Data:    data,
@@ -84,7 +93,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 	}
 
 	if err := l.server.InsertData(load); err != nil {
-		log.Logger().WithError(err).Errorf("failed to ingest")
+		log.Logger().WithError(err).Fatalf("failed to ingest")
 	}
 }
 
@@ -101,7 +110,11 @@ func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]i
 		row = append(row, payload.Name)
 
 		// timestamp cell
-		row = append(row, payload.Timestamp)
+		if l.realtimeIngest {
+			row = append(row, payload.Timestamp)
+		} else {
+			row = append(row, utils.GetTimestamp())
+		}
 
 		// tags cell
 		tags := map[string]interface{}{}
