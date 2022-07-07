@@ -1,20 +1,25 @@
 package loader
 
 import (
+	"sync"
+
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
+	"github.com/timeplus-io/chameleon/tsbs/utils"
 )
 
 type MultipleStreamStoreLoader struct {
-	server  *timeplus.NeutronServer
-	metrics []common.Metric
+	server         *timeplus.NeutronServer
+	metrics        []common.Metric
+	realtimeIngest bool
 }
 
-func NewMultipleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric) *MultipleStreamStoreLoader {
+func NewMultipleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric, realtimeIngest bool) *MultipleStreamStoreLoader {
 	return &MultipleStreamStoreLoader{
-		server:  server,
-		metrics: metrics,
+		server:         server,
+		metrics:        metrics,
+		realtimeIngest: realtimeIngest,
 	}
 }
 
@@ -41,12 +46,13 @@ func (l *MultipleStreamStoreLoader) CreateStreams() error {
 
 func (l *MultipleStreamStoreLoader) createStream(metric common.Metric) error {
 	streamDef := timeplus.StreamDef{
-		Name: metric.Name,
+		Name:            metric.Name,
+		EventTimeColumn: "to_datetime64(timestamp,9)",
 	}
 
 	cols := []timeplus.ColumnDef{}
 	timeCol := timeplus.ColumnDef{
-		Name: "ts",
+		Name: "timestamp",
 		Type: "string",
 	}
 	cols = append(cols, timeCol)
@@ -72,28 +78,51 @@ func (l *MultipleStreamStoreLoader) createStream(metric common.Metric) error {
 }
 
 func (l *MultipleStreamStoreLoader) Ingest(payloads []common.Payload) {
-	for _, payload := range payloads {
-		metricName := payload.Name
-		metric := common.FindMetricByName(l.metrics, metricName)
-		measureNames := metric.GetMeasureNames()
-		tagNames := payload.Tags
+	var wg sync.WaitGroup
+	splittedPayloads := common.SplitPayloads(payloads)
+	for key := range splittedPayloads {
+		wg.Add(1)
+		go l.ingestProcess(splittedPayloads[key], &wg)
+	}
+	wg.Wait()
+}
 
-		headers := append([]string{"ts"}, tagNames...)
-		headers = append(headers, measureNames...)
+func (l *MultipleStreamStoreLoader) ingestProcess(payloads []common.Payload, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-		data := make([][]interface{}, 1)
-		data[0] = payload.Data
+	for {
+		for _, payload := range payloads {
+			metricName := payload.Name
+			metric := common.FindMetricByName(l.metrics, metricName)
+			measureNames := metric.GetMeasureNames()
+			tagNames := payload.Tags
 
-		load := timeplus.IngestPayload{
-			Stream: metricName,
-			Data: timeplus.IngestData{
-				Columns: headers,
-				Data:    data,
-			},
+			headers := append([]string{"timestamp"}, tagNames...)
+			headers = append(headers, measureNames...)
+
+			data := make([][]interface{}, 1)
+			data[0] = payload.Data
+
+			if l.realtimeIngest {
+				data[0][0] = utils.GetTimestamp()
+			}
+
+			load := timeplus.IngestPayload{
+				Stream: metricName,
+				Data: timeplus.IngestData{
+					Columns: headers,
+					Data:    data,
+				},
+			}
+
+			if err := l.server.InsertData(load); err != nil {
+				log.Logger().WithError(err).Errorf("failed to ingest")
+			}
 		}
 
-		if err := l.server.InsertData(load); err != nil {
-			log.Logger().WithError(err).Fatalf("failed to ingest")
+		if !l.realtimeIngest {
+			break
 		}
 	}
+
 }

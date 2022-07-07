@@ -6,7 +6,7 @@ import (
 
 var Conf = config.Map{
 	"source": &config.String{
-		Default:   "./data/devops-data-devops.gz",
+		Default:   "./data/devops-data.gz",
 		Usage:     "tsbs data file",
 		Shorthand: "f",
 	},
@@ -20,9 +20,19 @@ var Conf = config.Map{
 		Usage:     "the apikey of timeplus",
 		Shorthand: "k",
 	},
+	"realtime-ingest": &config.Bool{
+		Default:   false,
+		Usage:     "whether to ingest data in real-time",
+		Shorthand: "r",
+	},
 	"metrics-schema": &config.String{
 		Default: "single",
 		Usage:   "the metrics store schema, default to single, support single|multiple",
+	},
+	"metrics-name": &config.String{
+		Default:   "metrics",
+		Usage:     "the stream name of the metrics",
+		Shorthand: "m",
 	},
 	"skip-create-streams": &config.Bool{
 		Default: false,

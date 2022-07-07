@@ -1,34 +1,38 @@
 package loader
 
 import (
-	"strconv"
+	"sync"
 
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
 	"github.com/timeplus-io/chameleon/tsbs/timeplus"
+	"github.com/timeplus-io/chameleon/tsbs/utils"
 )
 
-const SingleStoreStreamName = "metrics"
-
 type SingleStreamStoreLoader struct {
-	server  *timeplus.NeutronServer
-	metrics []common.Metric
+	server         *timeplus.NeutronServer
+	metrics        []common.Metric
+	name           string
+	realtimeIngest bool
 }
 
-func NewSingleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric) *SingleStreamStoreLoader {
+func NewSingleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric, name string, realtimeIngest bool) *SingleStreamStoreLoader {
 	return &SingleStreamStoreLoader{
-		server:  server,
-		metrics: metrics,
+		server:         server,
+		metrics:        metrics,
+		name:           name,
+		realtimeIngest: realtimeIngest,
 	}
 }
 
 func (l *SingleStreamStoreLoader) DeleteStreams() {
-	l.server.DeleteStream(SingleStoreStreamName)
+	l.server.DeleteStream(l.name)
 }
 
 func (l *SingleStreamStoreLoader) CreateStreams() error {
+	log.Logger().Infof("Create stream with name %s", l.name)
 	streamDef := timeplus.StreamDef{
-		Name: SingleStoreStreamName,
+		Name: l.name,
 		Columns: []timeplus.ColumnDef{
 			{
 				Name: "metric",
@@ -36,25 +40,42 @@ func (l *SingleStreamStoreLoader) CreateStreams() error {
 			},
 			{
 				Name: "timestamp",
-				Type: "float64",
+				Type: "string",
 			},
 			{
 				Name: "tags",
-				Type: "map(string, string)",
+				Type: "json",
 			},
 			{
 				Name: "value",
 				Type: "float64",
 			},
 		},
+		EventTimeColumn: "to_datetime64(timestamp,9)",
 	}
 
 	return l.server.CreateStream(streamDef)
 }
 
 func (l *SingleStreamStoreLoader) Ingest(payloads []common.Payload) {
-	for _, payload := range payloads {
-		l.ingest(payload)
+	var wg sync.WaitGroup
+	splittedPayloads := common.SplitPayloads(payloads)
+	for key := range splittedPayloads {
+		wg.Add(1)
+		go l.ingestProcess(splittedPayloads[key], &wg)
+	}
+	wg.Wait()
+}
+
+func (l *SingleStreamStoreLoader) ingestProcess(payloads []common.Payload, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		for _, payload := range payloads {
+			l.ingest(payload)
+		}
+		if !l.realtimeIngest {
+			break
+		}
 	}
 }
 
@@ -64,7 +85,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 	data := l.buildPayloadData(payload)
 
 	load := timeplus.IngestPayload{
-		Stream: SingleStoreStreamName,
+		Stream: l.name,
 		Data: timeplus.IngestData{
 			Columns: headers,
 			Data:    data,
@@ -72,13 +93,13 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 	}
 
 	if err := l.server.InsertData(load); err != nil {
-		log.Logger().WithError(err).Fatalf("failed to ingest")
+		log.Logger().WithError(err).Warnf("failed to ingest")
 	}
 }
 
 func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]interface{} {
 	tagSize := len(payload.Tags)
-	tagNames := payload.Data[1 : 1+tagSize]
+	tagValues := payload.Data[1 : 1+tagSize]
 	values := payload.Data[1+tagSize:]
 	metric := common.FindMetricByName(l.metrics, payload.Name)
 	result := make([][]interface{}, len(values))
@@ -89,16 +110,17 @@ func (l *SingleStreamStoreLoader) buildPayloadData(payload common.Payload) [][]i
 		row = append(row, payload.Name)
 
 		// timestamp cell
-		if s, err := strconv.ParseFloat(payload.Timestamp, 64); err == nil {
-			row = append(row, s)
+		if l.realtimeIngest {
+			row = append(row, utils.GetTimestamp())
 		} else {
-			row = append(row, 0)
+			row = append(row, payload.Timestamp)
 		}
+
 		// tags cell
 		tags := map[string]interface{}{}
 		tags["category"] = metric.Values[index].Name
-		for tagIndex, tagName := range tagNames {
-			tags[tagName.(string)] = payload.Tags[tagIndex]
+		for tagIndex, tagValue := range tagValues {
+			tags[payload.Tags[tagIndex]] = tagValue.(string)
 		}
 		row = append(row, tags)
 
