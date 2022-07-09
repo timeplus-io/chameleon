@@ -229,7 +229,7 @@ var RevenueView = timeplus.View{
 }
 
 type TimeplusSink struct {
-	server *timeplus.NeutronServer
+	server *timeplus.TimeplusServer
 }
 
 func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
@@ -243,7 +243,7 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	server := timeplus.NewNeutronServer(address, apikey)
+	server := timeplus.NewServer(address, apikey)
 
 	return &TimeplusSink{
 		server: server,
@@ -288,8 +288,16 @@ func (s *TimeplusSink) Init() error {
 
 func (s *TimeplusSink) initStream(streamDef timeplus.StreamDef) error {
 	if s.server.ExistStream(streamDef.Name) {
-		log.Logger().Warnf("stream %s already exist, no need to create", streamDef.Name)
-		return nil
+		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
+			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)
+			if err := s.server.DeleteStream(streamDef.Name); err != nil {
+				return err
+			}
+			return s.server.CreateStream(streamDef)
+		} else {
+			log.Logger().Warnf("stream %s already exist, no need to create", streamDef.Name)
+			return nil
+		}
 	}
 	return s.server.CreateStream(streamDef)
 }

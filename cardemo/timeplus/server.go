@@ -43,21 +43,21 @@ type IngestPayload struct {
 	Stream string     `json:"stream"`
 }
 
-type NeutronServer struct {
+type TimeplusServer struct {
 	address string
 	apikey  string
 	client  *http.Client
 }
 
-func NewNeutronServer(address string, apikey string) *NeutronServer {
-	return &NeutronServer{
+func NewServer(address string, apikey string) *TimeplusServer {
+	return &TimeplusServer{
 		address: address,
 		apikey:  apikey,
 		client:  utils.NewDefaultHttpClient(),
 	}
 }
 
-func (s *NeutronServer) CreateStream(streamDef StreamDef) error {
+func (s *TimeplusServer) CreateStream(streamDef StreamDef) error {
 	url := fmt.Sprintf("%s/api/%s/streams", s.address, API_VERSION)
 	_, _, err := utils.HttpRequestWithAPIKey(http.MethodPost, url, streamDef, s.client, s.apikey)
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *NeutronServer) CreateStream(streamDef StreamDef) error {
 	return nil
 }
 
-func (s *NeutronServer) DeleteStream(streamName string) error {
+func (s *TimeplusServer) DeleteStream(streamName string) error {
 	url := fmt.Sprintf("%s/api/%s/streams/%s", s.address, API_VERSION, streamName)
 	_, _, err := utils.HttpRequestWithAPIKey(http.MethodDelete, url, nil, s.client, s.apikey)
 	if err != nil {
@@ -75,7 +75,7 @@ func (s *NeutronServer) DeleteStream(streamName string) error {
 	return nil
 }
 
-func (s *NeutronServer) ExistStream(name string) bool {
+func (s *TimeplusServer) ExistStream(name string) bool {
 	streams, err := s.ListStream()
 	if err != nil {
 		return false
@@ -90,7 +90,7 @@ func (s *NeutronServer) ExistStream(name string) bool {
 	return false
 }
 
-func (s *NeutronServer) ListStream() ([]StreamDef, error) {
+func (s *TimeplusServer) ListStream() ([]StreamDef, error) {
 	url := fmt.Sprintf("%s/api/%s/streams", s.address, API_VERSION)
 	_, respBody, err := utils.HttpRequestWithAPIKey(http.MethodGet, url, nil, s.client, s.apikey)
 	if err != nil {
@@ -103,7 +103,7 @@ func (s *NeutronServer) ListStream() ([]StreamDef, error) {
 	return payload, nil
 }
 
-func (s *NeutronServer) CreateView(view View) error {
+func (s *TimeplusServer) CreateView(view View) error {
 	url := fmt.Sprintf("%s/api/%s/views", s.address, API_VERSION)
 	_, _, err := utils.HttpRequestWithAPIKey(http.MethodPost, url, view, s.client, s.apikey)
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *NeutronServer) CreateView(view View) error {
 	return nil
 }
 
-func (s *NeutronServer) ListView() ([]View, error) {
+func (s *TimeplusServer) ListView() ([]View, error) {
 	url := fmt.Sprintf("%s/api/%s/views", s.address, API_VERSION)
 	_, respBody, err := utils.HttpRequestWithAPIKey(http.MethodGet, url, nil, s.client, s.apikey)
 	if err != nil {
@@ -125,7 +125,7 @@ func (s *NeutronServer) ListView() ([]View, error) {
 	return payload, nil
 }
 
-func (s *NeutronServer) ExistView(name string) bool {
+func (s *TimeplusServer) ExistView(name string) bool {
 	views, err := s.ListView()
 	if err != nil {
 		return false
@@ -140,7 +140,7 @@ func (s *NeutronServer) ExistView(name string) bool {
 	return false
 }
 
-func (s *NeutronServer) InsertData(data IngestPayload) error {
+func (s *TimeplusServer) InsertData(data IngestPayload) error {
 	url := fmt.Sprintf("%s/api/%s/streams/%s/ingest", s.address, API_VERSION, data.Stream)
 	_, _, err := utils.HttpRequestWithAPIKey(http.MethodPost, url, data.Data, s.client, s.apikey)
 	if err != nil {
