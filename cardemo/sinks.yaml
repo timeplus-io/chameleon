@@ -1,0 +1,5 @@
+
+sinks:
+- type: timeplus
+  properties:
+    address: http://localhost:8000
