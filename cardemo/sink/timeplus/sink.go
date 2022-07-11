@@ -2,6 +2,7 @@ package timeplus
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/timeplus-io/chameleon/cardemo/common"
 	"github.com/timeplus-io/chameleon/cardemo/log"
@@ -106,6 +107,11 @@ var BookingStreamDef = timeplus.StreamDef{
 			Name: "booking_time",
 			Type: "datetime64(3)",
 		},
+		{
+			Name:    "_tp_time",
+			Type:    "datetime64(3)",
+			Default: "time",
+		},
 	},
 	TTLExpression:          DefaultTTL,
 	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
@@ -150,6 +156,11 @@ var CarStream = timeplus.StreamDef{
 		{
 			Name: "time",
 			Type: "datetime64(3)",
+		},
+		{
+			Name:    "_tp_time",
+			Type:    "datetime64(3)",
+			Default: "time",
 		},
 	},
 	TTLExpression:          DefaultTTL,
@@ -204,6 +215,11 @@ var TripStream = timeplus.StreamDef{
 			Name: "bid",
 			Type: "string",
 		},
+		{
+			Name:    "_tp_time",
+			Type:    "datetime64(3)",
+			Default: "end_time",
+		},
 	},
 	TTLExpression:          DefaultTTL,
 	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
@@ -229,7 +245,8 @@ var RevenueView = timeplus.View{
 }
 
 type TimeplusSink struct {
-	server *timeplus.NeutronServer
+	server    *timeplus.TimeplusServer
+	producers map[string]*TimeplusStreamProducer
 }
 
 func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
@@ -243,10 +260,22 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	server := timeplus.NewNeutronServer(address, apikey)
+	interval, err := utils.GetIntWithDefault(properties, "interval", 200)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	server := timeplus.NewServer(address, apikey)
+
+	producerInterval := time.Duration(interval) * time.Millisecond
+	producers := make(map[string]*TimeplusStreamProducer)
+	producers["car_live_data"] = NewTimeplusStreamProducer(server, "car_live_data", producerInterval)
+	producers["trips"] = NewTimeplusStreamProducer(server, "trips", producerInterval)
+	producers["bookings"] = NewTimeplusStreamProducer(server, "bookings", producerInterval)
 
 	return &TimeplusSink{
-		server: server,
+		server:    server,
+		producers: producers,
 	}, nil
 }
 
@@ -288,8 +317,16 @@ func (s *TimeplusSink) Init() error {
 
 func (s *TimeplusSink) initStream(streamDef timeplus.StreamDef) error {
 	if s.server.ExistStream(streamDef.Name) {
-		log.Logger().Warnf("stream %s already exist, no need to create", streamDef.Name)
-		return nil
+		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
+			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)
+			if err := s.server.DeleteStream(streamDef.Name); err != nil {
+				return err
+			}
+			return s.server.CreateStream(streamDef)
+		} else {
+			log.Logger().Warnf("stream %s already exist, no need to create", streamDef.Name)
+			return nil
+		}
 	}
 	return s.server.CreateStream(streamDef)
 }
@@ -347,30 +384,10 @@ func (s *TimeplusSink) InitUsers(users []*common.DimUser) error {
 }
 
 func (s *TimeplusSink) Send(event map[string]any, stream string, timeCol string) error {
-	// TODO: now data is ingested one by one
-	// Need add internal queue and flow control
-	ingestData := timeplus.IngestData{}
-	header := make([]string, len(event))
-	data := make([][]any, 1)
-	data[0] = make([]any, len(event))
-
-	i := 0
-	for key := range event {
-		header[i] = key
-		data[0][i] = event[key]
-		i++
-	}
-
-	ingestData.Columns = header
-	ingestData.Data = data
-
-	payload := timeplus.IngestPayload{
-		Data:   ingestData,
-		Stream: stream,
-	}
-
-	if err := s.server.InsertData(payload); err != nil {
-		log.Logger().Error(err)
+	if p, ok := s.producers[stream]; ok {
+		p.produce(event)
+	} else {
+		log.Logger().Errorf("no such stream %s", stream)
 	}
 	return nil
 }

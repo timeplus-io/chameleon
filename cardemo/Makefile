@@ -13,7 +13,7 @@ build:
 	go build 
 
 run:
-	go run main.go --config ./.cardemo.yaml -f /Users/gangtao/Code/timeplus/chameleon/cardemo/sinks.yaml
+	go run main.go --config ./.cardemo.yaml -f ./sinks.yaml
 
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
