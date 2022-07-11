@@ -13,8 +13,9 @@ const TIME_FORMAT = "2006-01-02 15:04:05.000"
 const API_VERSION = "v1beta1"
 
 type ColumnDef struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Default string `json:"default"`
 }
 
 type StreamDef struct {

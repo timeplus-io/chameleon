@@ -2,6 +2,7 @@ package timeplus
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/timeplus-io/chameleon/cardemo/common"
 	"github.com/timeplus-io/chameleon/cardemo/log"
@@ -106,6 +107,11 @@ var BookingStreamDef = timeplus.StreamDef{
 			Name: "booking_time",
 			Type: "datetime64(3)",
 		},
+		{
+			Name:    "_tp_time",
+			Type:    "datetime64(3)",
+			Default: "time",
+		},
 	},
 	TTLExpression:          DefaultTTL,
 	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
@@ -150,6 +156,11 @@ var CarStream = timeplus.StreamDef{
 		{
 			Name: "time",
 			Type: "datetime64(3)",
+		},
+		{
+			Name:    "_tp_time",
+			Type:    "datetime64(3)",
+			Default: "time",
 		},
 	},
 	TTLExpression:          DefaultTTL,
@@ -204,6 +215,11 @@ var TripStream = timeplus.StreamDef{
 			Name: "bid",
 			Type: "string",
 		},
+		{
+			Name:    "_tp_time",
+			Type:    "datetime64(3)",
+			Default: "end_time",
+		},
 	},
 	TTLExpression:          DefaultTTL,
 	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
@@ -244,12 +260,18 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	interval, err := utils.GetIntWithDefault(properties, "interval", 200)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	server := timeplus.NewServer(address, apikey)
 
+	producerInterval := time.Duration(interval) * time.Millisecond
 	producers := make(map[string]*TimeplusStreamProducer)
-	producers["car_live_data"] = NewTimeplusStreamProducer(server, "car_live_data")
-	producers["trips"] = NewTimeplusStreamProducer(server, "trips")
-	producers["bookings"] = NewTimeplusStreamProducer(server, "bookings")
+	producers["car_live_data"] = NewTimeplusStreamProducer(server, "car_live_data", producerInterval)
+	producers["trips"] = NewTimeplusStreamProducer(server, "trips", producerInterval)
+	producers["bookings"] = NewTimeplusStreamProducer(server, "bookings", producerInterval)
 
 	return &TimeplusSink{
 		server:    server,

@@ -9,18 +9,20 @@ import (
 )
 
 type TimeplusStreamProducer struct {
-	server *timeplus.TimeplusServer
-	stream string
-	queue  []map[string]any
-	lock   sync.Mutex
+	server   *timeplus.TimeplusServer
+	stream   string
+	queue    []map[string]any
+	interval time.Duration
+	lock     sync.Mutex
 }
 
-func NewTimeplusStreamProducer(server *timeplus.TimeplusServer, stream string) *TimeplusStreamProducer {
+func NewTimeplusStreamProducer(server *timeplus.TimeplusServer, stream string, interval time.Duration) *TimeplusStreamProducer {
 	producer := &TimeplusStreamProducer{
-		server: server,
-		stream: stream,
-		queue:  make([]map[string]any, 0),
-		lock:   sync.Mutex{},
+		server:   server,
+		stream:   stream,
+		queue:    make([]map[string]any, 0),
+		interval: interval,
+		lock:     sync.Mutex{},
 	}
 
 	go producer.start()
@@ -82,7 +84,7 @@ func (p *TimeplusStreamProducer) send() {
 func (p *TimeplusStreamProducer) start() {
 	for {
 		p.send()
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(p.interval)
 	}
 
 }
