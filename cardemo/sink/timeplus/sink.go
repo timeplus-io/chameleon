@@ -229,7 +229,8 @@ var RevenueView = timeplus.View{
 }
 
 type TimeplusSink struct {
-	server *timeplus.TimeplusServer
+	server    *timeplus.TimeplusServer
+	producers map[string]*TimeplusStreamProducer
 }
 
 func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
@@ -245,8 +246,14 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 
 	server := timeplus.NewServer(address, apikey)
 
+	producers := make(map[string]*TimeplusStreamProducer)
+	producers["car_live_data"] = NewTimeplusStreamProducer(server, "car_live_data")
+	producers["trips"] = NewTimeplusStreamProducer(server, "trips")
+	producers["bookings"] = NewTimeplusStreamProducer(server, "bookings")
+
 	return &TimeplusSink{
-		server: server,
+		server:    server,
+		producers: producers,
 	}, nil
 }
 
@@ -355,30 +362,10 @@ func (s *TimeplusSink) InitUsers(users []*common.DimUser) error {
 }
 
 func (s *TimeplusSink) Send(event map[string]any, stream string, timeCol string) error {
-	// TODO: now data is ingested one by one
-	// Need add internal queue and flow control
-	ingestData := timeplus.IngestData{}
-	header := make([]string, len(event))
-	data := make([][]any, 1)
-	data[0] = make([]any, len(event))
-
-	i := 0
-	for key := range event {
-		header[i] = key
-		data[0][i] = event[key]
-		i++
-	}
-
-	ingestData.Columns = header
-	ingestData.Data = data
-
-	payload := timeplus.IngestPayload{
-		Data:   ingestData,
-		Stream: stream,
-	}
-
-	if err := s.server.InsertData(payload); err != nil {
-		log.Logger().Error(err)
+	if p, ok := s.producers[stream]; ok {
+		p.produce(event)
+	} else {
+		log.Logger().Errorf("no such stream %s", stream)
 	}
 	return nil
 }
