@@ -1,4 +1,4 @@
-package neutron
+package timeplus
 
 import (
 	"fmt"
@@ -10,20 +10,25 @@ import (
 	"github.com/timeplus-io/chameleon/generator/utils"
 )
 
-const NEUTRON_SINK_TYPE = "neutron"
+const TimeplusSinkType = "timeplus"
 
-type NeutronSink struct {
-	server     *NeutronServer
+type TimeplusSink struct {
+	server     *TimeplusServer
 	streamName string
 }
 
-func NewNeutronSink(properties map[string]interface{}) (sink.Sink, error) {
+func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
 	address, err := utils.GetWithDefault(properties, "address", "http://localhost:8000")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
-	return &NeutronSink{
-		server: NewNeutronServer(address),
+
+	apikey, err := utils.GetWithDefault(properties, "apikey", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+	return &TimeplusSink{
+		server: NewTimeplusServer(address, apikey),
 	}, nil
 }
 
@@ -50,12 +55,15 @@ func convertType(sourceType string) string {
 	return "string"
 }
 
-func (s *NeutronSink) Init(name string, fields []common.Field) error {
+func (s *TimeplusSink) Init(name string, fields []common.Field) error {
 	s.streamName = name
 
 	streamDef := StreamDef{
-		Name:    name,
-		Columns: make([]ColumnDef, len(fields)),
+		Name:                   name,
+		Columns:                make([]ColumnDef, len(fields)),
+		TTLExpression:          DefaultTTL,
+		LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
+		LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
 	}
 
 	for index, field := range fields {
@@ -68,12 +76,11 @@ func (s *NeutronSink) Init(name string, fields []common.Field) error {
 		}
 	}
 
-	//s.server.DeleteStream(streamDef.Name)
-	s.server.CreateStream(streamDef) // ignore error here
-	return nil
+	s.server.DeleteStream(streamDef.Name)
+	return s.server.CreateStream(streamDef)
 }
 
-func (s *NeutronSink) Write(headers []string, rows [][]interface{}, index int) error {
+func (s *TimeplusSink) Write(headers []string, rows [][]interface{}, index int) error {
 	log.Logger().Debugf("Write one event to stream %s %v:%v", s.streamName, headers, rows)
 	ingestData := IngestPayload{
 		Stream: s.streamName,

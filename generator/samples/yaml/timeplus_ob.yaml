@@ -16,11 +16,11 @@ source:
     type: timestamp
     timestamp_format: '2006-01-02 15:04:05.000000'
 sinks:
-- type: neutron
+- type: timeplus
   properties:
     address: http://localhost:8000
 observer:
-  type: neutron
+  type: timeplus
   properties:
     address: http://localhost:8000
     metric: availability

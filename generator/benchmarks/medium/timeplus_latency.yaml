@@ -38,12 +38,12 @@ source:
     - 10000
 
 sinks:
-- type: neutron
+- type: timeplus
   properties:
     address: http://localhost:8000
     
 observer:
-  type: neutron
+  type: timeplus
   properties:
     address: http://localhost:8000
     query: select * from test where value=9

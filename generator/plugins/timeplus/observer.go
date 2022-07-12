@@ -1,4 +1,4 @@
-package neutron
+package timeplus
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 	"github.com/timeplus-io/chameleon/generator/utils"
 )
 
-const NEUTRON_OB_TYPE = "neutron"
+const TimeplusOBType = "timeplus"
 
-type NeutronObserver struct {
-	server     *NeutronServer
+type TimeplusObserver struct {
+	server     *TimeplusServer
 	query      string
 	timeColumn string
 	timeFormat string
@@ -29,8 +29,13 @@ type NeutronObserver struct {
 	metricsManager *metrics.Manager
 }
 
-func NewNeutronObserver(properties map[string]interface{}) (observer.Observer, error) {
+func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, error) {
 	address, err := utils.GetWithDefault(properties, "address", "http://localhost:8000")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	apikey, err := utils.GetWithDefault(properties, "apikey", "")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
@@ -55,8 +60,8 @@ func NewNeutronObserver(properties map[string]interface{}) (observer.Observer, e
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	return &NeutronObserver{
-		server:         NewNeutronServer(address),
+	return &TimeplusObserver{
+		server:         NewTimeplusServer(address, apikey),
 		query:          query,
 		timeColumn:     timeColumn,
 		timeFormat:     timeFormat,
@@ -67,7 +72,7 @@ func NewNeutronObserver(properties map[string]interface{}) (observer.Observer, e
 	}, nil
 }
 
-func (o *NeutronObserver) observeLatency() error {
+func (o *TimeplusObserver) observeLatency() error {
 	log.Logger().Infof("start observing latecny")
 	o.metricsManager.Add("latency")
 
@@ -102,7 +107,7 @@ func (o *NeutronObserver) observeLatency() error {
 	return nil
 }
 
-func (o *NeutronObserver) observeThroughput() error {
+func (o *TimeplusObserver) observeThroughput() error {
 	log.Logger().Infof("start observing throughput")
 	o.metricsManager.Add("throughput")
 
@@ -131,14 +136,14 @@ func (o *NeutronObserver) observeThroughput() error {
 	return nil
 }
 
-func (o *NeutronObserver) observeAvailability() error {
+func (o *TimeplusObserver) observeAvailability() error {
 	log.Logger().Infof("start observing availability")
 	o.metricsManager.Add("availability")
 	o.obWaiter.Add(1)
 
 	for {
 		if o.isStopped {
-			log.Logger().Infof("stop neutron availability observing")
+			log.Logger().Infof("stop timeplus availability observing")
 			break
 		}
 
@@ -159,7 +164,7 @@ func (o *NeutronObserver) observeAvailability() error {
 	return nil
 }
 
-func (o *NeutronObserver) Observe() error {
+func (o *TimeplusObserver) Observe() error {
 	log.Logger().Infof("start observing")
 	if o.metric == "latency" {
 		go o.observeLatency()
@@ -173,16 +178,16 @@ func (o *NeutronObserver) Observe() error {
 	return nil
 }
 
-func (o *NeutronObserver) Stop() {
-	log.Logger().Infof("call neutron stop observing")
+func (o *TimeplusObserver) Stop() {
+	log.Logger().Infof("call timeplus stop observing")
 	o.isStopped = true
 	log.Logger().Infof("set stopped")
 	o.cancel() // a bug with cancel when timeout
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
-	o.metricsManager.Save("neutron")
+	o.metricsManager.Save("timeplus")
 }
 
-func (o *NeutronObserver) Wait() {
+func (o *TimeplusObserver) Wait() {
 	o.obWaiter.Wait()
 }

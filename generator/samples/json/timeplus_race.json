@@ -24,14 +24,14 @@
     },
     "sinks": [
         {
-            "type": "neutron",
+            "type": "timeplus",
             "properties": {
                 "address": "http://localhost:8000"
             }
         }
     ],
     "observer": {
-        "type": "neutron",
+        "type": "timeplus",
         "properties": {
             "address": "http://localhost:8000",
             "metric": "availability",

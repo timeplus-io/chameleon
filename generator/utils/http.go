@@ -38,6 +38,13 @@ func HttpRequestWithAuth(method string, url string, payload interface{}, client 
 	return HttpRequestWithHeader(method, url, payload, client, headers)
 }
 
+func HttpRequestWithAPIKey(method string, url string, payload interface{}, client *http.Client, key string) (int, []byte, error) {
+	headers := make(map[string]string)
+	headers["X-Api-key"] = key
+
+	return HttpRequestWithHeader(method, url, payload, client, headers)
+}
+
 func HttpRequestWithUser(method string, url string, payload *url.Values, client *http.Client, username string, password string) (int, []byte, error) {
 	// var body io.Reader
 	// if payload == nil {
