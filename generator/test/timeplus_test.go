@@ -7,7 +7,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/observer"
-	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
+	"github.com/timeplus-io/chameleon/generator/plugins/timeplus"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 
@@ -25,11 +25,11 @@ var _ = Describe("Test Job", func() {
 
 		It("Create/List/Delete neutron stream", func() {
 			address := "http://localhost:8000"
-			server := neutron.NewNeutronServer(address)
+			server := timeplus.NewTimeplusServer(address, "")
 
-			streamDef := neutron.StreamDef{
+			streamDef := timeplus.StreamDef{
 				Name: "testStream",
-				Columns: []neutron.ColumnDef{
+				Columns: []timeplus.ColumnDef{
 					{
 						Name: "a",
 						Type: "int",
@@ -61,11 +61,11 @@ var _ = Describe("Test Job", func() {
 
 		It("Test Insert Data", func() {
 			address := "http://localhost:8000"
-			server := neutron.NewNeutronServer(address)
+			server := timeplus.NewTimeplusServer(address, "")
 
-			streamDef := neutron.StreamDef{
+			streamDef := timeplus.StreamDef{
 				Name: "testStream",
-				Columns: []neutron.ColumnDef{
+				Columns: []timeplus.ColumnDef{
 					{
 						Name: "number",
 						Type: "int",
@@ -84,9 +84,9 @@ var _ = Describe("Test Job", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			time.Sleep(1 * time.Second)
-			ingestData := neutron.IngestPayload{
+			ingestData := timeplus.IngestPayload{
 				Stream: streamDef.Name,
-				Data: neutron.IngestData{
+				Data: timeplus.IngestData{
 					Columns: []string{"number", "time"},
 					Data: [][]interface{}{
 						{1, "2022-03-31 23:58:56.344"},
@@ -116,7 +116,7 @@ var _ = Describe("Test Job", func() {
 				Source: source.DefaultConfiguration(),
 				Sinks: []sink.Configuration{
 					{
-						Type: neutron.NEUTRON_SINK_TYPE,
+						Type: timeplus.TimeplusSinkType,
 						Properties: map[string]interface{}{
 							"address": "http://localhost:8000",
 						},
@@ -158,14 +158,14 @@ var _ = Describe("Test Job", func() {
 				},
 				Sinks: []sink.Configuration{
 					{
-						Type: neutron.NEUTRON_SINK_TYPE,
+						Type: timeplus.TimeplusSinkType,
 						Properties: map[string]interface{}{
 							"address": "http://localhost:8000",
 						},
 					},
 				},
 				Observer: observer.Configuration{
-					Type: neutron.NEUTRON_OB_TYPE,
+					Type: timeplus.TimeplusOBType,
 					Properties: map[string]interface{}{
 						"address":     "http://localhost:8000",
 						"query":       "select * from test where value>9 ",
@@ -193,7 +193,7 @@ var _ = Describe("Test Job", func() {
 				"metric": "availability",
 				"query":  "SELECT count(*) FROM table(test)",
 			}
-			ob, err := neutron.NewNeutronObserver(properties)
+			ob, err := timeplus.NewTimeplusObserver(properties)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			go func() {

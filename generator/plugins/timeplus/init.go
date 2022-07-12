@@ -1,4 +1,4 @@
-package neutron
+package timeplus
 
 import (
 	"github.com/timeplus-io/chameleon/generator/log"
@@ -8,18 +8,18 @@ import (
 
 func init() {
 	sinkItem := sink.SinkRegItem{
-		Name:        NEUTRON_SINK_TYPE,
-		Constructor: NewNeutronSink,
+		Name:        TimeplusSinkType,
+		Constructor: NewTimeplusSink,
 	}
 	sink.Register(sinkItem)
-	log.Logger().Infof("sink plugin %s has been registered", NEUTRON_SINK_TYPE)
+	log.Logger().Infof("sink plugin %s has been registered", TimeplusSinkType)
 
 	obItem := observer.ObRegItem{
-		Name:        NEUTRON_OB_TYPE,
-		Constructor: NewNeutronObserver,
+		Name:        TimeplusOBType,
+		Constructor: NewTimeplusObserver,
 	}
 	observer.Register(obItem)
-	log.Logger().Infof("observer plugin %s has been registered", NEUTRON_OB_TYPE)
+	log.Logger().Infof("observer plugin %s has been registered", TimeplusOBType)
 }
 
 func Init() {

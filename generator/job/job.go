@@ -132,7 +132,10 @@ func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observe
 	// initialize all sinks with fields defineid in source
 	fields := job.source.GetFields()
 	for _, sink := range job.sinks {
-		sink.Init(name, fields) // todo : check init status here
+		err := sink.Init(name, fields) // todo : check init status here
+		if err != nil {
+			log.Logger().WithError(err).Fatalf("failed to initialize sink")
+		}
 	}
 
 	return job

@@ -23,9 +23,9 @@ import (
 	"github.com/timeplus-io/chameleon/generator/plugins/kafka"
 	"github.com/timeplus-io/chameleon/generator/plugins/ksql"
 	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
-	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
 	"github.com/timeplus-io/chameleon/generator/plugins/rocketmq"
 	"github.com/timeplus-io/chameleon/generator/plugins/splunk"
+	"github.com/timeplus-io/chameleon/generator/plugins/timeplus"
 
 	_ "github.com/timeplus-io/chameleon/generator/docs"
 )
@@ -101,7 +101,7 @@ func Run(_ *cobra.Command, _ []string) error {
 }
 
 func initPlugins() {
-	neutron.Init()
+	timeplus.Init()
 	splunk.Init()
 	materialize.Init()
 	kafka.Init()

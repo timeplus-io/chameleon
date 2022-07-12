@@ -17,11 +17,12 @@ source:
     type: timestamp
     timestamp_format: '2006-01-02 15:04:05.000000'
 sinks:
-- type: neutron
+- type: timeplus
   properties:
     address: http://localhost:8000
+
 observer:
-  type: neutron
+  type: timeplus
   properties:
     address: http://localhost:8000
     query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start

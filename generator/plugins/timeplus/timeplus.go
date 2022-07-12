@@ -1,4 +1,4 @@
-package neutron
+package timeplus
 
 import (
 	"bytes"
@@ -14,8 +14,12 @@ import (
 	"github.com/timeplus-io/chameleon/generator/utils"
 )
 
-const TIME_FORMAT = "2006-01-02 15:04:05.000"
-const API_VERSION = "v1beta1"
+const TimeFormat = "2006-01-02 15:04:05.000"
+const APIVersion = "v1beta1"
+
+const DefaultTTL = "to_datetime(_tp_time) + INTERVAL 30 DAY"
+const DefaultLogStoreRetentionBytes = 604800000
+const DefaultLogStoreRetentionMS = 1342177280
 
 type ColumnDef struct {
 	Name string `json:"name"`
@@ -23,12 +27,14 @@ type ColumnDef struct {
 }
 
 type StreamDef struct {
-	Name              string      `json:"name"`
-	Columns           []ColumnDef `json:"columns"`
-	EventTimeColumn   string      `json:"event_time_column,omitempty"`
-	Shards            int         `json:"shards,omitempty"`
-	ReplicationFactor int         `json:"replication_factor,omitempty"`
-	TTLExpression     string      `json:"ttl_expression,omitempty"`
+	Name                   string      `json:"name"`
+	Columns                []ColumnDef `json:"columns"`
+	EventTimeColumn        string      `json:"event_time_column,omitempty"`
+	Shards                 int         `json:"shards,omitempty"`
+	ReplicationFactor      int         `json:"replication_factor,omitempty"`
+	TTLExpression          string      `json:"ttl_expression,omitempty"`
+	LogStoreRetentionBytes int         `json:"logstore_retention_bytes,omitempty"`
+	LogStoreRetentionMS    int         `json:"logstore_retention_ms,omitempty"`
 }
 
 type IngestData struct {
@@ -92,27 +98,29 @@ type ThroughputStat struct {
 	Value float32 `json:"value"`
 }
 
-type NeutronServer struct {
+type TimeplusServer struct {
 	addres string
+	apikey string
 	client *http.Client
 }
 
-func NewNeutronServer(address string) *NeutronServer {
-	return &NeutronServer{
+func NewTimeplusServer(address string, apikey string) *TimeplusServer {
+	return &TimeplusServer{
 		addres: address,
+		apikey: apikey,
 		client: utils.NewDefaultHttpClient(),
 	}
 }
 
-func (s *NeutronServer) SyncQuery(sql string) (*QueryResult, error) {
-	url := fmt.Sprintf("%s/api/%s/sql", s.addres, API_VERSION)
+func (s *TimeplusServer) SyncQuery(sql string) (*QueryResult, error) {
+	url := fmt.Sprintf("%s/api/%s/sql", s.addres, APIVersion)
 
 	req := SQLRequest{
 		SQL:     sql,
 		Timeout: 1000,
 	}
 
-	_, respBody, err := utils.HttpRequest(http.MethodPost, url, req, s.client)
+	_, respBody, err := utils.HttpRequestWithAPIKey(http.MethodPost, url, req, s.client, s.apikey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run SQL %s: %w", req.SQL, err)
 	}
@@ -122,27 +130,27 @@ func (s *NeutronServer) SyncQuery(sql string) (*QueryResult, error) {
 	return &payload, nil
 }
 
-func (s *NeutronServer) CreateStream(streamDef StreamDef) error {
-	url := fmt.Sprintf("%s/api/%s/streams", s.addres, API_VERSION)
-	_, _, err := utils.HttpRequest(http.MethodPost, url, streamDef, s.client)
+func (s *TimeplusServer) CreateStream(streamDef StreamDef) error {
+	url := fmt.Sprintf("%s/api/%s/streams", s.addres, APIVersion)
+	_, _, err := utils.HttpRequestWithAPIKey(http.MethodPost, url, streamDef, s.client, s.apikey)
 	if err != nil {
 		return fmt.Errorf("failed to create stream %s: %w", streamDef.Name, err)
 	}
 	return nil
 }
 
-func (s *NeutronServer) DeleteStream(streamName string) error {
-	url := fmt.Sprintf("%s/api/%s/streams/%s", s.addres, API_VERSION, streamName)
-	_, _, err := utils.HttpRequest(http.MethodDelete, url, nil, s.client)
+func (s *TimeplusServer) DeleteStream(streamName string) error {
+	url := fmt.Sprintf("%s/api/%s/streams/%s", s.addres, APIVersion, streamName)
+	_, _, err := utils.HttpRequestWithAPIKey(http.MethodDelete, url, nil, s.client, s.apikey)
 	if err != nil {
 		return fmt.Errorf("failed to delete stream %s: %w", streamName, err)
 	}
 	return nil
 }
 
-func (s *NeutronServer) ListStream() ([]StreamDef, error) {
-	url := fmt.Sprintf("%s/api/%s/streams", s.addres, API_VERSION)
-	_, respBody, err := utils.HttpRequest(http.MethodGet, url, nil, s.client)
+func (s *TimeplusServer) ListStream() ([]StreamDef, error) {
+	url := fmt.Sprintf("%s/api/%s/streams", s.addres, APIVersion)
+	_, respBody, err := utils.HttpRequestWithAPIKey(http.MethodGet, url, nil, s.client, s.apikey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list stream : %w", err)
 	}
@@ -153,9 +161,9 @@ func (s *NeutronServer) ListStream() ([]StreamDef, error) {
 	return payload, nil
 }
 
-func (s *NeutronServer) InsertData(data IngestPayload) error {
-	url := fmt.Sprintf("%s/api/%s/streams/%s/ingest", s.addres, API_VERSION, data.Stream)
-	_, _, err := utils.HttpRequest(http.MethodPost, url, data.Data, s.client)
+func (s *TimeplusServer) InsertData(data IngestPayload) error {
+	url := fmt.Sprintf("%s/api/%s/streams/%s/ingest", s.addres, APIVersion, data.Stream)
+	_, _, err := utils.HttpRequestWithAPIKey(http.MethodPost, url, data.Data, s.client, s.apikey)
 	if err != nil {
 		return fmt.Errorf("failed to ingest data into stream %s: %w", data.Stream, err)
 	}
@@ -170,7 +178,7 @@ func toEvent(headers []ColumnDef, data []interface{}) common.Event {
 	return event
 }
 
-func (s *NeutronServer) QueryStream(sql string) (rxgo.Observable, error) {
+func (s *TimeplusServer) QueryStream(sql string) (rxgo.Observable, error) {
 	query := Query{
 		SQL:         sql,
 		Name:        "",
@@ -178,8 +186,8 @@ func (s *NeutronServer) QueryStream(sql string) (rxgo.Observable, error) {
 		Tags:        []string{},
 	}
 
-	createQueryUrl := fmt.Sprintf("%s/api/%s/queries", s.addres, API_VERSION)
-	_, respBody, err := utils.HttpRequest(http.MethodPost, createQueryUrl, query, s.client)
+	createQueryUrl := fmt.Sprintf("%s/api/%s/queries", s.addres, APIVersion)
+	_, respBody, err := utils.HttpRequestWithAPIKey(http.MethodPost, createQueryUrl, query, s.client, s.apikey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create query : %w", err)
 	}

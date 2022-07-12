@@ -6,7 +6,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/plugins/console"
-	"github.com/timeplus-io/chameleon/generator/plugins/neutron"
+	"github.com/timeplus-io/chameleon/generator/plugins/timeplus"
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 
@@ -18,7 +18,7 @@ var _ = Describe("Test Job", func() {
 
 	BeforeEach(func() {
 		console.Init()
-		neutron.Init()
+		timeplus.Init()
 	})
 
 	Describe("Job test", func() {

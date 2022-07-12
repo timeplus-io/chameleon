@@ -2,7 +2,7 @@
     "name": "test",
     "timeout": 100,
     "observer": {
-        "type": "neutron",
+        "type": "timeplus",
         "properties": {
             "address": "http://localhost:8000",
             "query": "select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start",
