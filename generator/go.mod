@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/lib/pq v1.10.4
 	github.com/reactivex/rxgo/v2 v2.5.0
@@ -32,7 +32,10 @@ require (
 
 require github.com/pkg/profile v1.6.0
 
-require github.com/apache/rocketmq-client-go/v2 v2.1.0
+require (
+	github.com/apache/rocketmq-client-go/v2 v2.1.0
+	github.com/timeplus-io/go-client v0.0.0-20220713194101-a38c8fed3b31
+)
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

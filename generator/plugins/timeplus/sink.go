@@ -8,12 +8,18 @@ import (
 	"github.com/timeplus-io/chameleon/generator/sink"
 	"github.com/timeplus-io/chameleon/generator/source"
 	"github.com/timeplus-io/chameleon/generator/utils"
+
+	timeplus "github.com/timeplus-io/go-client/client"
 )
 
 const TimeplusSinkType = "timeplus"
 
+const DefaultTTL = "to_datetime(_tp_time) + INTERVAL 30 DAY"
+const DefaultLogStoreRetentionBytes = 604800000
+const DefaultLogStoreRetentionMS = 1342177280
+
 type TimeplusSink struct {
-	server     *TimeplusServer
+	server     *timeplus.TimeplusClient
 	streamName string
 }
 
@@ -28,7 +34,7 @@ func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 	return &TimeplusSink{
-		server: NewTimeplusServer(address, apikey),
+		server: timeplus.NewCient(address, apikey),
 	}, nil
 }
 
@@ -37,13 +43,13 @@ func convertType(sourceType string) string {
 	case string(source.FIELDTYPE_TIMESTAMP):
 		return "datetime64(3)"
 	case string(source.FIELDTYPE_TIMESTAMP_INT):
-		return "int"
+		return "int64"
 	case string(source.FIELDTYPE_STRING):
 		return "string"
 	case string(source.FIELDTYPE_INT):
-		return "int"
+		return "int64"
 	case string(source.FIELDTYPE_FLOAT):
-		return "float"
+		return "float64"
 	case string(source.FIELDTYPE_BOOL):
 		return "bool"
 	case string(source.FIELDTYPE_MAP):
@@ -58,9 +64,9 @@ func convertType(sourceType string) string {
 func (s *TimeplusSink) Init(name string, fields []common.Field) error {
 	s.streamName = name
 
-	streamDef := StreamDef{
+	streamDef := timeplus.StreamDef{
 		Name:                   name,
-		Columns:                make([]ColumnDef, len(fields)),
+		Columns:                make([]timeplus.ColumnDef, len(fields)),
 		TTLExpression:          DefaultTTL,
 		LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
 		LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
@@ -70,7 +76,7 @@ func (s *TimeplusSink) Init(name string, fields []common.Field) error {
 		convertedType := convertType(field.Type)
 		log.Logger().Debugf("convert type %s to %s", field.Type, convertedType)
 
-		streamDef.Columns[index] = ColumnDef{
+		streamDef.Columns[index] = timeplus.ColumnDef{
 			Name: field.Name,
 			Type: convertedType,
 		}
@@ -82,15 +88,13 @@ func (s *TimeplusSink) Init(name string, fields []common.Field) error {
 
 func (s *TimeplusSink) Write(headers []string, rows [][]interface{}, index int) error {
 	log.Logger().Debugf("Write one event to stream %s %v:%v", s.streamName, headers, rows)
-	ingestData := IngestPayload{
+	ingestData := timeplus.IngestPayload{
 		Stream: s.streamName,
-		Data: IngestData{
+		Data: timeplus.IngestData{
 			Columns: headers,
 			Data:    rows,
 		},
 	}
-
-	//log.Logger().Infof("Write one event to stream %v", ingestData)
 
 	return s.server.InsertData(ingestData)
 }

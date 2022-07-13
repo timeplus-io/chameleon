@@ -14,8 +14,7 @@ source:
     - 0
     - 100
   - name: time
-    type: timestamp
-    timestamp_format: '2006-01-02 15:04:05.000000'
+    type: timestamp_int
 sinks:
 - type: timeplus
   properties:
@@ -25,6 +24,6 @@ observer:
   type: timeplus
   properties:
     address: http://localhost:8000
-    query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start
+    query: select * from test where value=9
     time_column: time
-    metric: throughput
+    metric: latency
