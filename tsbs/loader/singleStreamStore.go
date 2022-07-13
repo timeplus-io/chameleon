@@ -5,20 +5,21 @@ import (
 
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/log"
-	"github.com/timeplus-io/chameleon/tsbs/timeplus"
 	"github.com/timeplus-io/chameleon/tsbs/utils"
+
+	timeplus "github.com/timeplus-io/go-client/client"
 )
 
 type SingleStreamStoreLoader struct {
-	server         *timeplus.NeutronServer
+	client         *timeplus.TimeplusClient
 	metrics        []common.Metric
 	name           string
 	realtimeIngest bool
 }
 
-func NewSingleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common.Metric, name string, realtimeIngest bool) *SingleStreamStoreLoader {
+func NewSingleStreamStoreLoader(client *timeplus.TimeplusClient, metrics []common.Metric, name string, realtimeIngest bool) *SingleStreamStoreLoader {
 	return &SingleStreamStoreLoader{
-		server:         server,
+		client:         client,
 		metrics:        metrics,
 		name:           name,
 		realtimeIngest: realtimeIngest,
@@ -26,7 +27,7 @@ func NewSingleStreamStoreLoader(server *timeplus.NeutronServer, metrics []common
 }
 
 func (l *SingleStreamStoreLoader) DeleteStreams() {
-	l.server.DeleteStream(l.name)
+	l.client.DeleteStream(l.name)
 }
 
 func (l *SingleStreamStoreLoader) CreateStreams() error {
@@ -51,10 +52,13 @@ func (l *SingleStreamStoreLoader) CreateStreams() error {
 				Type: "float64",
 			},
 		},
-		EventTimeColumn: "to_datetime64(timestamp,9)",
+		EventTimeColumn:        "to_datetime64(timestamp,9)",
+		TTLExpression:          DefaultTTL,
+		LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
+		LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
 	}
 
-	return l.server.CreateStream(streamDef)
+	return l.client.CreateStream(streamDef)
 }
 
 func (l *SingleStreamStoreLoader) Ingest(payloads []common.Payload) {
@@ -92,7 +96,7 @@ func (l *SingleStreamStoreLoader) ingest(payload common.Payload) {
 		},
 	}
 
-	if err := l.server.InsertData(load); err != nil {
+	if err := l.client.InsertData(load); err != nil {
 		log.Logger().WithError(err).Warnf("failed to ingest")
 	}
 }

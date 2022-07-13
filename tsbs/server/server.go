@@ -11,7 +11,8 @@ import (
 	"github.com/timeplus-io/chameleon/tsbs/common"
 	"github.com/timeplus-io/chameleon/tsbs/loader"
 	"github.com/timeplus-io/chameleon/tsbs/log"
-	"github.com/timeplus-io/chameleon/tsbs/timeplus"
+
+	timeplus "github.com/timeplus-io/go-client/client"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,7 +28,7 @@ func Run(_ *cobra.Command, _ []string) error {
 
 	timeplusAddress := viper.GetString("timeplus-address")
 	tmieplusApiKey := viper.GetString("timeplus-apikey")
-	server := timeplus.NewNeutronServer(timeplusAddress, tmieplusApiKey)
+	server := timeplus.NewCient(timeplusAddress, tmieplusApiKey)
 
 	realtimeIngest := viper.GetBool("realtime-ingest")
 	var dataloader loader.DataLoader
