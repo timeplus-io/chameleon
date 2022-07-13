@@ -5,20 +5,21 @@ import (
 	"time"
 
 	"github.com/timeplus-io/chameleon/cardemo/log"
-	"github.com/timeplus-io/chameleon/cardemo/timeplus"
+
+	timeplus "github.com/timeplus-io/go-client/client"
 )
 
 type TimeplusStreamProducer struct {
-	server   *timeplus.TimeplusServer
+	client   *timeplus.TimeplusClient
 	stream   string
 	queue    []map[string]any
 	interval time.Duration
 	lock     sync.Mutex
 }
 
-func NewTimeplusStreamProducer(server *timeplus.TimeplusServer, stream string, interval time.Duration) *TimeplusStreamProducer {
+func NewTimeplusStreamProducer(server *timeplus.TimeplusClient, stream string, interval time.Duration) *TimeplusStreamProducer {
 	producer := &TimeplusStreamProducer{
-		server:   server,
+		client:   server,
 		stream:   stream,
 		queue:    make([]map[string]any, 0),
 		interval: interval,
@@ -74,7 +75,7 @@ func (p *TimeplusStreamProducer) send() {
 	}
 
 	go func() {
-		if err := p.server.InsertData(payload); err != nil {
+		if err := p.client.InsertData(payload); err != nil {
 			log.Logger().Error(err)
 		}
 	}()

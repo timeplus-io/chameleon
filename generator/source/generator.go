@@ -201,10 +201,10 @@ func (s *GeneratorEngine) GetFields() []common.Field {
 
 func makeTimestampInt(timestampDeleyMin int, timestampDeleyMax int) int64 {
 	now := time.Now().UTC()
-	delay := faker.Number(timestampDeleyMin, timestampDeleyMax)
+	// delay := faker.Number(timestampDeleyMin, timestampDeleyMax)
 	nsec := now.UnixMilli()
-	t := nsec - int64(delay)
-	return t
+	//t := nsec - int64(delay)
+	return nsec
 }
 
 func makeTimestamp(timestampDeleyMin int, timestampDeleyMax int) time.Time {

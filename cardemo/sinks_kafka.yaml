@@ -1,0 +1,5 @@
+
+sinks:
+- type: kafka
+  properties:
+    brokers: a32633f9f75cf4350b1f1e393970255a-638339585.us-west-2.elb.amazonaws.com:9094

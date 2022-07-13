@@ -7,17 +7,18 @@ import (
 	"time"
 
 	"github.com/reactivex/rxgo/v2"
-	"github.com/timeplus-io/chameleon/generator/common"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/metrics"
 	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/utils"
+
+	timeplus "github.com/timeplus-io/go-client/client"
 )
 
 const TimeplusOBType = "timeplus"
 
 type TimeplusObserver struct {
-	server     *TimeplusServer
+	server     *timeplus.TimeplusClient
 	query      string
 	timeColumn string
 	timeFormat string
@@ -61,7 +62,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 	}
 
 	return &TimeplusObserver{
-		server:         NewTimeplusServer(address, apikey),
+		server:         timeplus.NewCient(address, apikey),
 		query:          query,
 		timeColumn:     timeColumn,
 		timeFormat:     timeFormat,
@@ -84,15 +85,13 @@ func (o *TimeplusObserver) observeLatency() error {
 
 	o.obWaiter.Add(1)
 	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(common.Event)
-		log.Logger().Debugf("the event is %v", event)
-		t, err := time.Parse(o.timeFormat, event[o.timeColumn].(string))
-		if err != nil {
-			log.Logger().Errorf("failed to parse time column", err)
-		} else {
-			log.Logger().Infof("observe latency %v", time.Until(t))
-			o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
-		}
+		event := v.(map[string]interface{})
+
+		timestamp := event[o.timeColumn].(float64)
+		tm := time.UnixMilli(int64(timestamp))
+		log.Logger().Infof("observe latency %v", time.Until(tm))
+		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0)
+
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
@@ -119,7 +118,7 @@ func (o *TimeplusObserver) observeThroughput() error {
 
 	o.obWaiter.Add(1)
 	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(common.Event)
+		event := v.(map[string]interface{})
 		log.Logger().Infof("observe throughput %v", event["count"]) // TODO: make col configurable
 		o.metricsManager.Observe("throughput", event["count"].(float64))
 	}, func(err error) {
@@ -137,31 +136,32 @@ func (o *TimeplusObserver) observeThroughput() error {
 }
 
 func (o *TimeplusObserver) observeAvailability() error {
-	log.Logger().Infof("start observing availability")
-	o.metricsManager.Add("availability")
-	o.obWaiter.Add(1)
+	return fmt.Errorf("availability not supported")
+	// log.Logger().Infof("start observing availability")
+	// o.metricsManager.Add("availability")
+	// o.obWaiter.Add(1)
 
-	for {
-		if o.isStopped {
-			log.Logger().Infof("stop timeplus availability observing")
-			break
-		}
+	// for {
+	// 	if o.isStopped {
+	// 		log.Logger().Infof("stop timeplus availability observing")
+	// 		break
+	// 	}
 
-		result, err := o.server.SyncQuery(o.query)
-		if err != nil {
-			log.Logger().Errorf("failed to run query : %w", err)
-			continue
-		}
+	// 	result, err := o.server.SyncQuery(o.query)
+	// 	if err != nil {
+	// 		log.Logger().Errorf("failed to run query : %w", err)
+	// 		continue
+	// 	}
 
-		count := result.Data[0][0]
-		log.Logger().Infof("observing availability with count = %v", count)
-		o.metricsManager.Observe("availability", count.(float64))
-		time.Sleep(1 * time.Second)
-	}
+	// 	count := result.Data[0][0]
+	// 	log.Logger().Infof("observing availability with count = %v", count)
+	// 	o.metricsManager.Observe("availability", count.(float64))
+	// 	time.Sleep(1 * time.Second)
+	// }
 
-	log.Logger().Infof("stop observing availability")
-	o.obWaiter.Done()
-	return nil
+	// log.Logger().Infof("stop observing availability")
+	// o.obWaiter.Done()
+	// return nil
 }
 
 func (o *TimeplusObserver) Observe() error {

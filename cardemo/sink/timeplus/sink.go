@@ -6,8 +6,10 @@ import (
 
 	"github.com/timeplus-io/chameleon/cardemo/common"
 	"github.com/timeplus-io/chameleon/cardemo/log"
-	"github.com/timeplus-io/chameleon/cardemo/timeplus"
+
 	"github.com/timeplus-io/chameleon/cardemo/utils"
+
+	timeplus "github.com/timeplus-io/go-client/client"
 )
 
 const DefaultTTL = "to_datetime(_tp_time) + INTERVAL 30 DAY"
@@ -245,7 +247,7 @@ var RevenueView = timeplus.View{
 }
 
 type TimeplusSink struct {
-	server    *timeplus.TimeplusServer
+	client    *timeplus.TimeplusClient
 	producers map[string]*TimeplusStreamProducer
 }
 
@@ -265,7 +267,7 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	server := timeplus.NewServer(address, apikey)
+	server := timeplus.NewCient(address, apikey)
 
 	producerInterval := time.Duration(interval) * time.Millisecond
 	producers := make(map[string]*TimeplusStreamProducer)
@@ -274,7 +276,7 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 	producers["bookings"] = NewTimeplusStreamProducer(server, "bookings", producerInterval)
 
 	return &TimeplusSink{
-		server:    server,
+		client:    server,
 		producers: producers,
 	}, nil
 }
@@ -316,27 +318,27 @@ func (s *TimeplusSink) Init() error {
 }
 
 func (s *TimeplusSink) initStream(streamDef timeplus.StreamDef) error {
-	if s.server.ExistStream(streamDef.Name) {
+	if s.client.ExistStream(streamDef.Name) {
 		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
 			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)
-			if err := s.server.DeleteStream(streamDef.Name); err != nil {
+			if err := s.client.DeleteStream(streamDef.Name); err != nil {
 				return err
 			}
-			return s.server.CreateStream(streamDef)
+			return s.client.CreateStream(streamDef)
 		} else {
 			log.Logger().Warnf("stream %s already exist, no need to create", streamDef.Name)
 			return nil
 		}
 	}
-	return s.server.CreateStream(streamDef)
+	return s.client.CreateStream(streamDef)
 }
 
 func (s *TimeplusSink) initView(view timeplus.View) error {
-	if s.server.ExistView(view.Name) {
+	if s.client.ExistView(view.Name) {
 		log.Logger().Warnf("stream %s already exist, no need to create", view.Name)
 		return nil
 	}
-	return s.server.CreateView(view)
+	return s.client.CreateView(view)
 }
 
 func dimCarsToIngestData(cars []*common.DimCar) timeplus.IngestData {
@@ -355,7 +357,7 @@ func (s *TimeplusSink) InitCars(cars []*common.DimCar) error {
 		Data:   ingestData,
 		Stream: DimCarStreamDef.Name,
 	}
-	if err := s.server.InsertData(payload); err != nil {
+	if err := s.client.InsertData(payload); err != nil {
 		log.Logger().Fatalf("failed to initialize data to stream %s", DimCarStreamDef.Name)
 	}
 	return nil
@@ -377,7 +379,7 @@ func (s *TimeplusSink) InitUsers(users []*common.DimUser) error {
 		Data:   ingestData,
 		Stream: DimUserStreamDef.Name,
 	}
-	if err := s.server.InsertData(payload); err != nil {
+	if err := s.client.InsertData(payload); err != nil {
 		log.Logger().Fatalf("failed to initialize data to stream %s", DimUserStreamDef.Name)
 	}
 	return nil
