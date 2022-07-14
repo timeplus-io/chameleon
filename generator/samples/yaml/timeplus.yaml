@@ -12,7 +12,7 @@ source:
     type: int
     limit:
     - 0
-    - 100
+    - 10000
   - name: time
     type: timestamp_int
 sinks:
@@ -27,3 +27,5 @@ observer:
     query: select * from test where value=9
     time_column: time
     metric: latency
+    metric_store_address: http://localhost:8000
+    metric_store_apikey: ""

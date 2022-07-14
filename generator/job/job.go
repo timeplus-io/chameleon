@@ -111,7 +111,7 @@ func NewJob(config JobConfiguration) (*Job, error) {
 
 	obs, err := observer.CreateObserver(config.Observer)
 	if err != nil {
-		log.Logger().Warnf("failed to create observer %s", config.Observer.Type)
+		log.Logger().WithError(err).Warnf("failed to create observer %s", config.Observer.Type)
 	}
 
 	return CreateJob(config.Name, source, sinks, obs, config.Timeout), nil

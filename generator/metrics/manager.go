@@ -8,10 +8,13 @@ import (
 	"time"
 
 	"github.com/timeplus-io/chameleon/generator/log"
+	timeplus "github.com/timeplus-io/go-client/client"
+	timeplusMetrics "github.com/timeplus-io/go-client/metrics"
 )
 
 type Manager struct {
-	metrics sync.Map
+	metrics         sync.Map
+	timeplusMetrics *timeplusMetrics.Metrics
 }
 
 type Metric struct {
@@ -29,9 +32,17 @@ func NewMetric() *Metric {
 	}
 }
 
-func NewManager() *Manager {
+func NewManager(timeplusAddress string, timeplusAPIkey string) *Manager {
+	timeplusClient := timeplus.NewCient(timeplusAddress, timeplusAPIkey)
+	var m *timeplusMetrics.Metrics
+	m, err := timeplusMetrics.NewMetrics("generator", []string{"name"}, []string{"value", "time"}, timeplusClient)
+	if err != nil {
+		fmt.Printf("failed to create metric, %s\n", err)
+	}
+
 	return &Manager{
-		metrics: sync.Map{},
+		metrics:         sync.Map{},
+		timeplusMetrics: m,
 	}
 }
 
@@ -57,6 +68,8 @@ func (m *Manager) Observe(name string, value float64) {
 			}
 			metric.(*Metric).records = append(metric.(*Metric).records, record)
 		}
+
+		m.timeplusMetrics.Observe("timeplus", "test", []any{name}, []any{value, float64(time.Now().UnixMilli())}, nil)
 	}()
 }
 
