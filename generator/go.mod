@@ -21,7 +21,6 @@ require (
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe
 	github.com/swaggo/gin-swagger v1.5.1
 	github.com/swaggo/swag v1.8.3
-	github.com/timeplus-io/go-client v0.0.2-0.20220714202743-331a60e84880
 	github.com/twmb/franz-go v1.6.0
 	github.com/twmb/franz-go/pkg/kadm v1.1.1
 	github.com/usvc/go-config v0.4.1
@@ -84,6 +83,7 @@ require (
 	github.com/tidwall/gjson v1.2.1 // indirect
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
+	github.com/timeplus-io/go-client v0.0.2-0.20220715162931-1df4120d53d2 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.1.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.uber.org/atomic v1.7.0 // indirect

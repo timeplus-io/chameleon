@@ -89,7 +89,7 @@ func (o *TimeplusObserver) observeLatency() error {
 
 	resultStream, err := o.server.QueryStream(o.query)
 	if err != nil {
-		log.Logger().Errorf("failed to run query")
+		log.Logger().WithError(err).Errorf("failed to run query")
 		return err
 	}
 

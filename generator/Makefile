@@ -8,6 +8,8 @@ DATE=$(shell gdate -Iseconds)
 COMMIT=$(shell git rev-parse --short HEAD)
 FULLNAME=$(DOCKER_ID_USER)/${BIN_NAME}:dev_${COMMIT}
 
+PWD=$(shell pwd)
+
 .PHONY: gen docker gen_mock
 
 all: init gen run 
@@ -39,7 +41,7 @@ docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 
 docker_run:
-	docker run -p 3000:3000 $(IMAGE_NAME)
+	docker run -it -v $(PWD)/samples:/samples $(IMAGE_NAME) -f /samples/yaml/timeplus.yaml
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)
