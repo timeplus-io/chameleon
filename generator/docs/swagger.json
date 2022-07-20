@@ -66,10 +66,10 @@
                         }
                     },
                     "400": {
-                        "description": ""
+                        "description": "Bad Request"
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -104,7 +104,7 @@
                         }
                     },
                     "404": {
-                        "description": ""
+                        "description": "Not Found"
                     }
                 }
             },
@@ -131,10 +131,10 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": ""
+                        "description": "No Content"
                     },
                     "404": {
-                        "description": ""
+                        "description": "Not Found"
                     }
                 }
             }
@@ -163,10 +163,10 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": ""
+                        "description": "No Content"
                     },
                     "404": {
-                        "description": ""
+                        "description": "Not Found"
                     }
                 }
             }
@@ -195,10 +195,10 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": ""
+                        "description": "No Content"
                     },
                     "404": {
-                        "description": ""
+                        "description": "Not Found"
                     }
                 }
             }

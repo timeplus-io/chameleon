@@ -24,6 +24,8 @@ type TimeplusObserver struct {
 	timeFormat string
 	metric     string
 
+	querySet []interface{}
+
 	isStopped      bool
 	cancel         rxgo.Disposable
 	obWaiter       sync.WaitGroup
@@ -61,12 +63,15 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	//querySet := properties["querys"].([]interface{})
+
 	return &TimeplusObserver{
 		server:         timeplus.NewCient(address, apikey),
 		query:          query,
 		timeColumn:     timeColumn,
 		timeFormat:     timeFormat,
 		metric:         metric,
+		querySet:       nil,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
 		metricsManager: metrics.NewManager(),
@@ -136,44 +141,50 @@ func (o *TimeplusObserver) observeThroughput() error {
 }
 
 func (o *TimeplusObserver) observeAvailability() error {
+	log.Logger().Errorf("availability observing not supported")
 	return fmt.Errorf("availability not supported")
-	// log.Logger().Infof("start observing availability")
-	// o.metricsManager.Add("availability")
-	// o.obWaiter.Add(1)
+}
 
-	// for {
-	// 	if o.isStopped {
-	// 		log.Logger().Infof("stop timeplus availability observing")
-	// 		break
-	// 	}
+func (o *TimeplusObserver) observeQueries() error {
+	log.Logger().Info("start observing queries")
+	o.metricsManager.Add("queries")
+	log.Logger().Info("timeplus ob running query")
 
-	// 	result, err := o.server.SyncQuery(o.query)
-	// 	if err != nil {
-	// 		log.Logger().Errorf("failed to run query : %w", err)
-	// 		continue
-	// 	}
+	resultStream, err := o.server.QueryStream(o.query)
+	if err != nil {
+		log.Logger().Errorf("failed to run query")
+		return err
+	}
 
-	// 	count := result.Data[0][0]
-	// 	log.Logger().Infof("observing availability with count = %v", count)
-	// 	o.metricsManager.Observe("availability", count.(float64))
-	// 	time.Sleep(1 * time.Second)
-	// }
+	o.obWaiter.Add(1)
+	disposed := resultStream.ForEach(func(v interface{}) {
+		event := v.(map[string]interface{})
+		log.Logger().Infof("observe queries %v", event) // TODO: make col configurable
+	}, func(err error) {
+		log.Logger().Error("query failed", err)
+	}, func() {
+		log.Logger().Debugf("query %s closed")
+	})
 
-	// log.Logger().Infof("stop observing availability")
-	// o.obWaiter.Done()
-	// return nil
+	_, cancel := resultStream.Connect(context.Background())
+	o.cancel = cancel
+	<-disposed
+	log.Logger().Infof("stop observing queires")
+	o.obWaiter.Done()
+	return nil
 }
 
 func (o *TimeplusObserver) Observe() error {
-	log.Logger().Infof("start observing")
+	log.Logger().Infof("TimeplusObserver start observing")
+
 	if o.metric == "latency" {
 		go o.observeLatency()
-	}
-	if o.metric == "throughput" {
+	} else if o.metric == "throughput" {
 		go o.observeThroughput()
-	}
-	if o.metric == "availability" {
+	} else if o.metric == "availability" {
 		go o.observeAvailability()
+	} else if o.metric == "queries" {
+		go o.observeQueries()
 	}
 	return nil
 }

@@ -599,6 +599,8 @@ github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 h1:rQ229MBgvW68s1/g
 github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/timeplus-io/go-client v0.0.0-20220713194101-a38c8fed3b31 h1:b3W/ODUz0IHtHTnXMu2hd0nP6fvHEPubZtWgOcHISDg=
 github.com/timeplus-io/go-client v0.0.0-20220713194101-a38c8fed3b31/go.mod h1:5IWjUb6xihSboX2ugTnDz+xzctzt1Et+ACn3wYaQQtM=
+github.com/timeplus-io/go-client v0.0.2-0.20220715162931-1df4120d53d2 h1:lqHMGB6OOVjP4LtkSFxuEkg8ctd2iUDCylDztaKpFE4=
+github.com/timeplus-io/go-client v0.0.2-0.20220715162931-1df4120d53d2/go.mod h1:MFaoN34cotMBPMOA/CkoG2kkFc4mcmaXdiwIwzWs7mw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/twmb/franz-go v1.2.3-0.20211104052441-7952375c09c0/go.mod h1:e5ZOdNswX/wv+jebWNX49yc9U7zgR18Xovj9ckk6mx8=

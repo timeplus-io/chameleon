@@ -1,27 +1,11 @@
 ---
-name: test
-timeout: 30
-source:
-  batch_size: 2048
-  concurency: 32
-  interval: 100
-  batch_number: 100
-  fields:
-  - name: value
-    type: int
-    limit:
-    - 0
-    - 1000000
-  - name: time
-    type: timestamp
-    timestamp_format: '2006-01-02 15:04:05.000000'
-sinks:
-- type: timeplus
-  properties:
-    address: http://localhost:8000
+name: test-long-running-query
 observer:
   type: timeplus
   properties:
     address: http://localhost:8000
-    metric: availability
+    metric: queries
     query: SELECT count(*) FROM table(test)
+    querys:
+    - SELECT count(*) FROM table(test)
+    - SELECT count(*) FROM table(test)

@@ -125,9 +125,9 @@ paths:
           schema:
             $ref: '#/definitions/job.Job'
         "400":
-          description: ""
+          description: Bad Request
         "500":
-          description: ""
+          description: Internal Server Error
       summary: Create a job.
       tags:
       - job
@@ -146,9 +146,9 @@ paths:
       - application/json
       responses:
         "204":
-          description: ""
+          description: No Content
         "404":
-          description: ""
+          description: Not Found
       summary: delete job by id.
       tags:
       - job
@@ -170,7 +170,7 @@ paths:
           schema:
             $ref: '#/definitions/job.Job'
         "404":
-          description: ""
+          description: Not Found
       summary: get job by id.
       tags:
       - job
@@ -189,9 +189,9 @@ paths:
       - application/json
       responses:
         "204":
-          description: ""
+          description: No Content
         "404":
-          description: ""
+          description: Not Found
       summary: start to run a job.
       tags:
       - job
@@ -210,9 +210,9 @@ paths:
       - application/json
       responses:
         "204":
-          description: ""
+          description: No Content
         "404":
-          description: ""
+          description: Not Found
       summary: stop a running job.
       tags:
       - job

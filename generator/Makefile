@@ -23,6 +23,9 @@ gen:
 run: gen
 	go run main.go -f ./samples/yaml/timeplus.yaml
 
+run-ob: gen
+	go run main.go -f ./samples/yaml/timeplus_ob.yaml
+
 build:
 	go build 
 

@@ -32,10 +32,7 @@ require (
 
 require github.com/pkg/profile v1.6.0
 
-require (
-	github.com/apache/rocketmq-client-go/v2 v2.1.0
-	github.com/timeplus-io/go-client v0.0.0-20220713194101-a38c8fed3b31
-)
+require github.com/apache/rocketmq-client-go/v2 v2.1.0
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -90,6 +87,7 @@ require (
 	github.com/tidwall/gjson v1.2.1 // indirect
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
+	github.com/timeplus-io/go-client v0.0.2-0.20220715162931-1df4120d53d2 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.0.0 // indirect
 	github.com/twmb/go-rbtree v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
