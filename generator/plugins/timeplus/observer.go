@@ -13,6 +13,8 @@ import (
 	"github.com/timeplus-io/chameleon/generator/utils"
 
 	timeplus "github.com/timeplus-io/go-client/client"
+
+	"github.com/google/uuid"
 )
 
 const TimeplusOBType = "timeplus"
@@ -159,31 +161,38 @@ func (o *TimeplusObserver) observeAvailability() error {
 	return fmt.Errorf("availability not supported")
 }
 
-func (o *TimeplusObserver) observeQueries() error {
-	metricsName := "query"
-	log.Logger().Info("start observing queries")
-	o.metricsManager.Add(metricsName)
-	log.Logger().Info("timeplus ob running query")
+func (o *TimeplusObserver) runQuery(sql string) error {
 	o.obWaiter.Add(1)
 	defer o.obWaiter.Done()
 
-	// TODO : the API should return query Id
-	resultStream, err := o.server.QueryStream(o.query)
+	id := uuid.NewString() // TODO : the API should return query Id
+	metricsName := "query"
+	resultStream, err := o.server.QueryStream(sql)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		tag := map[string]interface{}{
 			"event": "error",
+			"query": sql,
 			"error": err.Error(),
+			"id":    id,
 		}
 		o.metricsManager.Observe(metricsName, 1, tag)
 		return err
 	}
+
+	tag := map[string]interface{}{
+		"event": "start",
+		"query": sql,
+		"id":    id,
+	}
+	o.metricsManager.Observe(metricsName, 1, tag)
 
 	disposed := resultStream.ForEach(func(v interface{}) {
 		event := v.(map[string]interface{})
 		log.Logger().Infof("observe queries %v", event) // TODO: make col configurable
 		tag := map[string]interface{}{
 			"event": "data",
+			"id":    id,
 		}
 		o.metricsManager.Observe(metricsName, 1, tag)
 	}, func(err error) {
@@ -191,21 +200,41 @@ func (o *TimeplusObserver) observeQueries() error {
 		tag := map[string]interface{}{
 			"event": "runtime_error",
 			"error": err.Error(),
+			"id":    id,
 		}
 		o.metricsManager.Observe(metricsName, 1, tag)
 	}, func() {
 		tag := map[string]interface{}{
 			"event": "close",
+			"id":    id,
 		}
 		o.metricsManager.Observe(metricsName, 1, tag)
-		log.Logger().Debugf("query %s closed")
+		log.Logger().Infof("query %s closed", id)
 	})
 
 	_, cancel := resultStream.Connect(context.Background())
 	o.cancel = cancel
 	<-disposed
-	log.Logger().Infof("stop observing queires")
+
+	time.Sleep(100 * time.Millisecond)
 	o.metricsManager.Flush()
+	return nil
+}
+
+func (o *TimeplusObserver) observeQueries() error {
+	metricsName := "query"
+	log.Logger().Info("start observing queries")
+	o.metricsManager.Add(metricsName)
+	log.Logger().Info("timeplus ob running query")
+
+	for _, query := range o.querySet {
+		go func(sql string) {
+			o.runQuery(sql)
+		}(query.(string))
+	}
+
+	o.obWaiter.Wait()
+	log.Logger().Infof("stop observing queires")
 	return nil
 }
 

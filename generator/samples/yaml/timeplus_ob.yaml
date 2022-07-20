@@ -5,7 +5,6 @@ observer:
   properties:
     address: http://localhost:8000
     metric: queries
-    query: SELECT count(*) FROM table(test)
     querys:
     - SELECT count(*) FROM table(test)
     - SELECT count(*) FROM table(test)
