@@ -63,9 +63,17 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	//querySet := properties["querys"].([]interface{})
+	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
 
-	return &TimeplusObserver{
+	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	ob := &TimeplusObserver{
 		server:         timeplus.NewCient(address, apikey),
 		query:          query,
 		timeColumn:     timeColumn,
@@ -74,8 +82,14 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		querySet:       nil,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(),
-	}, nil
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreAPIKey),
+	}
+
+	if value, ok := properties["querys"]; ok {
+		ob.querySet = value.([]interface{})
+	}
+
+	return ob, nil
 }
 
 func (o *TimeplusObserver) observeLatency() error {
@@ -84,7 +98,7 @@ func (o *TimeplusObserver) observeLatency() error {
 
 	resultStream, err := o.server.QueryStream(o.query)
 	if err != nil {
-		log.Logger().Errorf("failed to run query")
+		log.Logger().WithError(err).Errorf("failed to run query")
 		return err
 	}
 
@@ -95,7 +109,7 @@ func (o *TimeplusObserver) observeLatency() error {
 		timestamp := event[o.timeColumn].(float64)
 		tm := time.UnixMilli(int64(timestamp))
 		log.Logger().Infof("observe latency %v", time.Until(tm))
-		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0)
+		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
 
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
@@ -125,7 +139,7 @@ func (o *TimeplusObserver) observeThroughput() error {
 	disposed := resultStream.ForEach(func(v interface{}) {
 		event := v.(map[string]interface{})
 		log.Logger().Infof("observe throughput %v", event["count"]) // TODO: make col configurable
-		o.metricsManager.Observe("throughput", event["count"].(float64))
+		o.metricsManager.Observe("throughput", event["count"].(float64), nil)
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
@@ -146,23 +160,44 @@ func (o *TimeplusObserver) observeAvailability() error {
 }
 
 func (o *TimeplusObserver) observeQueries() error {
+	metricsName := "query"
 	log.Logger().Info("start observing queries")
-	o.metricsManager.Add("queries")
+	o.metricsManager.Add(metricsName)
 	log.Logger().Info("timeplus ob running query")
+	o.obWaiter.Add(1)
+	defer o.obWaiter.Done()
 
+	// TODO : the API should return query Id
 	resultStream, err := o.server.QueryStream(o.query)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
+		tag := map[string]interface{}{
+			"event": "error",
+			"error": err.Error(),
+		}
+		o.metricsManager.Observe(metricsName, 1, tag)
 		return err
 	}
 
-	o.obWaiter.Add(1)
 	disposed := resultStream.ForEach(func(v interface{}) {
 		event := v.(map[string]interface{})
 		log.Logger().Infof("observe queries %v", event) // TODO: make col configurable
+		tag := map[string]interface{}{
+			"event": "data",
+		}
+		o.metricsManager.Observe(metricsName, 1, tag)
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
+		tag := map[string]interface{}{
+			"event": "runtime_error",
+			"error": err.Error(),
+		}
+		o.metricsManager.Observe(metricsName, 1, tag)
 	}, func() {
+		tag := map[string]interface{}{
+			"event": "close",
+		}
+		o.metricsManager.Observe(metricsName, 1, tag)
 		log.Logger().Debugf("query %s closed")
 	})
 
@@ -170,7 +205,7 @@ func (o *TimeplusObserver) observeQueries() error {
 	o.cancel = cancel
 	<-disposed
 	log.Logger().Infof("stop observing queires")
-	o.obWaiter.Done()
+	o.metricsManager.Flush()
 	return nil
 }
 

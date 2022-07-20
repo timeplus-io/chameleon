@@ -12,18 +12,22 @@ source:
     type: int
     limit:
     - 0
-    - 100
+    - 10000
   - name: time
     type: timestamp_int
 sinks:
 - type: timeplus
   properties:
     address: http://localhost:8000
+    apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
 
 observer:
   type: timeplus
   properties:
     address: http://localhost:8000
+    apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
     query: select * from test where value=9
     time_column: time
     metric: latency
+    metric_store_address: http://localhost:8000
+    metric_store_apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-

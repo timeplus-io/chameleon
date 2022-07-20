@@ -128,6 +128,16 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, err
 	}
 
+	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	return &KafkaObserver{
 		brokers:        strings.Split(brokers, ","),
 		topic:          topic,
@@ -143,7 +153,7 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		ctx:            context.Background(),
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreAPIKey),
 	}, nil
 }
 
@@ -185,7 +195,7 @@ func (o *KafkaObserver) observeLatency() error {
 				}
 
 				log.Logger().Infof("observe latency %v", time.Until(t))
-				o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
+				o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0, nil)
 			}
 		}
 	}
@@ -218,7 +228,7 @@ func (o *KafkaObserver) observeThroughput() error {
 		log.Logger().Debugf("the offset is %v", offset)
 		log.Logger().Infof("the throughput is %v", throughput)
 		if preOffset != 0 {
-			o.metricsManager.Observe("throughput", float64(throughput))
+			o.metricsManager.Observe("throughput", float64(throughput), nil)
 		}
 		preOffset = offset
 		time.Sleep(1 * time.Second)
