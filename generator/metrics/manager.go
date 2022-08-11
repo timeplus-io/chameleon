@@ -32,8 +32,8 @@ func NewMetric() *Metric {
 	}
 }
 
-func NewManager(timeplusAddress string, timeplusAPIkey string) *Manager {
-	timeplusClient := timeplus.NewCient(timeplusAddress, timeplusAPIkey)
+func NewManager(timeplusAddress string, timeplusTenant string, timeplusAPIkey string) *Manager {
+	timeplusClient := timeplus.NewCient(timeplusAddress, timeplusTenant, timeplusAPIkey)
 	var m *timeplusMetrics.Metrics
 	m, err := timeplusMetrics.NewMetrics("generator", []string{"name"}, []string{"value", "time"}, timeplusClient)
 	if err != nil {

@@ -67,13 +67,18 @@ func NewRocketMQObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	return &RocketMQObserver{
 		consumer:       c,
 		topic:          topic,
 		metric:         metric,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreAPIKey),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
 	}, nil
 }
 

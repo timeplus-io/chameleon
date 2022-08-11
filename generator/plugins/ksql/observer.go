@@ -66,6 +66,11 @@ func NewKSQLObserver(properties map[string]interface{}) (observer.Observer, erro
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	url := fmt.Sprintf("http://%s:%d", host, port)
 	client := ksqldb.NewClient(url, "", "")
 
@@ -78,7 +83,7 @@ func NewKSQLObserver(properties map[string]interface{}) (observer.Observer, erro
 		query:          query,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreAPIKey),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
 	}, nil
 }
 

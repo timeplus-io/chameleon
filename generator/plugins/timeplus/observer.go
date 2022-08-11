@@ -45,6 +45,11 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	tenant, err := utils.GetWithDefault(properties, "tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	query, err := utils.GetWithDefault(properties, "query", "")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
@@ -75,8 +80,13 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	ob := &TimeplusObserver{
-		server:         timeplus.NewCient(address, apikey),
+		server:         timeplus.NewCient(address, tenant, apikey),
 		query:          query,
 		timeColumn:     timeColumn,
 		timeFormat:     timeFormat,
@@ -84,7 +94,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		querySet:       nil,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreAPIKey),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
 	}
 
 	if value, ok := properties["querys"]; ok {

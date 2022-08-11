@@ -138,6 +138,11 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	return &KafkaObserver{
 		brokers:        strings.Split(brokers, ","),
 		topic:          topic,
@@ -153,7 +158,7 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		ctx:            context.Background(),
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreAPIKey),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
 	}, nil
 }
 

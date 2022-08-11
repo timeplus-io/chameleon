@@ -33,8 +33,13 @@ func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
+
+	tenant, err := utils.GetWithDefault(properties, "tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
 	return &TimeplusSink{
-		server: timeplus.NewCient(address, apikey),
+		server: timeplus.NewCient(address, tenant, apikey),
 	}, nil
 }
 
