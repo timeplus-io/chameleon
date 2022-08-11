@@ -56,6 +56,21 @@ func NewKSQLObserver(properties map[string]interface{}) (observer.Observer, erro
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	url := fmt.Sprintf("http://%s:%d", host, port)
 	client := ksqldb.NewClient(url, "", "")
 
@@ -68,7 +83,7 @@ func NewKSQLObserver(properties map[string]interface{}) (observer.Observer, erro
 		query:          query,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
 	}, nil
 }
 
@@ -99,7 +114,7 @@ func (o *KSQLObserver) observeLatency() error {
 					continue
 				}
 				log.Logger().Infof("observe latency %v", time.Until(t))
-				o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0)
+				o.metricsManager.Observe("latency", -float64(time.Until(t).Microseconds())/1000.0, nil)
 			}
 		}
 		o.obWaiter.Done()
@@ -142,7 +157,7 @@ func (o *KSQLObserver) observeThroughput() error {
 				throuput := (count - preCount) / float64(now.Sub(preTime).Seconds())
 				log.Logger().Infof("get throughput🐾%v", throuput)
 				if preCount > 0 {
-					o.metricsManager.Observe("throughput", throuput)
+					o.metricsManager.Observe("throughput", throuput, nil)
 				}
 				preCount = count
 				preTime = now

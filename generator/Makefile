@@ -8,6 +8,8 @@ DATE=$(shell gdate -Iseconds)
 COMMIT=$(shell git rev-parse --short HEAD)
 FULLNAME=$(DOCKER_ID_USER)/${BIN_NAME}:dev_${COMMIT}
 
+PWD=$(shell pwd)
+
 .PHONY: gen docker gen_mock
 
 all: init gen run 
@@ -15,13 +17,16 @@ all: init gen run
 init:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/golang/mock/mockgen@v1.6.0
-	go mod tidy -go=1.16 && go mod tidy -go=1.17
+	go mod tidy 
 
 gen:
 	$(HOME)/go/bin/swag init -g server/main.go 
 
 run: gen
 	go run main.go -f ./samples/yaml/timeplus.yaml
+
+run-ob: gen
+	go run main.go -f ./samples/yaml/timeplus_ob.yaml
 
 build:
 	go build 
@@ -39,7 +44,7 @@ docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 
 docker_run:
-	docker run -p 3000:3000 $(IMAGE_NAME)
+	docker run -it -v $(PWD)/samples:/samples $(IMAGE_NAME) -f /samples/yaml/timeplus.yaml
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)

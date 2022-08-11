@@ -76,6 +76,21 @@ func NewMaterializeObserver(properties map[string]interface{}) (observer.Observe
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	url := fmt.Sprintf("postgres://%s@%s:%d/%s", user, host, port, db)
 
 	conn, err := pgx.Connect(context.Background(), url)
@@ -96,7 +111,7 @@ func NewMaterializeObserver(properties map[string]interface{}) (observer.Observe
 		conn:           conn,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(),
+		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
 	}, nil
 }
 
@@ -165,7 +180,7 @@ func (o *MaterializeObserver) observeLatency() error {
 			}
 			log.Logger().Infof("%v %v %v %v\n", timestamp, diff, value, eventTime)
 			log.Logger().Infof("observe latency %v", time.Until(eventTime))
-			o.metricsManager.Observe("latency", -float64(time.Until(eventTime).Microseconds())/1000.0)
+			o.metricsManager.Observe("latency", -float64(time.Until(eventTime).Microseconds())/1000.0, nil)
 		}
 	}
 
@@ -233,7 +248,7 @@ func (o *MaterializeObserver) observeThroughput() error {
 			}
 
 			log.Logger().Infof("count is %d", count)
-			o.metricsManager.Observe("throughput", float64(count))
+			o.metricsManager.Observe("throughput", float64(count), nil)
 		}
 	}
 
@@ -270,7 +285,7 @@ func (o *MaterializeObserver) observeAvailability() error {
 			}
 
 			log.Logger().Infof("count is %v", count)
-			o.metricsManager.Observe("availability", float64(count.(int64)))
+			o.metricsManager.Observe("availability", float64(count.(int64)), nil)
 		}
 
 		// add observation here

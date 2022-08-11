@@ -111,7 +111,7 @@ func NewJob(config JobConfiguration) (*Job, error) {
 
 	obs, err := observer.CreateObserver(config.Observer)
 	if err != nil {
-		log.Logger().Warnf("failed to create observer %s", config.Observer.Type)
+		log.Logger().WithError(err).Warnf("failed to create observer %s", config.Observer.Type)
 	}
 
 	return CreateJob(config.Name, source, sinks, obs, config.Timeout), nil
@@ -150,45 +150,52 @@ func (j *Job) Start() {
 	j.source.Start()
 
 	if j.observer != nil {
-		log.Logger().Infof("start observer")
+		log.Logger().Info("start observer")
 		go j.observer.Observe() // start observer go routine
 	}
 
 	j.Status = STATUS_RUNNING
 
 	streams := j.source.GetStreams()
+	log.Logger().Infof("get %d stream from source", len(streams))
 
-	j.jobWaiter = sync.WaitGroup{}
-	j.jobWaiter.Add(len(streams))
+	if len(streams) > 0 {
+		j.jobWaiter = sync.WaitGroup{}
+		j.jobWaiter.Add(len(streams))
 
-	for i, stream := range streams {
-		time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
-		go func(i int, stream rxgo.Observable) {
-			for item := range stream.Observe() {
-				events := item.V.([]common.Event)
+		for i, stream := range streams {
+			time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
+			log.Logger().Infof("start stream %d ", i)
+			go func(i int, stream rxgo.Observable) {
+				for item := range stream.Observe() {
+					events := item.V.([]common.Event)
 
-				if len(events) == 0 {
-					continue
-				}
+					if len(events) == 0 {
+						continue
+					}
 
-				header := events[0].GetHeader()
-				data := make([][]interface{}, len(events))
-				for index, event := range events {
-					row := event.GetRow(header)
-					data[index] = row
-				}
+					header := events[0].GetHeader()
+					data := make([][]interface{}, len(events))
+					for index, event := range events {
+						row := event.GetRow(header)
+						data[index] = row
+					}
 
-				for _, sink := range j.sinks {
-					if err := sink.Write(header, data, i); err != nil {
-						log.Logger().Errorf("failed to write event : %w ", err)
+					for _, sink := range j.sinks {
+						if err := sink.Write(header, data, i); err != nil {
+							log.Logger().Errorf("failed to write event : %w ", err)
+						}
 					}
 				}
-			}
-			j.jobWaiter.Done()
-		}(i, stream)
+				j.jobWaiter.Done()
+			}(i, stream)
+		}
+	} else {
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	if j.timeout != 0 {
+		log.Logger().Infof("wait for timeout %d", j.timeout)
 		for {
 			time.Sleep(1 * time.Second)
 			if -time.Until(startTime).Seconds() > float64(j.timeout) {
@@ -197,7 +204,16 @@ func (j *Job) Start() {
 				break
 			}
 		}
+		log.Logger().Infof("timeout")
 	}
+
+	if j.observer != nil {
+		log.Logger().Infof("wait observer finish")
+		j.observer.Wait()
+		log.Logger().Infof("observer finished")
+	}
+
+	log.Logger().Infof("job finished")
 }
 
 func (j *Job) Wait() {
