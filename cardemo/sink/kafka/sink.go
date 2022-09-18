@@ -159,7 +159,7 @@ func (s *KafkaSink) Send(event map[string]any, stream string, timeCol string) er
 
 func (s *KafkaSink) send(event map[string]any, stream string, timeCol string) error {
 	// TODO : put event to an internal event queue
-	log.Logger().Infof("got one car event here %v", event)
+	log.Logger().Debugf("got one car event here %v", event)
 	eventValue, _ := json.Marshal(event)
 	key := []byte(randStringBytes(8))
 	record := &kgo.Record{Topic: stream, Value: eventValue, Key: key}

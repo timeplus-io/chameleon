@@ -262,12 +262,17 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	tenant, err := utils.GetWithDefault(properties, "tenant", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	interval, err := utils.GetIntWithDefault(properties, "interval", 200)
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	server := timeplus.NewCient(address, apikey)
+	server := timeplus.NewCient(address, tenant, apikey)
 
 	producerInterval := time.Duration(interval) * time.Millisecond
 	producers := make(map[string]*TimeplusStreamProducer)
@@ -358,7 +363,8 @@ func (s *TimeplusSink) InitCars(cars []*common.DimCar) error {
 		Stream: DimCarStreamDef.Name,
 	}
 	if err := s.client.InsertData(payload); err != nil {
-		log.Logger().Fatalf("failed to initialize data to stream %s", DimCarStreamDef.Name)
+		log.Logger().Errorf("failed to initialize data to stream %s, %s", DimCarStreamDef.Name, err)
+		return err
 	}
 	return nil
 }
@@ -380,7 +386,8 @@ func (s *TimeplusSink) InitUsers(users []*common.DimUser) error {
 		Stream: DimUserStreamDef.Name,
 	}
 	if err := s.client.InsertData(payload); err != nil {
-		log.Logger().Fatalf("failed to initialize data to stream %s", DimUserStreamDef.Name)
+		log.Logger().Errorf("failed to initialize data to stream %s, %s", DimUserStreamDef.Name, err)
+		return err
 	}
 	return nil
 }

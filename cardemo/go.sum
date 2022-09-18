@@ -308,6 +308,8 @@ github.com/teivah/onecontext v0.0.0-20200513185103-40f981bfd775 h1:BLNsFR8l/hj/o
 github.com/teivah/onecontext v0.0.0-20200513185103-40f981bfd775/go.mod h1:XUZ4x3oGhWfiOnUvTslnKKs39AWUct3g3yJvXTQSJOQ=
 github.com/timeplus-io/go-client v0.0.0-20220713194101-a38c8fed3b31 h1:b3W/ODUz0IHtHTnXMu2hd0nP6fvHEPubZtWgOcHISDg=
 github.com/timeplus-io/go-client v0.0.0-20220713194101-a38c8fed3b31/go.mod h1:5IWjUb6xihSboX2ugTnDz+xzctzt1Et+ACn3wYaQQtM=
+github.com/timeplus-io/go-client v0.0.2 h1:Djp0FfnIolvcXxXHIhYP1kQv7gp96hBF49LodD1JmTs=
+github.com/timeplus-io/go-client v0.0.2/go.mod h1:MFaoN34cotMBPMOA/CkoG2kkFc4mcmaXdiwIwzWs7mw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/twmb/franz-go v1.6.0 h1:yri7YsVBe/k1LKcoZSLILgUI3U14e82qtD9i4VOcs9c=
 github.com/twmb/franz-go v1.6.0/go.mod h1:xdMwpUIQL/JDKKwerc5qJQG8TU1SNIddfjKJJyqRJIg=
