@@ -32,7 +32,7 @@ type MaterializeObserver struct {
 	conn           *pgx.Conn
 	isStopped      bool
 	obWaiter       sync.WaitGroup
-	metricsManager *metrics.Manager
+	metricsManager metrics.Metrics
 }
 
 func NewMaterializeObserver(properties map[string]interface{}) (observer.Observer, error) {
@@ -76,19 +76,26 @@ func NewMaterializeObserver(properties map[string]interface{}) (observer.Observe
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+	var metricsManager metrics.Metrics
+	if _, ok := properties["metric_store_address"]; !ok {
+		metricsManager = metrics.NewEmptyMetricManager()
+	} else {
+		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
 
-	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+		metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
 
-	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
+		metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
+
+		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
 	}
 
 	url := fmt.Sprintf("postgres://%s@%s:%d/%s", user, host, port, db)
@@ -111,7 +118,7 @@ func NewMaterializeObserver(properties map[string]interface{}) (observer.Observe
 		conn:           conn,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
+		metricsManager: metricsManager,
 	}, nil
 }
 

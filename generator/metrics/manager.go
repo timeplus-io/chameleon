@@ -17,7 +17,7 @@ type Manager struct {
 	timeplusMetrics *timeplusMetrics.Metrics
 }
 
-type Metric struct {
+type TimeplusMetric struct {
 	records []MetricRecord
 }
 
@@ -26,13 +26,13 @@ type MetricRecord struct {
 	time  int64
 }
 
-func NewMetric() *Metric {
-	return &Metric{
+func NewMetric() *TimeplusMetric {
+	return &TimeplusMetric{
 		records: make([]MetricRecord, 0),
 	}
 }
 
-func NewManager(timeplusAddress string, timeplusTenant string, timeplusAPIkey string) *Manager {
+func NewTimeplusMetricManager(timeplusAddress string, timeplusTenant string, timeplusAPIkey string) *Manager {
 	timeplusClient := timeplus.NewCient(timeplusAddress, timeplusTenant, timeplusAPIkey)
 	var m *timeplusMetrics.Metrics
 	m, err := timeplusMetrics.NewMetrics("generator", []string{"name"}, []string{"value", "time"}, timeplusClient)
@@ -65,7 +65,7 @@ func (m *Manager) Observe(name string, value float64, tags map[string]interface{
 				value: value,
 				time:  time.Now().UnixMilli(),
 			}
-			metric.(*Metric).records = append(metric.(*Metric).records, record)
+			metric.(*TimeplusMetric).records = append(metric.(*TimeplusMetric).records, record)
 		}
 
 		m.timeplusMetrics.Observe("timeplus", "test", []any{name}, []any{value, float64(time.Now().UnixMilli())}, tags)
@@ -76,13 +76,13 @@ func (m *Manager) Save(namesapce string) {
 	log.Logger().Infof("save result to fle")
 	m.metrics.Range(func(key, value interface{}) bool {
 		metricName := key.(string)
-		metric := value.(*Metric)
+		metric := value.(*TimeplusMetric)
 		m.save(namesapce, metricName, metric)
 		return true
 	})
 }
 
-func (m *Manager) save(namesapce string, name string, metric *Metric) {
+func (m *Manager) save(namesapce string, name string, metric *TimeplusMetric) {
 	ts := time.Now().Unix()
 	filePath := fmt.Sprintf("%s_%s_report_%d.csv", namesapce, name, ts)
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

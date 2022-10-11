@@ -21,7 +21,7 @@ require (
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe
 	github.com/swaggo/gin-swagger v1.5.1
 	github.com/swaggo/swag v1.8.3
-	github.com/timeplus-io/go-client v0.0.2
+	github.com/timeplus-io/go-client v0.0.3
 	github.com/twmb/franz-go v1.6.0
 	github.com/twmb/franz-go/pkg/kadm v1.1.1
 	github.com/usvc/go-config v0.4.1

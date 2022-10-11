@@ -1,0 +1,36 @@
+---
+name: test
+timeout: 20
+source:
+  batch_size: 512
+  concurency: 8
+  interval: 100
+  interval_delta: 0
+  batch_number: 100000000
+  fields:
+    - name: value
+      type: int
+      limit:
+        - 0
+        - 10000
+    - name: time
+      type: timestamp_int
+sinks:
+  - type: timeplus
+    properties:
+      address: https://dev.timeplus.cloud
+      tenant: tp-demo
+      apikey: key
+
+observer:
+  type: timeplus
+  properties:
+    address: https://dev.timeplus.cloud
+    tenant: tp-demo
+    apikey: key
+    query: select * from test where value=9
+    time_column: time
+    metric: latency
+    metric_store_address: https://dev.timeplus.cloud
+    metric_store_apikey: key
+    metric_store_tenant: tp-demo

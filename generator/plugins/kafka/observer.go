@@ -41,7 +41,7 @@ type KafkaObserver struct {
 	metric         string
 	isStopped      bool
 	obWaiter       sync.WaitGroup
-	metricsManager *metrics.Manager
+	metricsManager metrics.Metrics
 }
 
 type KafkaResult map[string]interface{}
@@ -128,19 +128,26 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, err
 	}
 
-	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+	var metricsManager metrics.Metrics
+	if _, ok := properties["metric_store_address"]; !ok {
+		metricsManager = metrics.NewEmptyMetricManager()
+	} else {
+		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
 
-	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+		metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
 
-	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
+		metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
+
+		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
 	}
 
 	return &KafkaObserver{
@@ -158,7 +165,7 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		ctx:            context.Background(),
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
+		metricsManager: metricsManager,
 	}, nil
 }
 

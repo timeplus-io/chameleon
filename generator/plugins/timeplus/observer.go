@@ -31,7 +31,7 @@ type TimeplusObserver struct {
 	isStopped      bool
 	cancel         rxgo.Disposable
 	obWaiter       sync.WaitGroup
-	metricsManager *metrics.Manager
+	metricsManager metrics.Metrics
 }
 
 func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, error) {
@@ -70,19 +70,26 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+	var metricsManager metrics.Metrics
+	if _, ok := properties["metric_store_address"]; !ok {
+		metricsManager = metrics.NewEmptyMetricManager()
+	} else {
+		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
 
-	metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+		metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
 
-	metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
+		metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
+		if err != nil {
+			return nil, fmt.Errorf("invalid properties : %w", err)
+		}
+
+		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
 	}
 
 	ob := &TimeplusObserver{
@@ -94,7 +101,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		querySet:       nil,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
-		metricsManager: metrics.NewManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey),
+		metricsManager: metricsManager,
 	}
 
 	if value, ok := properties["querys"]; ok {
@@ -108,17 +115,32 @@ func (o *TimeplusObserver) observeLatency() error {
 	log.Logger().Infof("start observing latecny")
 	o.metricsManager.Add("latency")
 
-	resultStream, err := o.server.QueryStream(o.query)
+	resultStream, info, err := o.server.QueryStream(o.query)
 	if err != nil {
 		log.Logger().WithError(err).Errorf("failed to run query")
 		return err
 	}
 
 	o.obWaiter.Add(1)
-	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(map[string]interface{})
 
-		timestamp := event[o.timeColumn].(float64)
+	timeIndex := -1
+	for index, header := range info.Result.Header {
+		if header.Name == o.timeColumn {
+			timeIndex = index
+			fmt.Printf("time index is %d\n", timeIndex)
+		}
+	}
+	disposed := resultStream.ForEach(func(v interface{}) {
+		fmt.Printf("event is %v\n", v)
+		// event := v.(map[string]interface{})
+
+		// timestamp := event[o.timeColumn].(float64)
+		// tm := time.UnixMilli(int64(timestamp))
+		// log.Logger().Infof("observe latency %v", time.Until(tm))
+		// o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
+
+		event := v.([]interface{})
+		timestamp := event[timeIndex].(float64)
 		tm := time.UnixMilli(int64(timestamp))
 		log.Logger().Infof("observe latency %v", time.Until(tm))
 		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
@@ -141,7 +163,7 @@ func (o *TimeplusObserver) observeThroughput() error {
 	log.Logger().Infof("start observing throughput")
 	o.metricsManager.Add("throughput")
 
-	resultStream, err := o.server.QueryStream(o.query)
+	resultStream, _, err := o.server.QueryStream(o.query)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		return err
@@ -177,7 +199,7 @@ func (o *TimeplusObserver) runQuery(sql string) error {
 
 	id := uuid.NewString() // TODO : the API should return query Id
 	metricsName := "query"
-	resultStream, err := o.server.QueryStream(sql)
+	resultStream, _, err := o.server.QueryStream(sql)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		tag := map[string]interface{}{
