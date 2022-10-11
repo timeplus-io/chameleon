@@ -29,7 +29,7 @@ For more information, refer to :
 
 Chameleon is Timeplus's open source repository for stream data test tools, we are openning these code to make stream data related test easy and efficient.
 
-Streaming data platform benchmarking is full of challengs, Timeplus's performance test tool `dataloader` is ready here and can be used to generate huge amount of stream data with different format for performance test purpose, refer to [dataloader](https://github.com/timeplus-io/chameleon/tree/main/dataloader) for more information.
+Streaming data platform benchmarking is full of challengs, Timeplus's performance test tool `dataloader` is ready here and can be used to generate huge amount of stream data with different format for performance test purpose, refer to [dataloader](https://github.com/timeplus-io/chameleon/tree/develop/dataloader) for more information.
 
 There will be more functions and other tools opening in the future, ping us if you have any comment.
 

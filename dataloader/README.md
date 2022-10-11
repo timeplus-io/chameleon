@@ -16,16 +16,6 @@ go build dataloader.go
 
 The above command will produce a binary `dataloader`. We will use it to load data later.
 
-# Build This Tool
-
-After `go get` or `git clone` this repo, go to `cmd` directory and run
-
-```
-go build dataloader.go
-```
-
-The above command will produce a binary `dataloader`. We will use it to load data later.
-
 # Workflow
 
 dataload ingest data -> Redpanda / Kafka <- Streaming Query in Timeplus
