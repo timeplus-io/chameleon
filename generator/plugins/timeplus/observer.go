@@ -171,9 +171,10 @@ func (o *TimeplusObserver) observeThroughput() error {
 
 	o.obWaiter.Add(1)
 	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(map[string]interface{})
-		log.Logger().Infof("observe throughput %v", event["count"]) // TODO: make col configurable
-		o.metricsManager.Observe("throughput", event["count"].(float64), nil)
+		event := v.([]interface{})
+		count := event[1].(float64) // TODO: make col configurable, now hard code to second fields
+		log.Logger().Infof("observe throughput %v", count)
+		o.metricsManager.Observe("throughput", count, nil)
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
