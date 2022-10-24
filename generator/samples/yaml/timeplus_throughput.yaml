@@ -1,6 +1,6 @@
 ---
 name: test
-timeout: 20
+timeout: 300
 source:
   batch_size: 50
   concurency: 16
@@ -30,6 +30,7 @@ sinks:
   - type: timeplus
     properties:
       address: http://localhost:8000
+      enable_low_level_ingest: false
 
 observer:
   type: timeplus
