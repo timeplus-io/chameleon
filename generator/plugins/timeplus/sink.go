@@ -10,6 +10,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/utils"
 
 	timeplus "github.com/timeplus-io/go-client/client"
+	timeplusUtils "github.com/timeplus-io/go-client/utils"
 )
 
 const TimeplusSinkType = "timeplus"
@@ -19,8 +20,10 @@ const DefaultLogStoreRetentionBytes = 604800000
 const DefaultLogStoreRetentionMS = 1342177280
 
 type TimeplusSink struct {
-	server     *timeplus.TimeplusClient
-	streamName string
+	server               *timeplus.TimeplusClient
+	enableLowLevelIngest bool
+	lowLevelIngestServer *timeplus.TimeplusLowLevelClient
+	streamName           string
 }
 
 func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
@@ -38,8 +41,48 @@ func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
+
+	insecureSkipVerify, err := utils.GetBoolWithDefault(properties, "insecureSkipVerify", true)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	maxIdleConns, err := utils.GetIntWithDefault(properties, "maxIdleConns", 100)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	maxConnsPerHost, err := utils.GetIntWithDefault(properties, "maxIdleConns", 100)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	maxIdleConnsPerHost, err := utils.GetIntWithDefault(properties, "maxIdleConnsPerHost", 100)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	timeout, err := utils.GetIntWithDefault(properties, "http_timeout", 10)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	config := timeplusUtils.NewHTTPClientConfig(insecureSkipVerify, maxIdleConns, maxConnsPerHost, maxIdleConnsPerHost, timeout)
+
+	useLowLevelIngestAPI, err := utils.GetBoolWithDefault(properties, "enable_low_level_ingest", false)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	lowLevelAddress, err := utils.GetWithDefault(properties, "low_level_ingest_address", "http://localhost:8123")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	return &TimeplusSink{
-		server: timeplus.NewCient(address, tenant, apikey),
+		server:               timeplus.NewCientWithHttpConfig(address, tenant, apikey, config),
+		enableLowLevelIngest: useLowLevelIngestAPI,
+		lowLevelIngestServer: timeplus.NewLowLevelCient(lowLevelAddress),
 	}, nil
 }
 
@@ -101,5 +144,9 @@ func (s *TimeplusSink) Write(headers []string, rows [][]interface{}, index int) 
 		},
 	}
 
-	return s.server.InsertData(ingestData)
+	if s.enableLowLevelIngest {
+		return s.lowLevelIngestServer.InsertData(ingestData)
+	} else {
+		return s.server.InsertData(ingestData)
+	}
 }
