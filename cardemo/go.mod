@@ -10,7 +10,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
-	github.com/timeplus-io/go-client v0.0.6
+	github.com/timeplus-io/go-client v0.0.7
 	github.com/twmb/franz-go v1.6.0
 	github.com/usvc/go-config v0.4.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
