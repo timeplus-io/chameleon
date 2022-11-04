@@ -9,7 +9,7 @@ import (
 
 	"github.com/timeplus-io/chameleon/cardemo/utils"
 
-	timeplus "github.com/timeplus-io/go-client/client"
+	"github.com/timeplus-io/go-client/timeplus"
 )
 
 const DefaultTTL = "to_datetime(_tp_time) + INTERVAL 30 DAY"
@@ -358,7 +358,7 @@ func dimCarsToIngestData(cars []*common.DimCar) timeplus.IngestData {
 
 func (s *TimeplusSink) InitCars(cars []*common.DimCar) error {
 	ingestData := dimCarsToIngestData(cars)
-	payload := timeplus.IngestPayload{
+	payload := &timeplus.IngestPayload{
 		Data:   ingestData,
 		Stream: DimCarStreamDef.Name,
 	}
@@ -381,7 +381,7 @@ func dimUsersToIngestData(users []*common.DimUser) timeplus.IngestData {
 
 func (s *TimeplusSink) InitUsers(users []*common.DimUser) error {
 	ingestData := dimUsersToIngestData(users)
-	payload := timeplus.IngestPayload{
+	payload := &timeplus.IngestPayload{
 		Data:   ingestData,
 		Stream: DimUserStreamDef.Name,
 	}
