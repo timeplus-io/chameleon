@@ -6,7 +6,7 @@ import (
 
 	"github.com/timeplus-io/chameleon/cardemo/log"
 
-	timeplus "github.com/timeplus-io/go-client/client"
+	"github.com/timeplus-io/go-client/timeplus"
 )
 
 type TimeplusStreamProducer struct {
@@ -69,7 +69,7 @@ func (p *TimeplusStreamProducer) send() {
 
 	p.queue = make([]map[string]any, 0)
 
-	payload := timeplus.IngestPayload{
+	payload := &timeplus.IngestPayload{
 		Data:   ingestData,
 		Stream: p.stream,
 	}
