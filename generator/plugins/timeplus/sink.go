@@ -9,7 +9,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/source"
 	"github.com/timeplus-io/chameleon/generator/utils"
 
-	timeplus "github.com/timeplus-io/go-client/client"
+	"github.com/timeplus-io/go-client/timeplus"
 	timeplusUtils "github.com/timeplus-io/go-client/utils"
 )
 
@@ -136,7 +136,7 @@ func (s *TimeplusSink) Init(name string, fields []common.Field) error {
 
 func (s *TimeplusSink) Write(headers []string, rows [][]interface{}, index int) error {
 	log.Logger().Debugf("Write one event to stream %s %v:%v", s.streamName, headers, rows)
-	ingestData := timeplus.IngestPayload{
+	ingestData := &timeplus.IngestPayload{
 		Stream: s.streamName,
 		Data: timeplus.IngestData{
 			Columns: headers,
