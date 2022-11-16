@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/timeplus-io/chameleon/generator/log"
-	timeplus "github.com/timeplus-io/go-client/client"
 	timeplusMetrics "github.com/timeplus-io/go-client/metrics"
+	"github.com/timeplus-io/go-client/timeplus"
 )
 
 type Manager struct {
@@ -35,7 +35,7 @@ func NewMetric() *TimeplusMetric {
 func NewTimeplusMetricManager(timeplusAddress string, timeplusTenant string, timeplusAPIkey string) *Manager {
 	timeplusClient := timeplus.NewCient(timeplusAddress, timeplusTenant, timeplusAPIkey)
 	var m *timeplusMetrics.Metrics
-	m, err := timeplusMetrics.NewMetrics("generator", []string{"name"}, []string{"value", "time"}, timeplusClient)
+	m, err := timeplusMetrics.NewMetrics("generator", []string{"name"}, []string{"value", "time"}, timeplusClient, 5*time.Second)
 	if err != nil {
 		fmt.Printf("failed to create metric, %s\n", err)
 	}

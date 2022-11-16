@@ -12,7 +12,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/observer"
 	"github.com/timeplus-io/chameleon/generator/utils"
 
-	timeplus "github.com/timeplus-io/go-client/client"
+	"github.com/timeplus-io/go-client/timeplus"
 
 	"github.com/google/uuid"
 )

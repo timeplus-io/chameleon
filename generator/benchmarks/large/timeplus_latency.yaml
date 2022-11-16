@@ -6,47 +6,47 @@ source:
   concurency: 64
   interval: 10
   fields:
-  - name: ordertime
-    type: timestamp
-  - name: orderid
-    type: generate
-    rule: "O{number:1,1000}"
-  - name: itemid
-    type: generate
-    rule: "I{number:1,1000}"
-  - name: orderunits
-    type: float
-    limit: [0.0, 10.0]
-  - name: city
-    type: generate
-    rule: "{city}"
-  - name: state
-    type: generate
-    rule: "{state}"
-  - name: zipcode
-    type: generate
-    rule: "{zip}"
-  - name: time
-    type: timestamp
-    timestamp_format: '2006-01-02 15:04:05.000000'
-  - name: timestamp
-    type: timestamp_int
-  - name: value
-    type: int
-    limit:
-    - 0
-    - 100000
+    - name: ordertime
+      type: timestamp
+    - name: orderid
+      type: generate
+      rule: "O{number:1,1000}"
+    - name: itemid
+      type: generate
+      rule: "I{number:1,1000}"
+    - name: orderunits
+      type: float
+      limit: [0.0, 10.0]
+    - name: city
+      type: generate
+      rule: "{city}"
+    - name: state
+      type: generate
+      rule: "{state}"
+    - name: zipcode
+      type: generate
+      rule: "{zip}"
+    - name: time
+      type: timestamp
+      timestamp_format: "2006-01-02 15:04:05.000000"
+    - name: timestamp
+      type: timestamp_int
+    - name: value
+      type: int
+      limit:
+        - 0
+        - 100000
 
 sinks:
-- type: timeplus
-  properties:
-    address: http://localhost:8000
-    
+  - type: timeplus
+    properties:
+      address: http://localhost:8000
+
 observer:
   type: timeplus
   properties:
     address: http://localhost:8000
     query: select * from test where value=9
-    time_column: time
-    time_format: '2006-01-02T15:04:05.000-07:00'
+    time_column: timestamp
+    time_format: "2006-01-02T15:04:05.000-07:00"
     metric: latency
