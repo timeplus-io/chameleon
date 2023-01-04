@@ -2,28 +2,28 @@
 name: test
 timeout: 20
 source:
-  batch_size: 512
-  concurency: 8
-  interval: 100
+  batch_size: 4
+  concurency: 1
+  interval: 3000
   interval_delta: 0
   batch_number: 100000000
   random_event: true
   fields:
-    - name: value
+    - name: v
       type: int
       limit:
         - 0
-        - 10000
+        - 100
     - name: time
       type: timestamp_int
 sinks:
-  - type: timeplus
+  - type: kdb
     properties:
-      address: http://localhost:8000
-      apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
+      host: localhost
+      port: 5001
 
 observer:
-  type: timeplus
+  type: kdb
   properties:
     address: http://localhost:8000
     apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
