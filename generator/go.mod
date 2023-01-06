@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/apache/rocketmq-client-go/v2 v2.1.0
 	github.com/brianvoe/gofakeit/v6 v6.17.0
+	github.com/dolphindb/api-go v1.30.20
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v4 v4.16.1
@@ -75,6 +76,8 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

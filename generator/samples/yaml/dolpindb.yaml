@@ -1,0 +1,38 @@
+---
+name: test
+timeout: 100000000
+source:
+  batch_size: 32
+  concurency: 4
+  interval: 100
+  interval_delta: 0
+  batch_number: 100000000
+  random_event: true
+  fields:
+    - name: v
+      type: int
+      limit:
+        - 0
+        - 100
+    - name: sym
+      type: int
+      limit:
+        - 0
+        - 10000
+    - name: time
+      type: timestamp_int
+sinks:
+  - type: dolpindb
+    properties:
+      address: localhost:8848
+
+observer:
+  type: dolpindb
+  properties:
+    address: http://localhost:8000
+    apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
+    query: select * from test where value=9
+    time_column: time
+    metric: latency
+    metric_store_address: http://localhost:8000
+    metric_store_apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
