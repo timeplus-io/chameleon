@@ -1,6 +1,6 @@
 ---
 name: test
-timeout: 20
+timeout: 100000000
 source:
   batch_size: 4
   concurency: 1
@@ -14,6 +14,11 @@ source:
       limit:
         - 0
         - 100
+    - name: sym
+      type: int
+      limit:
+        - 0
+        - 10000
     - name: time
       type: timestamp_int
 sinks:
