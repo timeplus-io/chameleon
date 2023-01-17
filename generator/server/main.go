@@ -20,6 +20,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/job"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/plugins/dolpindb"
 	"github.com/timeplus-io/chameleon/generator/plugins/kafka"
 	"github.com/timeplus-io/chameleon/generator/plugins/kdb"
 	"github.com/timeplus-io/chameleon/generator/plugins/ksql"
@@ -110,6 +111,7 @@ func initPlugins() {
 	console.Init()
 	rocketmq.Init()
 	kdb.Init()
+	dolpindb.Init()
 }
 
 func startServer() *http.Server {
