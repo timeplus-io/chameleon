@@ -72,7 +72,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 
 	var metricsManager metrics.Metrics
 	if _, ok := properties["metric_store_address"]; !ok {
-		metricsManager = metrics.NewEmptyMetricManager()
+		metricsManager = metrics.NewCSVMetricManager()
 	} else {
 		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
 		if err != nil {
@@ -190,8 +190,33 @@ func (o *TimeplusObserver) observeThroughput() error {
 }
 
 func (o *TimeplusObserver) observeAvailability() error {
-	log.Logger().Errorf("availability observing not supported")
-	return fmt.Errorf("availability not supported")
+	log.Logger().Infof("start observing availability")
+	o.metricsManager.Add("availability")
+
+	resultStream, _, err := o.server.QueryStream(o.query)
+	if err != nil {
+		log.Logger().Errorf("failed to run query")
+		return err
+	}
+
+	o.obWaiter.Add(1)
+	disposed := resultStream.ForEach(func(v interface{}) {
+		event := v.([]interface{})
+		count := event[0].(float64) // TODO: make col configurable, now hard code to second fields
+		log.Logger().Infof("observe availability %v", count)
+		o.metricsManager.Observe("availability", count, nil)
+	}, func(err error) {
+		log.Logger().Error("query failed", err)
+	}, func() {
+		log.Logger().Debugf("query %s closed")
+	})
+
+	_, cancel := resultStream.Connect(context.Background())
+	o.cancel = cancel
+	<-disposed
+	log.Logger().Infof("stop observing availability")
+	o.obWaiter.Done()
+	return nil
 }
 
 func (o *TimeplusObserver) runQuery(sql string) error {

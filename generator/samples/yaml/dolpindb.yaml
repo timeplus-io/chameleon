@@ -2,8 +2,8 @@
 name: test
 timeout: 30
 source:
-  batch_size: 64
-  concurency: 8
+  batch_size: 32
+  concurency: 4
   interval: 100
   interval_delta: 0
   batch_number: 100
