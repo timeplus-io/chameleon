@@ -133,8 +133,8 @@ func NewDolpinDBSink(properties map[string]interface{}) (sink.Sink, error) {
 
 func convertType(sourceType string) string {
 	switch sourceType {
-	case string(source.FIELDTYPE_TIMESTAMP):
-		return "TIMESTAMP"
+	case string(source.FIELDTYPE_TIMESTAMP): // Should consider to support time.Time for timestamp type
+		return "STRING"
 	case string(source.FIELDTYPE_TIMESTAMP_INT):
 		return "LONG"
 	case string(source.FIELDTYPE_STRING):
@@ -181,7 +181,7 @@ func (s *DolpinDBSink) Init(name string, fields []common.Field) error {
 }
 
 func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) error {
-	log.Logger().Infof("write dolpindb header:%v rows:%v %t index:%d", headers, rows, rows, index)
+	log.Logger().Debugf("write dolpindb header:%v rows:%v %t index:%d", headers, rows, rows, index)
 
 	// order by headers
 	values := make(map[string][]interface{})
@@ -228,7 +228,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			modelType := model.DtDouble
 			v := make([]float64, len(value))
 			for i := 0; i < len(value); i++ {
-				v[i] = float64(value[i].(float64))
+				v[i] = float64(value[i].(float32))
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
@@ -285,6 +285,6 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 		return err
 	}
 
-	log.Logger().Infof("insert success result: %v", res)
+	log.Logger().Debugf("insert success result: %v", res)
 	return nil
 }

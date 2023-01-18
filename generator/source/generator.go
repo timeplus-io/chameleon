@@ -142,7 +142,7 @@ func (s *GeneratorEngine) Start() {
 }
 
 func (s *GeneratorEngine) run(index int) error {
-	log.Logger().Infof("start generate routine with index %d", index)
+	log.Logger().Infof("start generate routine with index %d, batch number %d ", index, s.Config.BatchNumber)
 	streamChannel := s.streamChannels[index]
 	for i := 0; i < s.Config.BatchNumber; i++ {
 		if s.Finished {

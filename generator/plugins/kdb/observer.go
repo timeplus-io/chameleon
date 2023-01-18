@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	kdb "github.com/sv/kdbgo"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/metrics"
 	"github.com/timeplus-io/chameleon/generator/observer"
@@ -15,6 +16,8 @@ const KDB_OB_TYPE = "kdb"
 type KDBObserver struct {
 	host string
 	port int
+
+	client *kdb.KDBConn
 
 	metric         string
 	isStopped      bool
@@ -28,9 +31,14 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	port, err := utils.GetIntWithDefault(properties, "port", 8088)
+	port, err := utils.GetIntWithDefault(properties, "port", 5001)
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	client, err := kdb.DialKDB(host, port, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
 
 	metric, err := utils.GetWithDefault(properties, "metric", "latency")
@@ -40,7 +48,7 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 
 	var metricsManager metrics.Metrics
 	if _, ok := properties["metric_store_address"]; !ok {
-		metricsManager = metrics.NewEmptyMetricManager()
+		metricsManager = metrics.NewCSVMetricManager()
 	} else {
 		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
 		if err != nil {
@@ -63,6 +71,7 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 	return &KDBObserver{
 		host:           host,
 		port:           port,
+		client:         client,
 		metric:         metric,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},

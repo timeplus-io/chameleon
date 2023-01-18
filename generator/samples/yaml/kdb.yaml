@@ -30,10 +30,6 @@ sinks:
 observer:
   type: kdb
   properties:
-    address: http://localhost:8000
-    apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
-    query: select * from test where value=9
-    time_column: time
-    metric: latency
-    metric_store_address: http://localhost:8000
-    metric_store_apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
+    host: localhost
+    port: 5001
+    metric: availability

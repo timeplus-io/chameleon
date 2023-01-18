@@ -51,7 +51,7 @@ func NewKDBSink(properties map[string]interface{}) (sink.Sink, error) {
 func convertType(sourceType string) string {
 	switch sourceType {
 	case string(source.FIELDTYPE_TIMESTAMP):
-		return "symbol"
+		return "timestamp"
 	case string(source.FIELDTYPE_TIMESTAMP_INT):
 		return "long"
 	case string(source.FIELDTYPE_STRING):
