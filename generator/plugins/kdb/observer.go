@@ -3,6 +3,7 @@ package kdb
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	kdb "github.com/sv/kdbgo"
 	"github.com/timeplus-io/chameleon/generator/log"
@@ -14,10 +15,8 @@ import (
 const KDB_OB_TYPE = "kdb"
 
 type KDBObserver struct {
-	host string
-	port int
-
 	client *kdb.KDBConn
+	query  string
 
 	metric         string
 	isStopped      bool
@@ -39,6 +38,11 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 	client, err := kdb.DialKDB(host, port, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
+	}
+
+	query, err := utils.GetWithDefault(properties, "query", "count test")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
 	metric, err := utils.GetWithDefault(properties, "metric", "latency")
@@ -69,9 +73,8 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 	}
 
 	return &KDBObserver{
-		host:           host,
-		port:           port,
 		client:         client,
+		query:          query,
 		metric:         metric,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
@@ -88,6 +91,37 @@ func (o *KDBObserver) observeThroughput() error {
 }
 
 func (o *KDBObserver) observeAvailability() error {
+	log.Logger().Infof("availability observing started")
+	o.metricsManager.Add("availability")
+
+	o.obWaiter.Add(1)
+	defer o.obWaiter.Done()
+
+	metricsName := "availability"
+	var preCount int64 = 0
+	tag := map[string]interface{}{}
+
+	for {
+		res, err := o.client.Call(o.query)
+		if err != nil {
+			log.Logger().Errorf("query kdb failed: %w", err)
+		} else {
+			count := res.Data.(int64)
+			log.Logger().Infof("query success result: %d", count)
+			o.metricsManager.Observe(metricsName, float64(count), tag)
+			if preCount != 0 && count == preCount {
+				break
+			} else {
+				preCount = count
+			}
+		}
+
+		time.Sleep(3 * time.Second)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	o.metricsManager.Flush()
+
 	return nil
 }
 
@@ -109,7 +143,13 @@ func (o *KDBObserver) Observe() error {
 }
 
 func (o *KDBObserver) Stop() {
+	log.Logger().Infof("call kdb stop observing")
+	o.isStopped = true
+	o.obWaiter.Wait()
+	o.metricsManager.Save("kdb")
+	log.Logger().Infof("save observing completed")
 }
 
 func (o *KDBObserver) Wait() {
+	o.obWaiter.Wait()
 }
