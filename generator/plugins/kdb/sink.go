@@ -131,13 +131,13 @@ func (s *KDBSink) Write(headers []string, rows [][]interface{}, index int) error
 
 	insertData := strings.Join(results, ";")
 	insertSQL := fmt.Sprintf("`%s insert (%s)", s.tableName, insertData)
-	log.Logger().Infof("insert rows : %s", insertSQL)
+	log.Logger().Debugf("insert rows : %s", insertSQL)
 
-	res, err := s.client.Call(insertSQL)
+	_, err := s.client.Call(insertSQL)
 	if err != nil {
 		log.Logger().Errorf("insert kdb failed: %w", err)
 		return err
 	}
-	log.Logger().Infof("insert success result: %v", res)
+	log.Logger().Infof("insert success")
 	return nil
 }
