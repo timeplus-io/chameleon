@@ -99,7 +99,7 @@ func (o *KDBObserver) observeAvailability() error {
 
 	metricsName := "availability"
 	var preCount int64 = 0
-	tag := map[string]interface{}{}
+	tag := map[string]interface{}{"targte": "kdb"}
 
 	for {
 		res, err := o.client.Call(o.query)

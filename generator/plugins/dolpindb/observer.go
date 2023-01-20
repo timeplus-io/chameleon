@@ -150,7 +150,7 @@ func (o *DolpinDBObserver) observeAvailability() error {
 	defer o.obWaiter.Done()
 
 	metricsName := "availability"
-	tag := map[string]interface{}{}
+	tag := map[string]interface{}{"targte": "dolphinDB"}
 
 	var preCount int32 = 0
 	for {

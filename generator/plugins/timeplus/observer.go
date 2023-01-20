@@ -200,11 +200,12 @@ func (o *TimeplusObserver) observeAvailability() error {
 	}
 
 	o.obWaiter.Add(1)
+	tag := map[string]interface{}{"targte": "dolphinDB"}
 	disposed := resultStream.ForEach(func(v interface{}) {
 		event := v.([]interface{})
 		count := event[0].(float64) // TODO: make col configurable, now hard code to second fields
 		log.Logger().Infof("observe availability %v", count)
-		o.metricsManager.Observe("availability", count, nil)
+		o.metricsManager.Observe("availability", count, tag)
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
