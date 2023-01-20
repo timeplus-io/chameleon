@@ -8,6 +8,7 @@ import (
 
 	"github.com/dolphindb/api-go/api"
 	"github.com/dolphindb/api-go/model"
+	"github.com/google/uuid"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/metrics"
 	"github.com/timeplus-io/chameleon/generator/observer"
@@ -150,7 +151,8 @@ func (o *DolpinDBObserver) observeAvailability() error {
 	defer o.obWaiter.Done()
 
 	metricsName := "availability"
-	tag := map[string]interface{}{"targte": "dolphinDB"}
+	id, _ := uuid.NewRandom()
+	tag := map[string]interface{}{"targte": "dolphinDB", "testId": id.String()}
 
 	var preCount int32 = 0
 	for {

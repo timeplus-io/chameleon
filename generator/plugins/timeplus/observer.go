@@ -200,7 +200,9 @@ func (o *TimeplusObserver) observeAvailability() error {
 	}
 
 	o.obWaiter.Add(1)
-	tag := map[string]interface{}{"targte": "dolphinDB"}
+	defer o.obWaiter.Done()
+	id, _ := uuid.NewRandom()
+	tag := map[string]interface{}{"targte": "timeplus", "testId": id.String()}
 	disposed := resultStream.ForEach(func(v interface{}) {
 		event := v.([]interface{})
 		count := event[0].(float64) // TODO: make col configurable, now hard code to second fields
@@ -216,7 +218,7 @@ func (o *TimeplusObserver) observeAvailability() error {
 	o.cancel = cancel
 	<-disposed
 	log.Logger().Infof("stop observing availability")
-	o.obWaiter.Done()
+
 	return nil
 }
 

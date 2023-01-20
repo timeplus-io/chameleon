@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	kdb "github.com/sv/kdbgo"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/metrics"
@@ -99,7 +100,8 @@ func (o *KDBObserver) observeAvailability() error {
 
 	metricsName := "availability"
 	var preCount int64 = 0
-	tag := map[string]interface{}{"targte": "kdb"}
+	id, _ := uuid.NewRandom()
+	tag := map[string]interface{}{"targte": "kdb", "testId": id.String()}
 
 	for {
 		res, err := o.client.Call(o.query)
