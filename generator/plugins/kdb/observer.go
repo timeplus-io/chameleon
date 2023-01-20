@@ -3,7 +3,10 @@ package kdb
 import (
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/google/uuid"
+	kdb "github.com/sv/kdbgo"
 	"github.com/timeplus-io/chameleon/generator/log"
 	"github.com/timeplus-io/chameleon/generator/metrics"
 	"github.com/timeplus-io/chameleon/generator/observer"
@@ -13,8 +16,8 @@ import (
 const KDB_OB_TYPE = "kdb"
 
 type KDBObserver struct {
-	host string
-	port int
+	client *kdb.KDBConn
+	query  string
 
 	metric         string
 	isStopped      bool
@@ -28,7 +31,17 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	port, err := utils.GetIntWithDefault(properties, "port", 8088)
+	port, err := utils.GetIntWithDefault(properties, "port", 5001)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	client, err := kdb.DialKDB(host, port, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect: %w", err)
+	}
+
+	query, err := utils.GetWithDefault(properties, "query", "count test")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
@@ -40,7 +53,7 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 
 	var metricsManager metrics.Metrics
 	if _, ok := properties["metric_store_address"]; !ok {
-		metricsManager = metrics.NewEmptyMetricManager()
+		metricsManager = metrics.NewCSVMetricManager()
 	} else {
 		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
 		if err != nil {
@@ -61,8 +74,8 @@ func NewKDBObserver(properties map[string]interface{}) (observer.Observer, error
 	}
 
 	return &KDBObserver{
-		host:           host,
-		port:           port,
+		client:         client,
+		query:          query,
 		metric:         metric,
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
@@ -79,6 +92,37 @@ func (o *KDBObserver) observeThroughput() error {
 }
 
 func (o *KDBObserver) observeAvailability() error {
+	log.Logger().Infof("availability observing started")
+	o.metricsManager.Add("availability")
+
+	o.obWaiter.Add(1)
+	defer o.obWaiter.Done()
+
+	metricsName := "availability"
+	var preCount int64 = 0
+	id, _ := uuid.NewRandom()
+	tag := map[string]interface{}{"targte": "kdb", "testId": id.String()}
+
+	for {
+		res, err := o.client.Call(o.query)
+		if err != nil {
+			log.Logger().Errorf("query kdb failed: %w", err)
+		} else {
+			count := res.Data.(int64)
+			log.Logger().Infof("query success result: %d", count)
+			o.metricsManager.Observe(metricsName, float64(count), tag)
+			if preCount != 0 && count == preCount {
+				break
+			} else {
+				preCount = count
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	o.metricsManager.Flush()
+
 	return nil
 }
 
@@ -100,7 +144,13 @@ func (o *KDBObserver) Observe() error {
 }
 
 func (o *KDBObserver) Stop() {
+	log.Logger().Infof("call kdb stop observing")
+	o.isStopped = true
+	o.obWaiter.Wait()
+	o.metricsManager.Save("kdb")
+	log.Logger().Infof("save observing completed")
 }
 
 func (o *KDBObserver) Wait() {
+	o.obWaiter.Wait()
 }

@@ -50,7 +50,7 @@ func NewKDBSink(properties map[string]interface{}) (sink.Sink, error) {
 
 func convertType(sourceType string) string {
 	switch sourceType {
-	case string(source.FIELDTYPE_TIMESTAMP):
+	case string(source.FIELDTYPE_TIMESTAMP): // TODO: support using datetime instead of symbol for ingest
 		return "symbol"
 	case string(source.FIELDTYPE_TIMESTAMP_INT):
 		return "long"
@@ -59,7 +59,7 @@ func convertType(sourceType string) string {
 	case string(source.FIELDTYPE_INT):
 		return "int"
 	case string(source.FIELDTYPE_FLOAT):
-		return "real"
+		return "float"
 	case string(source.FIELDTYPE_BOOL):
 		return "boolean"
 	case string(source.FIELDTYPE_MAP):
@@ -114,21 +114,30 @@ func (s *KDBSink) Write(headers []string, rows [][]interface{}, index int) error
 
 	results := make([]string, len(headers))
 	for index, col := range s.columns {
-		value := strings.Join(values[col.Name], " ")
-		log.Logger().Debugf("col %s %s", col.Name, value)
-		results[index] = value
+		if col.Type == "symbol" {
+			quotedValue := make([]string, len(values[col.Name]))
+			for i, val := range values[col.Name] {
+				quotedValue[i] = fmt.Sprintf(`"%s"`, val)
+			}
+			value := strings.Join(quotedValue, ";")
+			log.Logger().Debugf("col %s %s", col.Name, value)
+			results[index] = fmt.Sprintf("`$(%s)", value)
+		} else {
+			value := strings.Join(values[col.Name], " ")
+			log.Logger().Debugf("col %s %s", col.Name, value)
+			results[index] = value
+		}
 	}
 
 	insertData := strings.Join(results, ";")
 	insertSQL := fmt.Sprintf("`%s insert (%s)", s.tableName, insertData)
-	log.Logger().Infof("insert rows : %s", insertSQL)
+	log.Logger().Debugf("insert rows : %s", insertSQL)
 
-	res, err := s.client.Call(insertSQL)
+	_, err := s.client.Call(insertSQL)
 	if err != nil {
 		log.Logger().Errorf("insert kdb failed: %w", err)
 		return err
 	}
-	log.Logger().Infof("insert success result: %v", res)
-
+	log.Logger().Infof("insert success")
 	return nil
 }

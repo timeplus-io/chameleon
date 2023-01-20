@@ -17,17 +17,8 @@ type Manager struct {
 	timeplusMetrics *timeplusMetrics.Metrics
 }
 
-type TimeplusMetric struct {
-	records []MetricRecord
-}
-
-type MetricRecord struct {
-	value float64
-	time  int64
-}
-
-func NewMetric() *TimeplusMetric {
-	return &TimeplusMetric{
+func NewMetric() *Metric {
+	return &Metric{
 		records: make([]MetricRecord, 0),
 	}
 }
@@ -65,7 +56,7 @@ func (m *Manager) Observe(name string, value float64, tags map[string]interface{
 				value: value,
 				time:  time.Now().UnixMilli(),
 			}
-			metric.(*TimeplusMetric).records = append(metric.(*TimeplusMetric).records, record)
+			metric.(*Metric).records = append(metric.(*Metric).records, record)
 		}
 
 		m.timeplusMetrics.Observe("timeplus", "test", []any{name}, []any{value, float64(time.Now().UnixMilli())}, tags)
@@ -76,13 +67,13 @@ func (m *Manager) Save(namesapce string) {
 	log.Logger().Infof("save result to fle")
 	m.metrics.Range(func(key, value interface{}) bool {
 		metricName := key.(string)
-		metric := value.(*TimeplusMetric)
+		metric := value.(*Metric)
 		m.save(namesapce, metricName, metric)
 		return true
 	})
 }
 
-func (m *Manager) save(namesapce string, name string, metric *TimeplusMetric) {
+func (m *Manager) save(namesapce string, name string, metric *Metric) {
 	ts := time.Now().Unix()
 	filePath := fmt.Sprintf("%s_%s_report_%d.csv", namesapce, name, ts)
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

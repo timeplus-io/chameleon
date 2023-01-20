@@ -1,38 +1,54 @@
 ---
 name: test
-timeout: 100000000
+timeout: 30
 source:
   batch_size: 32
   concurency: 4
   interval: 100
   interval_delta: 0
-  batch_number: 100000000
+  batch_number: 100
   random_event: true
   fields:
-    - name: v
-      type: int
-      limit:
-        - 0
-        - 100
-    - name: sym
-      type: int
-      limit:
-        - 0
-        - 10000
+    - name: ordertime
+      type: timestamp
+      timestamp_format: "2006-01-02T15:04:05.000Z"
+    - name: orderid
+      type: generate
+      rule: "O{number:1,1000}"
+    - name: itemid
+      type: generate
+      rule: "I{number:1,1000}"
+    - name: orderunits
+      type: float
+      limit: [0.0, 10.0]
+    - name: city
+      type: generate
+      rule: "{city}"
+    - name: state
+      type: generate
+      rule: "{state}"
+    - name: zipcode
+      type: generate
+      rule: "{zip}"
     - name: time
+      type: timestamp
+      timestamp_format: "2006-01-02T15:04:05.000Z"
+    - name: timestamp
       type: timestamp_int
+    - name: value
+      type: int
+      limit:
+        - 0
+        - 100000
 sinks:
   - type: dolpindb
     properties:
       address: localhost:8848
+      dbpath: dfs://perftest
 
 observer:
   type: dolpindb
   properties:
-    address: http://localhost:8000
-    apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
-    query: select * from test where value=9
-    time_column: time
-    metric: latency
-    metric_store_address: http://localhost:8000
-    metric_store_apikey: OgTcKISs6PCK0isAKXMYlNRpI6RgCBvcQWcJbXapNzqMSO4WjoHU1DKbSZl-
+    metric: availability
+    address: localhost:8848
+    dbpath: dfs://perftest
