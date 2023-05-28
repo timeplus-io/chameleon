@@ -2,3 +2,5 @@
 sinks.json
 sinks.yaml
 cardemo
+routes.json
+sinks_kafka.yaml
