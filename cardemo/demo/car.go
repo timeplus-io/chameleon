@@ -1,6 +1,7 @@
 package demo
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 
@@ -35,16 +36,16 @@ type Car struct {
 	faker          *fake.Faker
 	carRunInterval int
 	idleDuration   int
+	routes         *RouteList
+	route          Response
 
 	lock sync.Mutex
 }
 
-func NewCar(cid string, inService bool, appChannels AppChannels, faker *fake.Faker) *Car {
+func NewCar(cid string, inService bool, appChannels AppChannels, faker *fake.Faker, routes *RouteList) *Car {
 	car := Car{
 		ID:             cid,
 		InUse:          false,
-		Longitude:      faker.Longitude(),
-		Latitude:       faker.Latitude(),
 		GasPercent:     faker.Float64Range(REFILL_MIN, REFILL_MAX),
 		TotalDistance:  faker.Float64Range(0.0, INITIAL_MILLAGE_MAX),
 		Locked:         true,
@@ -56,11 +57,22 @@ func NewCar(cid string, inService bool, appChannels AppChannels, faker *fake.Fak
 		carRunInterval: viper.GetInt("cardemo.car.update.interval"),
 		idleDuration:   0,
 		faker:          faker,
+		routes:         routes,
 		lock:           sync.Mutex{},
 	}
 
+	car.route = car.nextRoutes()
+	car.Latitude = car.route.Routes[0].Geometry.Coordinates[0][1]
+	car.Longitude = car.route.Routes[0].Geometry.Coordinates[0][0]
+
 	go (&car).StartSimulation()
 	return &car
+}
+
+func (c *Car) nextRoutes() Response {
+	rand.Seed(time.Now().UnixNano())
+	randomIndex := rand.Intn(len(*c.routes))
+	return (*c.routes)[randomIndex]
 }
 
 func (c *Car) StartSimulation() {
@@ -253,8 +265,8 @@ func (c *Car) Event() map[string]any {
 	return event
 }
 
-func CreateCar(cid string, inService bool, channels AppChannels) *Car {
+func CreateCar(cid string, inService bool, channels AppChannels, routes *RouteList) *Car {
 	log.Logger().Debugf("car: %s in-service: %d", cid, inService)
-	car := NewCar(cid, inService, channels, fake.New(0))
+	car := NewCar(cid, inService, channels, fake.New(0), routes)
 	return car
 }

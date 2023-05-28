@@ -165,7 +165,7 @@ func (a *CarSharingDemoApp) initCarsData(channels AppChannels) []*Car {
 	result := make([]*Car, carCount)
 
 	for index, car := range cars {
-		result[index] = CreateCar(car.ID, car.InService, channels)
+		result[index] = CreateCar(car.ID, car.InService, channels, &a.Routes)
 	}
 	return result
 }
