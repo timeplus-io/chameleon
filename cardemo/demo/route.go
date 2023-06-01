@@ -2,8 +2,23 @@ package demo
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math"
+	"math/rand"
+	"time"
+
+	"github.com/timeplus-io/chameleon/cardemo/log"
 )
+
+const (
+	EarthRadius = 6371 // Earth's radius in kilometers
+)
+
+type Location struct {
+	Latitude  float64
+	Longitude float64
+}
 
 type Route struct {
 	WeightName string   `json:"weight_name"`
@@ -49,6 +64,14 @@ type Response struct {
 
 type RouteList []Response
 
+type Track struct {
+	position []float64
+	target   []float64
+	path     [][]float64
+
+	distance float64
+}
+
 func loadRoutes(path string) (*RouteList, error) {
 	jsonData, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -62,4 +85,112 @@ func loadRoutes(path string) (*RouteList, error) {
 	}
 
 	return &routes, nil
+}
+
+func NewTrack(routes *RouteList) (*Track, error) {
+	rand.Seed(time.Now().UnixNano())
+	randomIndex := rand.Intn(len(*routes))
+
+	path := (*routes)[randomIndex].Routes[0].Geometry.Coordinates
+
+	if len(path) >= 2 {
+		return &Track{
+			position: path[0],
+			target:   path[1],
+			path:     path,
+			distance: 0,
+		}, nil
+	} else if len(path) == 1 {
+		return &Track{
+			position: path[0],
+			target:   path[0],
+			path:     path,
+			distance: 0,
+		}, nil
+	} else {
+		return nil, fmt.Errorf("invalid routes")
+	}
+}
+
+func (t *Track) Latitude() float64 {
+	return t.position[1]
+}
+
+func (t *Track) Longitude() float64 {
+	return t.position[0]
+}
+
+func (t *Track) CurrentLocation() Location {
+	return Location{
+		Latitude:  t.Latitude(),
+		Longitude: t.Longitude(),
+	}
+}
+
+func (t *Track) TargetLocation() Location {
+	return Location{
+		Latitude:  t.target[1],
+		Longitude: t.target[0],
+	}
+}
+
+func (t *Track) Distance() float64 {
+	return t.distance
+}
+
+func (t *Track) Run(interval float64) {
+	mean := 50.0  // Desired average
+	stdDev := 2.0 // Desired standard deviation
+	speed := stdDev*rand.NormFloat64() + mean
+	t.distance = speed * interval / (60 * 60 * 1000)
+
+	log.Logger().Infof("running distance is %f, interval is %f", t.distance, interval)
+
+	initial := t.CurrentLocation()
+	target := t.TargetLocation()
+
+	// Calculate the bearing between the initial and target locations
+	bearing := math.Atan2(math.Sin(degToRad(target.Longitude)-degToRad(initial.Longitude))*math.Cos(degToRad(target.Latitude)),
+		math.Cos(degToRad(initial.Latitude))*math.Sin(degToRad(target.Latitude))-math.Sin(degToRad(initial.Latitude))*math.Cos(degToRad(target.Latitude))*math.Cos(degToRad(target.Longitude)-degToRad(initial.Longitude)))
+
+	// Convert the bearing to degrees
+	bearing = radToDeg(bearing)
+
+	// Calculate the new location after driving 1 kilometer
+	newLocation := calculateDestination(initial, bearing, t.distance)
+
+	t.position = []float64{newLocation.Longitude, newLocation.Latitude}
+
+	// TODO : Check if target changed and track finished
+}
+
+func (t *Track) IsFinished() bool {
+	return false
+}
+
+// Written by ChatGPT
+// Converts degrees to radians.
+func degToRad(deg float64) float64 {
+	return deg * (math.Pi / 180)
+}
+
+// Converts radians to degrees.
+func radToDeg(rad float64) float64 {
+	return rad * (180 / math.Pi)
+}
+
+// Calculates the destination location given an initial location, bearing, and distance.
+func calculateDestination(initial Location, bearing float64, distance float64) Location {
+	lat1 := degToRad(initial.Latitude)
+	lon1 := degToRad(initial.Longitude)
+	b := degToRad(bearing)
+	d := distance / EarthRadius
+
+	lat2 := math.Asin(math.Sin(lat1)*math.Cos(d) + math.Cos(lat1)*math.Sin(d)*math.Cos(b))
+	lon2 := lon1 + math.Atan2(math.Sin(b)*math.Sin(d)*math.Cos(lat1), math.Cos(d)-math.Sin(lat1)*math.Sin(lat2))
+
+	return Location{
+		Latitude:  radToDeg(lat2),
+		Longitude: radToDeg(lon2),
+	}
 }

@@ -37,7 +37,7 @@ type Car struct {
 	carRunInterval int
 	idleDuration   int
 	routes         *RouteList
-	route          *Response
+	route          *Track
 
 	lock sync.Mutex
 }
@@ -193,9 +193,14 @@ func (c *Car) StartTrip(user *User) {
 	user.InTrip = true
 	c.InUse = true
 	c.Locked = false
-	c.route = c.nextRoutes()
-	c.Latitude = c.route.Routes[0].Geometry.Coordinates[0][1]
-	c.Longitude = c.route.Routes[0].Geometry.Coordinates[0][0]
+	if route, err := NewTrack(c.routes); err != nil {
+		log.Logger().Fatalf("invalid route found")
+	} else {
+		c.route = route
+		c.Latitude = c.route.Latitude()
+		c.Longitude = c.route.Longitude()
+	}
+
 	c.targetDistance = c.faker.Float64Range(viper.GetFloat64("cardemo.trip.target.min"), viper.GetFloat64("cardemo.trip.target.max"))
 	log.Logger().Debugf("car %s target distance is %f km", c.ID, c.targetDistance)
 
@@ -205,23 +210,29 @@ func (c *Car) StartTrip(user *User) {
 
 func (c *Car) Run() {
 	c.idleDuration = 0
-	previousLatitude := c.Latitude
-	previousLongitude := c.Longitude
+	// previousLatitude := c.Latitude
+	// previousLongitude := c.Longitude
 
-	detla := viper.GetFloat64("cardemo.car.update.delta")
-	c.Latitude = previousLatitude + c.faker.Float64Range(-detla, detla)
-	c.Longitude = previousLongitude + c.faker.Float64Range(-detla, detla)
+	// detla := viper.GetFloat64("cardemo.car.update.delta")
+	// c.Latitude = previousLatitude + c.faker.Float64Range(-detla, detla)
+	// c.Longitude = previousLongitude + c.faker.Float64Range(-detla, detla)
 
-	distance := Distance(previousLatitude, previousLongitude, c.Latitude, c.Longitude)
-	log.Logger().Debugf("The car ran distance: %f km", distance)
+	// distance := Distance(previousLatitude, previousLongitude, c.Latitude, c.Longitude)
+	// log.Logger().Debugf("The car ran distance: %f km", distance)
 
-	c.TotalDistance = c.TotalDistance + (distance / 1000)
-	c.targetDistance = c.targetDistance - (distance / 1000)
+	// c.TotalDistance = c.TotalDistance + (distance / 1000)
+	// c.targetDistance = c.targetDistance - (distance / 1000)
 
-	log.Logger().Debugf("target distance is %f km", c.targetDistance)
+	// log.Logger().Debugf("target distance is %f km", c.targetDistance)
 
-	c.Speed = int(distance * 60 * 60 / float64(c.carRunInterval))
-	log.Logger().Debugf("car run speed is %d km/h", c.Speed)
+	// c.Speed = int(distance * 60 * 60 / float64(c.carRunInterval))
+	// log.Logger().Debugf("car run speed is %d km/h", c.Speed)
+
+	c.route.Run(float64(c.carRunInterval))
+	distance := c.route.Distance()
+	newLocation := c.route.CurrentLocation()
+	c.Latitude = newLocation.Latitude
+	c.Longitude = newLocation.Longitude
 
 	c.GasPercent = c.GasPercent - (distance / viper.GetFloat64("cardemo.car.recharge.mileage"))
 
