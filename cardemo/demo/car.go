@@ -37,7 +37,7 @@ type Car struct {
 	carRunInterval int
 	idleDuration   int
 	routes         *RouteList
-	route          Response
+	route          *Response
 
 	lock sync.Mutex
 }
@@ -61,18 +61,18 @@ func NewCar(cid string, inService bool, appChannels AppChannels, faker *fake.Fak
 		lock:           sync.Mutex{},
 	}
 
-	car.route = car.nextRoutes()
-	car.Latitude = car.route.Routes[0].Geometry.Coordinates[0][1]
-	car.Longitude = car.route.Routes[0].Geometry.Coordinates[0][0]
+	car.route = nil
+	car.Latitude = 0
+	car.Longitude = 0
 
 	go (&car).StartSimulation()
 	return &car
 }
 
-func (c *Car) nextRoutes() Response {
+func (c *Car) nextRoutes() *Response {
 	rand.Seed(time.Now().UnixNano())
 	randomIndex := rand.Intn(len(*c.routes))
-	return (*c.routes)[randomIndex]
+	return &(*c.routes)[randomIndex]
 }
 
 func (c *Car) StartSimulation() {
@@ -193,6 +193,9 @@ func (c *Car) StartTrip(user *User) {
 	user.InTrip = true
 	c.InUse = true
 	c.Locked = false
+	c.route = c.nextRoutes()
+	c.Latitude = c.route.Routes[0].Geometry.Coordinates[0][1]
+	c.Longitude = c.route.Routes[0].Geometry.Coordinates[0][0]
 	c.targetDistance = c.faker.Float64Range(viper.GetFloat64("cardemo.trip.target.min"), viper.GetFloat64("cardemo.trip.target.max"))
 	log.Logger().Debugf("car %s target distance is %f km", c.ID, c.targetDistance)
 
@@ -266,7 +269,7 @@ func (c *Car) Event() map[string]any {
 }
 
 func CreateCar(cid string, inService bool, channels AppChannels, routes *RouteList) *Car {
-	log.Logger().Debugf("car: %s in-service: %d", cid, inService)
+	log.Logger().Debugf("car: %s in-service: %t", cid, inService)
 	car := NewCar(cid, inService, channels, fake.New(0), routes)
 	return car
 }
