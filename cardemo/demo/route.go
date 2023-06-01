@@ -66,10 +66,11 @@ type RouteList []Response
 
 type Track struct {
 	position []float64
-	target   []float64
 	path     [][]float64
+	step     int
 
-	distance float64
+	distance      float64
+	totalDistance float64
 }
 
 func loadRoutes(path string) (*RouteList, error) {
@@ -93,19 +94,13 @@ func NewTrack(routes *RouteList) (*Track, error) {
 
 	path := (*routes)[randomIndex].Routes[0].Geometry.Coordinates
 
-	if len(path) >= 2 {
+	if len(path) > 0 {
 		return &Track{
-			position: path[0],
-			target:   path[1],
-			path:     path,
-			distance: 0,
-		}, nil
-	} else if len(path) == 1 {
-		return &Track{
-			position: path[0],
-			target:   path[0],
-			path:     path,
-			distance: 0,
+			position:      path[0],
+			path:          path,
+			step:          0,
+			distance:      0,
+			totalDistance: 0,
 		}, nil
 	} else {
 		return nil, fmt.Errorf("invalid routes")
@@ -129,8 +124,8 @@ func (t *Track) CurrentLocation() Location {
 
 func (t *Track) TargetLocation() Location {
 	return Location{
-		Latitude:  t.target[1],
-		Longitude: t.target[0],
+		Latitude:  t.path[t.step+1][1],
+		Longitude: t.path[t.step+1][0],
 	}
 }
 
@@ -138,11 +133,20 @@ func (t *Track) Distance() float64 {
 	return t.distance
 }
 
+func (t *Track) TotalDistance() float64 {
+	return t.totalDistance
+}
+
 func (t *Track) Run(interval float64) {
+	if t.IsFinished() {
+		return
+	}
+
 	mean := 50.0  // Desired average
 	stdDev := 2.0 // Desired standard deviation
 	speed := stdDev*rand.NormFloat64() + mean
 	t.distance = speed * interval / (60 * 60 * 1000)
+	t.totalDistance += t.distance
 
 	log.Logger().Infof("running distance is %f, interval is %f", t.distance, interval)
 
@@ -159,13 +163,25 @@ func (t *Track) Run(interval float64) {
 	// Calculate the new location after driving 1 kilometer
 	newLocation := calculateDestination(initial, bearing, t.distance)
 
-	t.position = []float64{newLocation.Longitude, newLocation.Latitude}
-
-	// TODO : Check if target changed and track finished
+	if (newLocation.Latitude-initial.Latitude) > (target.Latitude-initial.Latitude) ||
+		(newLocation.Longitude-initial.Longitude) > (target.Longitude-initial.Longitude) {
+		t.step = t.step + 1
+		t.position = []float64{target.Longitude, target.Latitude}
+	} else {
+		t.position = []float64{newLocation.Longitude, newLocation.Latitude}
+	}
 }
 
 func (t *Track) IsFinished() bool {
-	return false
+	if len(t.path) <= 1 {
+		return true
+	}
+
+	if t.step == len(t.path)-1 {
+		return true
+	} else {
+		return false
+	}
 }
 
 // Written by ChatGPT

@@ -1,7 +1,6 @@
 package demo
 
 import (
-	"math/rand"
 	"sync"
 	"time"
 
@@ -31,7 +30,6 @@ type Car struct {
 	price          float64
 	currentUser    *User
 	currentTrip    *Trip
-	targetDistance float64
 	channels       AppChannels
 	faker          *fake.Faker
 	carRunInterval int
@@ -52,7 +50,6 @@ func NewCar(cid string, inService bool, appChannels AppChannels, faker *fake.Fak
 		inService:      inService,
 		booked:         false,
 		price:          viper.GetFloat64("cardemo.car.price"),
-		targetDistance: 0,
 		channels:       appChannels,
 		carRunInterval: viper.GetInt("cardemo.car.update.interval"),
 		idleDuration:   0,
@@ -67,12 +64,6 @@ func NewCar(cid string, inService bool, appChannels AppChannels, faker *fake.Fak
 
 	go (&car).StartSimulation()
 	return &car
-}
-
-func (c *Car) nextRoutes() *Response {
-	rand.Seed(time.Now().UnixNano())
-	randomIndex := rand.Intn(len(*c.routes))
-	return &(*c.routes)[randomIndex]
 }
 
 func (c *Car) StartSimulation() {
@@ -201,35 +192,15 @@ func (c *Car) StartTrip(user *User) {
 		c.Longitude = c.route.Longitude()
 	}
 
-	c.targetDistance = c.faker.Float64Range(viper.GetFloat64("cardemo.trip.target.min"), viper.GetFloat64("cardemo.trip.target.max"))
-	log.Logger().Debugf("car %s target distance is %f km", c.ID, c.targetDistance)
-
 	c.currentTrip = NewTrip(bid, c.Longitude, c.Latitude, c.TotalDistance)
 	c.currentUser = user
 }
 
 func (c *Car) Run() {
 	c.idleDuration = 0
-	// previousLatitude := c.Latitude
-	// previousLongitude := c.Longitude
-
-	// detla := viper.GetFloat64("cardemo.car.update.delta")
-	// c.Latitude = previousLatitude + c.faker.Float64Range(-detla, detla)
-	// c.Longitude = previousLongitude + c.faker.Float64Range(-detla, detla)
-
-	// distance := Distance(previousLatitude, previousLongitude, c.Latitude, c.Longitude)
-	// log.Logger().Debugf("The car ran distance: %f km", distance)
-
-	// c.TotalDistance = c.TotalDistance + (distance / 1000)
-	// c.targetDistance = c.targetDistance - (distance / 1000)
-
-	// log.Logger().Debugf("target distance is %f km", c.targetDistance)
-
-	// c.Speed = int(distance * 60 * 60 / float64(c.carRunInterval))
-	// log.Logger().Debugf("car run speed is %d km/h", c.Speed)
-
 	c.route.Run(float64(c.carRunInterval))
 	distance := c.route.Distance()
+	c.TotalDistance += distance
 	newLocation := c.route.CurrentLocation()
 	c.Latitude = newLocation.Latitude
 	c.Longitude = newLocation.Longitude
@@ -241,7 +212,7 @@ func (c *Car) Run() {
 	}
 
 	// arrived!
-	if c.targetDistance <= 0 {
+	if c.route.IsFinished() {
 		c.StopTrip()
 	}
 }
