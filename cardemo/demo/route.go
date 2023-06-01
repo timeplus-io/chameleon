@@ -137,9 +137,9 @@ func (t *Track) TotalDistance() float64 {
 	return t.totalDistance
 }
 
-func (t *Track) Run(interval float64) {
+func (t *Track) Run(interval float64) float64 {
 	if t.IsFinished() {
-		return
+		return 0
 	}
 
 	mean := 50.0  // Desired average
@@ -170,6 +170,8 @@ func (t *Track) Run(interval float64) {
 	} else {
 		t.position = []float64{newLocation.Longitude, newLocation.Latitude}
 	}
+
+	return speed
 }
 
 func (t *Track) IsFinished() bool {

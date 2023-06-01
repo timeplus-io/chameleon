@@ -6,6 +6,7 @@ DOCKER_ID_USER ?= timeplus
 DATE=$(shell gdate -Iseconds)
 COMMIT=$(shell git rev-parse --short HEAD)
 FULLNAME=$(DOCKER_ID_USER)/${BIN_NAME}:dev_${COMMIT}
+PWD=$(shell pwd)
 
 .PHONY: gen docker gen_mock
 
@@ -19,7 +20,11 @@ docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 
 docker_run:
-	docker run $(IMAGE_NAME)
+	docker run \
+		-v $(PWD)/routes.json:/timeplus/routes.json:ro \
+		-v $(PWD)/.cardemo.yaml:/timeplus/.cardemo.yaml:ro \
+		-v $(PWD)/sinks.yaml:/timeplus/sinks.yaml:ro \
+		$(IMAGE_NAME) --config /timeplus/.cardemo.yaml -f ./sinks.yaml
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)

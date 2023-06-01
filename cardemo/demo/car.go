@@ -198,9 +198,10 @@ func (c *Car) StartTrip(user *User) {
 
 func (c *Car) Run() {
 	c.idleDuration = 0
-	c.route.Run(float64(c.carRunInterval))
+	speed := c.route.Run(float64(c.carRunInterval))
 	distance := c.route.Distance()
 	c.TotalDistance += distance
+	c.Speed = int(speed)
 	newLocation := c.route.CurrentLocation()
 	c.Latitude = newLocation.Latitude
 	c.Longitude = newLocation.Longitude
