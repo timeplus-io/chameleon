@@ -24,6 +24,9 @@ type TimeplusObserver struct {
 	timeFormat string
 	metric     string
 
+	bufferCount int
+	bufferTime  int
+
 	querySet []interface{}
 
 	isStopped      bool
@@ -68,6 +71,16 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	bufferCount, err := utils.GetIntWithDefault(properties, "buffer_count", 100)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	bufferTime, err := utils.GetIntWithDefault(properties, "buffer_time", 128)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	var metricsManager metrics.Metrics
 	if _, ok := properties["metric_store_address"]; !ok {
 		metricsManager = metrics.NewCSVMetricManager()
@@ -100,6 +113,8 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		isStopped:      false,
 		obWaiter:       sync.WaitGroup{},
 		metricsManager: metricsManager,
+		bufferCount:    bufferCount,
+		bufferTime:     bufferTime,
 	}
 
 	if value, ok := properties["querys"]; ok {
@@ -113,7 +128,7 @@ func (o *TimeplusObserver) observeLatency() error {
 	log.Logger().Infof("start observing latecny")
 	o.metricsManager.Add("latency")
 
-	resultStream, cancel, header, err := o.server.QueryStreamWithHeader(o.query, 100, 128)
+	resultStream, cancel, header, err := o.server.QueryStreamWithHeader(o.query, o.bufferCount, o.bufferTime)
 	if err != nil {
 		log.Logger().WithError(err).Errorf("failed to run query")
 		return err
@@ -156,7 +171,7 @@ func (o *TimeplusObserver) observeThroughput() error {
 	log.Logger().Infof("start observing throughput")
 	o.metricsManager.Add("throughput")
 
-	resultStream, cancel, _, err := o.server.QueryStream(o.query, 100, 128)
+	resultStream, cancel, _, err := o.server.QueryStream(o.query, o.bufferCount, o.bufferTime)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		return err
@@ -187,7 +202,7 @@ func (o *TimeplusObserver) observeAvailability() error {
 	log.Logger().Infof("start observing availability")
 	o.metricsManager.Add("availability")
 
-	resultStream, cancel, _, err := o.server.QueryStream(o.query, 100, 128)
+	resultStream, cancel, _, err := o.server.QueryStream(o.query, o.bufferCount, o.bufferTime)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		return err
@@ -223,7 +238,7 @@ func (o *TimeplusObserver) runQuery(sql string) error {
 
 	id := uuid.NewString() // TODO : the API should return query Id
 	metricsName := "query"
-	resultStream, cancel, _, err := o.server.QueryStream(sql, 100, 128)
+	resultStream, cancel, _, err := o.server.QueryStream(sql, o.bufferCount, o.bufferTime)
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		tag := map[string]interface{}{
