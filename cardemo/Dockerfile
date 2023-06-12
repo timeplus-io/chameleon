@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -o ./cardemo ./main.go
 FROM alpine:3.13.6
 WORKDIR /timeplus
 COPY --from=builder /build/cardemo /timeplus/cardemo
-COPY ./sinks.yaml /timeplus/config/
+COPY ./routes.json /timeplus/
 RUN chmod +x /timeplus/cardemo
 
 ENTRYPOINT [ "/timeplus/cardemo"]

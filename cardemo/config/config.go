@@ -30,4 +30,9 @@ var Conf = config.Map{
 		Default: "info",
 		Usage:   "level of log, support panic|fatal|error|warn|info|debug|trace",
 	},
+	"routes-file": &config.String{
+		Default:   "./routes.json",
+		Usage:     "where the routes file located",
+		Shorthand: "r",
+	},
 }

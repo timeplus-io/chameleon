@@ -288,22 +288,27 @@ func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
 
 func (s *TimeplusSink) Init() error {
 	if err := s.initStream(DimCarStreamDef); err != nil {
+		log.Logger().Warnf("DimCarStream failed to init")
 		return err
 	}
 
 	if err := s.initStream(DimUserStreamDef); err != nil {
+		log.Logger().Warnf("DimUserStream failed to init")
 		return err
 	}
 
 	if err := s.initStream(BookingStreamDef); err != nil {
+		log.Logger().Warnf("BookingStream failed to init")
 		return err
 	}
 
 	if err := s.initStream(CarStream); err != nil {
+		log.Logger().Warnf("CarStream failed to init")
 		return err
 	}
 
 	if err := s.initStream(TripStream); err != nil {
+		log.Logger().Warnf("TripStream failed to init")
 		return err
 	}
 
@@ -323,6 +328,8 @@ func (s *TimeplusSink) Init() error {
 }
 
 func (s *TimeplusSink) initStream(streamDef timeplus.StreamDef) error {
+	log.Logger().Infof("Calling Stream Init")
+
 	if s.client.ExistStream(streamDef.Name) {
 		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
 			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)

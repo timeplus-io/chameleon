@@ -46,8 +46,9 @@ type CarSharingDemoApp struct {
 	BookingStream       rxgo.Observable
 	BookingStreamCancel rxgo.Disposable
 
-	Users []*User
-	Cars  []*Car
+	Routes RouteList
+	Users  []*User
+	Cars   []*Car
 
 	Stopped bool
 
@@ -144,6 +145,16 @@ func (a *CarSharingDemoApp) handleStreamUpdate(stream rxgo.Observable, streamNam
 	<-disposed
 }
 
+func (a *CarSharingDemoApp) initRoutes() {
+	routesPath := viper.GetString("routes-file")
+	if routes, err := loadRoutes(routesPath); err != nil {
+		log.Logger().Panicf("failed to load routes from %s", routesPath)
+	} else {
+		a.Routes = *routes
+		log.Logger().Infof("success to load routes from %s", routesPath)
+	}
+}
+
 func (a *CarSharingDemoApp) initCarsData(channels AppChannels) []*Car {
 	carCount := viper.GetInt("cardemo.car.count")
 	cars := common.MakeDimCars(carCount)
@@ -154,7 +165,7 @@ func (a *CarSharingDemoApp) initCarsData(channels AppChannels) []*Car {
 	result := make([]*Car, carCount)
 
 	for index, car := range cars {
-		result[index] = CreateCar(car.ID, car.InService, channels)
+		result[index] = CreateCar(car.ID, car.InService, channels, &a.Routes)
 	}
 	return result
 }
@@ -223,6 +234,7 @@ func (a *CarSharingDemoApp) Start() {
 		BookingChannel: a.BookingChannel,
 	}
 
+	a.initRoutes()
 	a.Cars = a.initCarsData(channels)
 	a.Users = a.initUserData()
 
