@@ -328,6 +328,8 @@ func (s *TimeplusSink) Init() error {
 }
 
 func (s *TimeplusSink) initStream(streamDef timeplus.StreamDef) error {
+	log.Logger().Infof("Calling Stream Init")
+
 	if s.client.ExistStream(streamDef.Name) {
 		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
 			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)

@@ -148,7 +148,7 @@ func (t *Track) Run(interval float64) float64 {
 	t.distance = speed * interval / (60 * 60 * 1000)
 	t.totalDistance += t.distance
 
-	log.Logger().Infof("running distance is %f, interval is %f", t.distance, interval)
+	log.Logger().Debugf("running distance is %f, interval is %f", t.distance, interval)
 
 	initial := t.CurrentLocation()
 	target := t.TargetLocation()
