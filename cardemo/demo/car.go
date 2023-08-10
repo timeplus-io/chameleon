@@ -116,7 +116,7 @@ func (c *Car) Book(user *User) bool {
 		return false
 	}
 
-	log.Logger().Infof("car %s is booked by user %s", c.ID, user.ID)
+	log.Logger().Debugf("car %s is booked by user %s", c.ID, user.ID)
 	c.booked = true
 	c.currentBooking = NewBooking(user, c)
 	user.InTrip = true
@@ -133,7 +133,7 @@ func (c *Car) CancelBook(user *User) {
 		return
 	}
 
-	log.Logger().Infof("book %s is cancelled by user %s", c.ID, user.ID)
+	log.Logger().Debugf("book %s is cancelled by user %s", c.ID, user.ID)
 	user.InTrip = false
 	c.booked = false
 	c.currentBooking.Act("cancel")
@@ -151,7 +151,7 @@ func (c *Car) ExpireBook() {
 	}
 
 	if time.Now().UTC().After(c.currentBooking.Expire) {
-		log.Logger().Infof("booking %s is expired", c.currentBooking.ID)
+		log.Logger().Debugf("booking %s is expired", c.currentBooking.ID)
 		c.booked = false
 		c.currentBooking.Act("expire")
 		c.channels.BookingChannel <- rxgo.Of(c.currentBooking.Event())

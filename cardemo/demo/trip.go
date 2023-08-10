@@ -50,7 +50,7 @@ func (t *Trip) End(longtitude float64, latitude float64, mileage float64) {
 func (t *Trip) Pay(price float64, payType string) {
 	duration := float64(t.EndTime.Sub(t.StartTime) / time.Second)
 	t.Amount = 1 + price*duration/60
-	log.Logger().Infof("Trip end with running duration %.2f minutes and fee $%.2f", duration/60, t.Amount)
+	log.Logger().Debugf("Trip end with running duration %.2f minutes and fee $%.2f", duration/60, t.Amount)
 	t.PayType = payType
 }
 
