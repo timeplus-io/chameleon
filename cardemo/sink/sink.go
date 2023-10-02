@@ -9,6 +9,7 @@ import (
 
 	"github.com/timeplus-io/chameleon/cardemo/log"
 	"github.com/timeplus-io/chameleon/cardemo/sink/kafka"
+	"github.com/timeplus-io/chameleon/cardemo/sink/proton"
 	"github.com/timeplus-io/chameleon/cardemo/sink/timeplus"
 	"sigs.k8s.io/yaml"
 )
@@ -27,6 +28,10 @@ func LoadSinks(path string) ([]Sink, error) {
 			}
 		} else if config.Type == "timeplus" {
 			if result[index], err = timeplus.NewTimeplusSink(config.Properties); err != nil {
+				return nil, err
+			}
+		} else if config.Type == "proton" {
+			if result[index], err = proton.NewProtonSink(config.Properties); err != nil {
 				return nil, err
 			}
 		}
