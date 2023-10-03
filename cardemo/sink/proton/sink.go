@@ -319,9 +319,24 @@ func (s *ProtonSink) initStream(streamDef StreamDef) error {
 	}
 
 	if s.client.ExistStream(streamDef.Name) {
+		if streamDef.Name == DimCarStreamDef.Name {
+			if err := s.client.DeleteStreamView(CarInfoView.Name); err != nil {
+				log.Logger().Errorf("failed to delete view %s, %s", CarInfoView.Name, err.Error())
+				return err
+			}
+		}
+
+		if streamDef.Name == DimUserStreamDef.Name {
+			if err := s.client.DeleteStreamView(UserInfoView.Name); err != nil {
+				log.Logger().Errorf("failed to delete view %s, %s", UserInfoView.Name, err.Error())
+				return err
+			}
+		}
+
 		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
-			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)
+			log.Logger().Warnf("recreate stream %s", streamDef.Name)
 			if err := s.client.DeleteStreamView(streamDef.Name); err != nil {
+				log.Logger().Errorf("failed to delete existing stream %s, %s", streamDef.Name, err.Error())
 				return err
 			}
 			return s.client.CreateStream(streamDef, streamStorageConfig)

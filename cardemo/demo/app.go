@@ -92,7 +92,7 @@ func initConfig() {
 func NewCarSharingDemoApp() (*CarSharingDemoApp, error) {
 	initConfig()
 	sceduleInterval := viper.GetInt("cardemo.app.schedule.interval")
-	log.Logger().Infof("set car schedule interval to %d ms", sceduleInterval)
+	log.Logger().Debugf("set car schedule interval to %d ms", sceduleInterval)
 
 	app := CarSharingDemoApp{
 		Faker:            fake.New(0),

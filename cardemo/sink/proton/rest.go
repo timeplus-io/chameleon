@@ -685,7 +685,6 @@ func (s *Client) DeleteStreamView(name string) error {
 			return err
 		}
 	}
-
 	return nil
 }
 

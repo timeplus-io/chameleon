@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
-	github.com/timeplus-io/go-client v0.0.7
+	github.com/timeplus-io/go-client v0.1.0
 	github.com/timeplus-io/proton-go-driver/v2 v2.0.15
 	github.com/twmb/franz-go v1.6.0
 	github.com/usvc/go-config v0.4.1
@@ -24,7 +24,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.4 // indirect
