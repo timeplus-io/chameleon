@@ -8,6 +8,7 @@ FROM alpine:3.13.6
 WORKDIR /timeplus
 COPY --from=builder /build/cardemo /timeplus/cardemo
 COPY ./routes.json /timeplus/
+COPY ./cardemo.yaml /timeplus/
 RUN chmod +x /timeplus/cardemo
 
 ENTRYPOINT [ "/timeplus/cardemo"]
