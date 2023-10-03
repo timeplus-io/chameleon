@@ -245,17 +245,35 @@ func NewProtonSink(properties map[string]any) (*ProtonSink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	tenant := ""
-	host := "localhost"
-	portRest := 3218
-	portTCP := 8463
-	user := "default"
-	password := ""
+	host, err := utils.GetWithDefault(properties, "host", "localhost")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	portRest, err := utils.GetIntWithDefault(properties, "rest_port", 3218)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	portTCP, err := utils.GetIntWithDefault(properties, "tcp_port", 8463)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	user, err := utils.GetWithDefault(properties, "user", "default")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	password, err := utils.GetWithDefault(properties, "password", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
 
 	driverConfig := NewConfig(host, user, password, portTCP)
 	driver := NewEngine(driverConfig)
 
-	server := NewClient(tenant, host, portRest, user, password, driver, driver)
+	server := NewClient("", host, portRest, user, password, driver, driver)
 
 	producerInterval := time.Duration(interval) * time.Millisecond
 	producers := make(map[string]*ProtonStreamProducer)
