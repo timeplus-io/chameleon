@@ -13,6 +13,12 @@ type JobHandler struct {
 	manager *job.JobManager
 }
 
+type JobResponse struct {
+	Id     string        `json:"id"`
+	Name   string        `json:"name"`
+	Status job.JobStatus `json:"status"`
+}
+
 func NewJobHandler() *JobHandler {
 	return &JobHandler{
 		manager: job.NewJobManager(),
@@ -26,7 +32,7 @@ func NewJobHandler() *JobHandler {
 // @Accept json
 // @Produce json
 // @Param config body job.JobConfiguration true "job configuration"
-// @Success 201 {object} job.Job
+// @Success 201 {object} JobResponse
 // @Failure 400
 // @Failure 500
 // @Router /jobs [post]
@@ -39,7 +45,12 @@ func (h *JobHandler) CreateJob(c *gin.Context) {
 		if job, err := h.manager.CreateJob(config); err != nil {
 			c.Status(http.StatusInternalServerError)
 		} else {
-			c.JSON(http.StatusCreated, *job)
+			response := JobResponse{
+				Id:     job.Id,
+				Name:   job.Name,
+				Status: job.Status,
+			}
+			c.JSON(http.StatusCreated, response)
 		}
 	} else {
 		c.Status(http.StatusBadRequest)
@@ -65,7 +76,7 @@ func (h *JobHandler) ListJob(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "job id"
-// @Success 200 {object} job.Job
+// @Success 200 {object} JobResponse
 // @Failure 404
 // @Router /jobs/{id} [get]
 func (h *JobHandler) GetJob(c *gin.Context) {
@@ -73,7 +84,12 @@ func (h *JobHandler) GetJob(c *gin.Context) {
 	if job, err := h.manager.GetJob(id); err != nil {
 		c.Status(http.StatusNotFound)
 	} else {
-		c.JSON(http.StatusOK, *job)
+		response := JobResponse{
+			Id:     job.Id,
+			Name:   job.Name,
+			Status: job.Status,
+		}
+		c.JSON(http.StatusOK, response)
 	}
 }
 

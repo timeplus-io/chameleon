@@ -69,7 +69,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/job.Job"
+                            "$ref": "#/definitions/handlers.JobResponse"
                         }
                     },
                     "400": {
@@ -107,7 +107,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/job.Job"
+                            "$ref": "#/definitions/handlers.JobResponse"
                         }
                     },
                     "404": {
@@ -212,6 +212,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.JobResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/job.JobStatus"
+                }
+            }
+        },
         "job.Job": {
             "type": "object",
             "properties": {

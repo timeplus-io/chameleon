@@ -1,23 +1,23 @@
-package timeplus
+package proton
 
 import (
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/timeplus-io/chameleon/generator/log"
-	"github.com/timeplus-io/chameleon/generator/metrics"
-	"github.com/timeplus-io/chameleon/generator/observer"
-	"github.com/timeplus-io/chameleon/generator/utils"
+	"github.com/timeplus-io/chameleon/generator/internal/log"
+	"github.com/timeplus-io/chameleon/generator/internal/metrics"
+	"github.com/timeplus-io/chameleon/generator/internal/observer"
+	"github.com/timeplus-io/chameleon/generator/internal/utils"
 
 	"github.com/timeplus-io/go-client/timeplus"
 
 	"github.com/google/uuid"
 )
 
-const TimeplusOBType = "timeplus"
+const ProtonOBType = "proton"
 
-type TimeplusObserver struct {
+type ProtonObserver struct {
 	server     *timeplus.TimeplusClient
 	query      string
 	timeColumn string
@@ -35,7 +35,7 @@ type TimeplusObserver struct {
 	metricsManager metrics.Metrics
 }
 
-func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, error) {
+func NewProtonObserver(properties map[string]interface{}) (observer.Observer, error) {
 	address, err := utils.GetWithDefault(properties, "address", "http://localhost:8000")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
@@ -103,7 +103,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
 	}
 
-	ob := &TimeplusObserver{
+	ob := &ProtonObserver{
 		server:         timeplus.NewCient(address, tenant, apikey),
 		query:          query,
 		timeColumn:     timeColumn,
@@ -124,7 +124,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 	return ob, nil
 }
 
-func (o *TimeplusObserver) observeLatency() error {
+func (o *ProtonObserver) observeLatency() error {
 	log.Logger().Infof("start observing latecny")
 	o.metricsManager.Add("latency")
 
@@ -167,7 +167,7 @@ func (o *TimeplusObserver) observeLatency() error {
 	return nil
 }
 
-func (o *TimeplusObserver) observeThroughput() error {
+func (o *ProtonObserver) observeThroughput() error {
 	log.Logger().Infof("start observing throughput")
 	o.metricsManager.Add("throughput")
 
@@ -198,7 +198,7 @@ func (o *TimeplusObserver) observeThroughput() error {
 	return nil
 }
 
-func (o *TimeplusObserver) observeAvailability() error {
+func (o *ProtonObserver) observeAvailability() error {
 	log.Logger().Infof("start observing availability")
 	o.metricsManager.Add("availability")
 
@@ -232,7 +232,7 @@ func (o *TimeplusObserver) observeAvailability() error {
 	return nil
 }
 
-func (o *TimeplusObserver) runQuery(sql string) error {
+func (o *ProtonObserver) runQuery(sql string) error {
 	o.obWaiter.Add(1)
 	defer o.obWaiter.Done()
 
@@ -293,7 +293,7 @@ func (o *TimeplusObserver) runQuery(sql string) error {
 	return nil
 }
 
-func (o *TimeplusObserver) observeQueries() error {
+func (o *ProtonObserver) observeQueries() error {
 	metricsName := "query"
 	log.Logger().Info("start observing queries")
 	o.metricsManager.Add(metricsName)
@@ -310,7 +310,7 @@ func (o *TimeplusObserver) observeQueries() error {
 	return nil
 }
 
-func (o *TimeplusObserver) Observe() error {
+func (o *ProtonObserver) Observe() error {
 	log.Logger().Infof("TimeplusObserver start observing")
 
 	if o.metric == "latency" {
@@ -325,7 +325,7 @@ func (o *TimeplusObserver) Observe() error {
 	return nil
 }
 
-func (o *TimeplusObserver) Stop() {
+func (o *ProtonObserver) Stop() {
 	log.Logger().Infof("call timeplus stop observing")
 	o.isStopped = true
 	log.Logger().Infof("set stopped")
@@ -335,6 +335,6 @@ func (o *TimeplusObserver) Stop() {
 	o.metricsManager.Save("timeplus")
 }
 
-func (o *TimeplusObserver) Wait() {
+func (o *ProtonObserver) Wait() {
 	o.obWaiter.Wait()
 }

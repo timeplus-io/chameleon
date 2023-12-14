@@ -25,6 +25,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/kdb"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/ksql"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/materialize"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/proton"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/rocketmq"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/splunk"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/timeplus"
@@ -112,6 +113,7 @@ func initPlugins() {
 	rocketmq.Init()
 	kdb.Init()
 	dolpindb.Init()
+	proton.Init()
 }
 
 func startServer() *http.Server {

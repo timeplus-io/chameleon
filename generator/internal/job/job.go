@@ -183,7 +183,7 @@ func (j *Job) Start() {
 
 					for _, sink := range j.sinks {
 						if err := sink.Write(header, data, i); err != nil {
-							log.Logger().Errorf("failed to write event : %w ", err)
+							log.Logger().Errorf("failed to write event : %v ", err)
 						}
 					}
 				}

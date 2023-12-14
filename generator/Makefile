@@ -23,10 +23,10 @@ gen:
 	$(HOME)/go/bin/swag init -g internal/server/main.go 
 
 run: gen
-	go run main.go -f ./samples/yaml/timeplus.yaml
+	go run main.go -S
 
-run-ob: gen
-	go run main.go -f ./samples/yaml/timeplus_ob.yaml
+run_proton:
+	go run main.go -f ./samples/yaml/proton.yaml
 
 build:
 	go build 

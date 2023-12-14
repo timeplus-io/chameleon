@@ -128,5 +128,4 @@ func HttpRequestWithHeader(method string, url string, payload interface{}, clien
 	}
 
 	return res.StatusCode, resBody, nil
-
 }

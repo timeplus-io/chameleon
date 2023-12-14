@@ -20,10 +20,8 @@ const DefaultLogStoreRetentionBytes = 604800000
 const DefaultLogStoreRetentionMS = 1342177280
 
 type TimeplusSink struct {
-	server               *timeplus.TimeplusClient
-	enableLowLevelIngest bool
-	lowLevelIngestServer *timeplus.TimeplusLowLevelClient
-	streamName           string
+	server     *timeplus.TimeplusClient
+	streamName string
 }
 
 func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
@@ -68,21 +66,8 @@ func NewTimeplusSink(properties map[string]interface{}) (sink.Sink, error) {
 	}
 
 	config := timeplusUtils.NewHTTPClientConfig(insecureSkipVerify, maxIdleConns, maxConnsPerHost, maxIdleConnsPerHost, timeout)
-
-	useLowLevelIngestAPI, err := utils.GetBoolWithDefault(properties, "enable_low_level_ingest", false)
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
-
-	lowLevelAddress, err := utils.GetWithDefault(properties, "low_level_ingest_address", "http://localhost:8123")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
-
 	return &TimeplusSink{
-		server:               timeplus.NewCientWithHttpConfig(address, tenant, apikey, config),
-		enableLowLevelIngest: useLowLevelIngestAPI,
-		lowLevelIngestServer: timeplus.NewLowLevelCient(lowLevelAddress),
+		server: timeplus.NewCientWithHttpConfig(address, tenant, apikey, config),
 	}, nil
 }
 
@@ -144,9 +129,5 @@ func (s *TimeplusSink) Write(headers []string, rows [][]interface{}, index int) 
 		},
 	}
 
-	if s.enableLowLevelIngest {
-		return s.lowLevelIngestServer.InsertData(ingestData)
-	} else {
-		return s.server.InsertData(ingestData)
-	}
+	return s.server.InsertData(ingestData)
 }
