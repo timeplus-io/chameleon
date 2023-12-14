@@ -38,7 +38,7 @@ type Job struct {
 
 	source    source.Source
 	sinks     []sink.Sink
-	observer  observer.Observer
+	observers []observer.Observer
 	jobWaiter sync.WaitGroup
 	timeout   int
 }
@@ -108,25 +108,30 @@ func NewJob(config JobConfiguration) (*Job, error) {
 			sinks[index] = sink
 		}
 	}
+	obs := make([]observer.Observer, 0)
 
-	obs, err := observer.CreateObserver(config.Observer)
-	if err != nil {
-		log.Logger().WithError(err).Warnf("failed to create observer %s", config.Observer.Type)
+	for _, obConfig := range config.Observers {
+		ob, err := observer.CreateObserver(obConfig)
+		if err != nil {
+			log.Logger().WithError(err).Warnf("failed to create observer %s", obConfig.Type)
+		} else {
+			obs = append(obs, ob)
+		}
 	}
 
 	return CreateJob(config.Name, source, sinks, obs, config.Timeout), nil
 }
 
-func CreateJob(name string, source source.Source, sinks []sink.Sink, obs observer.Observer, timeout int) *Job {
+func CreateJob(name string, source source.Source, sinks []sink.Sink, obs []observer.Observer, timeout int) *Job {
 	id := uuid.New().String()
 	job := &Job{
-		Id:       id,
-		Name:     name,
-		Status:   STATUS_INIT,
-		source:   source,
-		sinks:    sinks,
-		observer: obs,
-		timeout:  timeout,
+		Id:        id,
+		Name:      name,
+		Status:    STATUS_INIT,
+		source:    source,
+		sinks:     sinks,
+		observers: obs,
+		timeout:   timeout,
 	}
 
 	// initialize all sinks with fields defineid in source
@@ -149,9 +154,9 @@ func (j *Job) Start() {
 	startTime := time.Now()
 	j.source.Start()
 
-	if j.observer != nil {
+	for _, ob := range j.observers {
 		log.Logger().Info("start observer")
-		go j.observer.Observe() // start observer go routine
+		go ob.Observe() // start observer go routine
 	}
 
 	j.Status = STATUS_RUNNING
@@ -207,9 +212,9 @@ func (j *Job) Start() {
 		log.Logger().Infof("timeout")
 	}
 
-	if j.observer != nil {
+	for _, ob := range j.observers {
 		log.Logger().Infof("wait observer finish")
-		j.observer.Wait()
+		ob.Wait()
 		log.Logger().Infof("observer finished")
 	}
 
@@ -218,15 +223,16 @@ func (j *Job) Start() {
 
 func (j *Job) Wait() {
 	j.jobWaiter.Wait()
-	if j.observer != nil {
-		j.observer.Wait()
+
+	for _, ob := range j.observers {
+		ob.Wait()
 	}
 }
 
 func (j *Job) Stop() {
 	j.source.Stop()
-	if j.observer != nil {
-		j.observer.Stop()
+	for _, ob := range j.observers {
+		ob.Stop()
 	}
 	j.Status = STATUS_STOPPED
 }

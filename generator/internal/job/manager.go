@@ -10,11 +10,11 @@ import (
 )
 
 type JobConfiguration struct {
-	Name     string                 `json:"name"`
-	Source   source.Configuration   `json:"source,omitempty"`
-	Sinks    []sink.Configuration   `json:"sinks,omitempty"`
-	Observer observer.Configuration `json:"observer,omitempty"`
-	Timeout  int                    `json:"timeout,omitempty"`
+	Name      string                   `json:"name"`
+	Source    source.Configuration     `json:"source,omitempty"`
+	Sinks     []sink.Configuration     `json:"sinks,omitempty"`
+	Observers []observer.Configuration `json:"observer,omitempty"`
+	Timeout   int                      `json:"timeout,omitempty"`
 }
 
 type JobManager struct {
