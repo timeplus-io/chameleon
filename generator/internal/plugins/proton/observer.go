@@ -10,7 +10,6 @@ import (
 	"github.com/timeplus-io/chameleon/generator/internal/metrics"
 	"github.com/timeplus-io/chameleon/generator/internal/observer"
 	"github.com/timeplus-io/chameleon/generator/internal/utils"
-	"github.com/timeplus-io/go-client/timeplus"
 
 	"github.com/google/uuid"
 )
@@ -126,19 +125,15 @@ func (o *ProtonObserver) observeLatency() error {
 	for index, header := range header {
 		if header.Name == o.timeColumn {
 			timeIndex = index
-			fmt.Printf("time index is %d\n", timeIndex)
+			log.Logger().Debugf("time index is %d\n", timeIndex)
 		}
 	}
 	resultStream.ForEach(func(v interface{}) {
-		fmt.Printf("event is %v\n", v)
-
-		event := v.(*timeplus.DataEvent)
-		for _, e := range *event {
-			timestamp := e[timeIndex].(float64)
-			tm := time.UnixMilli(int64(timestamp))
-			log.Logger().Infof("observe latency %v", time.Until(tm))
-			o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
-		}
+		event := v.(ResponseDataRow)
+		timestamp := event[timeIndex].(int64)
+		tm := time.UnixMilli(timestamp)
+		log.Logger().Infof("observe latency %v", time.Until(tm))
+		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
 
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
@@ -154,33 +149,35 @@ func (o *ProtonObserver) observeLatency() error {
 }
 
 func (o *ProtonObserver) observeThroughput() error {
-	// log.Logger().Infof("start observing throughput")
-	// o.metricsManager.Add("throughput")
+	log.Logger().Infof("start observing throughput")
+	o.metricsManager.Add("throughput")
 
-	// resultStream, cancel, _, err := o.server.QueryStream(o.query, o.bufferCount, o.bufferTime)
-	// if err != nil {
-	// 	log.Logger().Errorf("failed to run query")
-	// 	return err
-	// }
+	id := uuid.NewString()
+	ctx, cancel := context.WithCancel(context.Background())
+	_, resultStream, _, err := o.server.QueryStream(ctx, o.query, id)
+	if err != nil {
+		log.Logger().Errorf("failed to run query")
+		cancel()
+		return err
+	}
 
-	// o.obWaiter.Add(1)
-	// disposed := resultStream.ForEach(func(v interface{}) {
-	// 	event := v.(*timeplus.DataEvent)
-	// 	for _, e := range *event {
-	// 		count := e[1].(float64) // TODO: make col configurable, now hard code to second fields
-	// 		log.Logger().Infof("observe throughput %v", count)
-	// 		o.metricsManager.Observe("throughput", count, nil)
-	// 	}
-	// }, func(err error) {
-	// 	log.Logger().Error("query failed", err)
-	// }, func() {
-	// 	log.Logger().Debugf("query %s closed")
-	// })
+	o.obWaiter.Add(1)
+	resultStream.ForEach(func(v interface{}) {
+		event := v.(ResponseDataRow)
+		count := event[1].(uint64) // TODO: make col configurable, now hard code to second fields
+		log.Logger().Infof("observe throughput %v", count)
+		o.metricsManager.Observe("throughput", float64(count), nil)
 
-	// o.cancel = cancel
-	// <-disposed
-	// log.Logger().Infof("stop observing throughput")
-	// o.obWaiter.Done()
+	}, func(err error) {
+		log.Logger().Error("query failed", err)
+	}, func() {
+		log.Logger().Debugf("query %s closed", o.query)
+	})
+
+	resultStream.Connect(ctx)
+	o.cancel = cancel
+	log.Logger().Infof("stop observing throughput")
+	o.obWaiter.Done()
 	return nil
 }
 

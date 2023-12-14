@@ -21,11 +21,18 @@ sinks:
     properties:
       host: localhost
       port: 8123
+# observer:
+#   type: proton
+#   properties:
+#     host: localhost
+#     query: select * from test where value=9
+#     time_column: time
+#     metric: latency
 observer:
   type: proton
   properties:
     host: localhost
-    metric: queries
-    querys:
-    - SELECT count(*) FROM test
+    query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start
+    time_column: time
+    metric: throughput
 
