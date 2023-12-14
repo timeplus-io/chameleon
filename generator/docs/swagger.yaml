@@ -7,7 +7,7 @@ definitions:
       name:
         type: string
       status:
-        type: string
+        $ref: '#/definitions/job.JobStatus'
     type: object
   job.JobConfiguration:
     properties:
@@ -24,6 +24,18 @@ definitions:
       timeout:
         type: integer
     type: object
+  job.JobStatus:
+    enum:
+    - init
+    - running
+    - stopped
+    - failed
+    type: string
+    x-enum-varnames:
+    - STATUS_INIT
+    - STATUS_RUNNING
+    - STATUS_STOPPED
+    - STATUS_FAILED
   observer.Configuration:
     properties:
       properties:
@@ -80,8 +92,32 @@ definitions:
       timestamp_locale:
         type: string
       type:
-        type: string
+        $ref: '#/definitions/source.FieldType'
     type: object
+  source.FieldType:
+    enum:
+    - timestamp
+    - timestamp_int
+    - string
+    - int
+    - float
+    - bool
+    - map
+    - array
+    - generate
+    - regex
+    type: string
+    x-enum-varnames:
+    - FIELDTYPE_TIMESTAMP
+    - FIELDTYPE_TIMESTAMP_INT
+    - FIELDTYPE_STRING
+    - FIELDTYPE_INT
+    - FIELDTYPE_FLOAT
+    - FIELDTYPE_BOOL
+    - FIELDTYPE_MAP
+    - FIELDTYPE_ARRAY
+    - FIELDTYPE_GENERATE
+    - FIELDTYPE_REGEX
 info:
   contact:
     email: gang@timeplus.io

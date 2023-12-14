@@ -3,12 +3,12 @@ package test_test
 import (
 	"time"
 
-	"github.com/timeplus-io/chameleon/generator/job"
-	"github.com/timeplus-io/chameleon/generator/observer"
-	"github.com/timeplus-io/chameleon/generator/plugins/console"
-	"github.com/timeplus-io/chameleon/generator/plugins/timeplus"
-	"github.com/timeplus-io/chameleon/generator/sink"
-	"github.com/timeplus-io/chameleon/generator/source"
+	"github.com/timeplus-io/chameleon/generator/internal/job"
+	"github.com/timeplus-io/chameleon/generator/internal/observer"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/timeplus"
+	"github.com/timeplus-io/chameleon/generator/internal/sink"
+	"github.com/timeplus-io/chameleon/generator/internal/source"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

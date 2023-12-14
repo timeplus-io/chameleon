@@ -215,7 +215,7 @@
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "$ref": "#/definitions/job.JobStatus"
                 }
             }
         },
@@ -241,6 +241,21 @@
                     "type": "integer"
                 }
             }
+        },
+        "job.JobStatus": {
+            "type": "string",
+            "enum": [
+                "init",
+                "running",
+                "stopped",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "STATUS_INIT",
+                "STATUS_RUNNING",
+                "STATUS_STOPPED",
+                "STATUS_FAILED"
+            ]
         },
         "observer.Configuration": {
             "type": "object",
@@ -325,9 +340,36 @@
                     "type": "string"
                 },
                 "type": {
-                    "type": "string"
+                    "$ref": "#/definitions/source.FieldType"
                 }
             }
+        },
+        "source.FieldType": {
+            "type": "string",
+            "enum": [
+                "timestamp",
+                "timestamp_int",
+                "string",
+                "int",
+                "float",
+                "bool",
+                "map",
+                "array",
+                "generate",
+                "regex"
+            ],
+            "x-enum-varnames": [
+                "FIELDTYPE_TIMESTAMP",
+                "FIELDTYPE_TIMESTAMP_INT",
+                "FIELDTYPE_STRING",
+                "FIELDTYPE_INT",
+                "FIELDTYPE_FLOAT",
+                "FIELDTYPE_BOOL",
+                "FIELDTYPE_MAP",
+                "FIELDTYPE_ARRAY",
+                "FIELDTYPE_GENERATE",
+                "FIELDTYPE_REGEX"
+            ]
         }
     }
 }

@@ -20,7 +20,7 @@ init:
 	go mod tidy 
 
 gen:
-	$(HOME)/go/bin/swag init -g server/main.go 
+	$(HOME)/go/bin/swag init -g internal/server/main.go 
 
 run: gen
 	go run main.go -f ./samples/yaml/timeplus.yaml

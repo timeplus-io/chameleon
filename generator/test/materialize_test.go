@@ -3,10 +3,10 @@ package test_test
 import (
 	"time"
 
-	"github.com/timeplus-io/chameleon/generator/job"
-	"github.com/timeplus-io/chameleon/generator/plugins/materialize"
-	"github.com/timeplus-io/chameleon/generator/sink"
-	"github.com/timeplus-io/chameleon/generator/source"
+	"github.com/timeplus-io/chameleon/generator/internal/job"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/materialize"
+	"github.com/timeplus-io/chameleon/generator/internal/sink"
+	"github.com/timeplus-io/chameleon/generator/internal/source"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
