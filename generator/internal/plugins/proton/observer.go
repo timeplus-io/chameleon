@@ -1,6 +1,7 @@
 package proton
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -10,15 +11,13 @@ import (
 	"github.com/timeplus-io/chameleon/generator/internal/observer"
 	"github.com/timeplus-io/chameleon/generator/internal/utils"
 
-	"github.com/timeplus-io/go-client/timeplus"
-
 	"github.com/google/uuid"
 )
 
 const ProtonOBType = "proton"
 
 type ProtonObserver struct {
-	server     *timeplus.TimeplusClient
+	server     *Engine
 	query      string
 	timeColumn string
 	timeFormat string
@@ -36,20 +35,23 @@ type ProtonObserver struct {
 }
 
 func NewProtonObserver(properties map[string]interface{}) (observer.Observer, error) {
-	address, err := utils.GetWithDefault(properties, "address", "http://localhost:8000")
+	host, err := utils.GetWithDefault(properties, "host", "localhost")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	apikey, err := utils.GetWithDefault(properties, "apikey", "")
+	username, err := utils.GetWithDefault(properties, "username", "default")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	tenant, err := utils.GetWithDefault(properties, "tenant", "")
+	password, err := utils.GetWithDefault(properties, "password", "")
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
+
+	config := NewConfig(host, username, password)
+	engine := NewEngine(config)
 
 	query, err := utils.GetWithDefault(properties, "query", "")
 	if err != nil {
@@ -81,30 +83,10 @@ func NewProtonObserver(properties map[string]interface{}) (observer.Observer, er
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	var metricsManager metrics.Metrics
-	if _, ok := properties["metric_store_address"]; !ok {
-		metricsManager = metrics.NewCSVMetricManager()
-	} else {
-		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
-	}
+	metricsManager := metrics.NewCSVMetricManager()
 
 	ob := &ProtonObserver{
-		server:         timeplus.NewCient(address, tenant, apikey),
+		server:         engine,
 		query:          query,
 		timeColumn:     timeColumn,
 		timeFormat:     timeFormat,
@@ -125,120 +107,94 @@ func NewProtonObserver(properties map[string]interface{}) (observer.Observer, er
 }
 
 func (o *ProtonObserver) observeLatency() error {
-	log.Logger().Infof("start observing latecny")
-	o.metricsManager.Add("latency")
+	// log.Logger().Infof("start observing latecny")
+	// o.metricsManager.Add("latency")
 
-	resultStream, cancel, header, err := o.server.QueryStreamWithHeader(o.query, o.bufferCount, o.bufferTime)
-	if err != nil {
-		log.Logger().WithError(err).Errorf("failed to run query")
-		return err
-	}
+	// resultStream, cancel, header, err := o.server.QueryStreamWithHeader(o.query, o.bufferCount, o.bufferTime)
+	// if err != nil {
+	// 	log.Logger().WithError(err).Errorf("failed to run query")
+	// 	return err
+	// }
 
-	o.obWaiter.Add(1)
+	// o.obWaiter.Add(1)
 
-	timeIndex := -1
-	for index, header := range header {
-		if header.Name == o.timeColumn {
-			timeIndex = index
-			fmt.Printf("time index is %d\n", timeIndex)
-		}
-	}
-	disposed := resultStream.ForEach(func(v interface{}) {
-		fmt.Printf("event is %v\n", v)
+	// timeIndex := -1
+	// for index, header := range header {
+	// 	if header.Name == o.timeColumn {
+	// 		timeIndex = index
+	// 		fmt.Printf("time index is %d\n", timeIndex)
+	// 	}
+	// }
+	// disposed := resultStream.ForEach(func(v interface{}) {
+	// 	fmt.Printf("event is %v\n", v)
 
-		event := v.(*timeplus.DataEvent)
-		for _, e := range *event {
-			timestamp := e[timeIndex].(float64)
-			tm := time.UnixMilli(int64(timestamp))
-			log.Logger().Infof("observe latency %v", time.Until(tm))
-			o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
-		}
+	// 	event := v.(*timeplus.DataEvent)
+	// 	for _, e := range *event {
+	// 		timestamp := e[timeIndex].(float64)
+	// 		tm := time.UnixMilli(int64(timestamp))
+	// 		log.Logger().Infof("observe latency %v", time.Until(tm))
+	// 		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
+	// 	}
 
-	}, func(err error) {
-		log.Logger().Error("query failed", err)
-	}, func() {
-		log.Logger().Debugf("query %s closed")
-	})
+	// }, func(err error) {
+	// 	log.Logger().Error("query failed", err)
+	// }, func() {
+	// 	log.Logger().Debugf("query %s closed")
+	// })
 
-	o.cancel = cancel
-	<-disposed
-	log.Logger().Infof("stop observing latecny")
-	o.obWaiter.Done()
+	// o.cancel = cancel
+	// <-disposed
+	// log.Logger().Infof("stop observing latecny")
+	// o.obWaiter.Done()
 	return nil
 }
 
 func (o *ProtonObserver) observeThroughput() error {
-	log.Logger().Infof("start observing throughput")
-	o.metricsManager.Add("throughput")
+	// log.Logger().Infof("start observing throughput")
+	// o.metricsManager.Add("throughput")
 
-	resultStream, cancel, _, err := o.server.QueryStream(o.query, o.bufferCount, o.bufferTime)
-	if err != nil {
-		log.Logger().Errorf("failed to run query")
-		return err
-	}
+	// resultStream, cancel, _, err := o.server.QueryStream(o.query, o.bufferCount, o.bufferTime)
+	// if err != nil {
+	// 	log.Logger().Errorf("failed to run query")
+	// 	return err
+	// }
 
-	o.obWaiter.Add(1)
-	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(*timeplus.DataEvent)
-		for _, e := range *event {
-			count := e[1].(float64) // TODO: make col configurable, now hard code to second fields
-			log.Logger().Infof("observe throughput %v", count)
-			o.metricsManager.Observe("throughput", count, nil)
-		}
-	}, func(err error) {
-		log.Logger().Error("query failed", err)
-	}, func() {
-		log.Logger().Debugf("query %s closed")
-	})
+	// o.obWaiter.Add(1)
+	// disposed := resultStream.ForEach(func(v interface{}) {
+	// 	event := v.(*timeplus.DataEvent)
+	// 	for _, e := range *event {
+	// 		count := e[1].(float64) // TODO: make col configurable, now hard code to second fields
+	// 		log.Logger().Infof("observe throughput %v", count)
+	// 		o.metricsManager.Observe("throughput", count, nil)
+	// 	}
+	// }, func(err error) {
+	// 	log.Logger().Error("query failed", err)
+	// }, func() {
+	// 	log.Logger().Debugf("query %s closed")
+	// })
 
-	o.cancel = cancel
-	<-disposed
-	log.Logger().Infof("stop observing throughput")
-	o.obWaiter.Done()
+	// o.cancel = cancel
+	// <-disposed
+	// log.Logger().Infof("stop observing throughput")
+	// o.obWaiter.Done()
 	return nil
 }
 
 func (o *ProtonObserver) observeAvailability() error {
-	log.Logger().Infof("start observing availability")
-	o.metricsManager.Add("availability")
-
-	resultStream, cancel, _, err := o.server.QueryStream(o.query, o.bufferCount, o.bufferTime)
-	if err != nil {
-		log.Logger().Errorf("failed to run query")
-		return err
-	}
-
-	o.obWaiter.Add(1)
-	defer o.obWaiter.Done()
-	id, _ := uuid.NewRandom()
-	tag := map[string]interface{}{"targte": "timeplus", "testId": id.String()}
-	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(*timeplus.DataEvent)
-		for _, e := range *event {
-			count := e[0].(float64) // TODO: make col configurable, now hard code to second fields
-			log.Logger().Infof("observe availability %v", count)
-			o.metricsManager.Observe("availability", count, tag)
-		}
-	}, func(err error) {
-		log.Logger().Error("query failed", err)
-	}, func() {
-		log.Logger().Debugf("query %s closed")
-	})
-
-	o.cancel = cancel
-	<-disposed
-	log.Logger().Infof("stop observing availability")
-
-	return nil
+	return fmt.Errorf("not implemented")
 }
 
 func (o *ProtonObserver) runQuery(sql string) error {
+	log.Logger().Infof("Start run query %s", sql)
 	o.obWaiter.Add(1)
 	defer o.obWaiter.Done()
 
 	id := uuid.NewString() // TODO : the API should return query Id
 	metricsName := "query"
-	resultStream, cancel, _, err := o.server.QueryStream(sql, o.bufferCount, o.bufferTime)
+	log.Logger().Infof("call run query %s", sql)
+	ctx, cancel := context.WithCancel(context.Background())
+	_, resultStream, _, err := o.server.QueryStream(ctx, sql, id)
+	log.Logger().Infof("handle run query result")
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		tag := map[string]interface{}{
@@ -258,9 +214,10 @@ func (o *ProtonObserver) runQuery(sql string) error {
 	}
 	o.metricsManager.Observe(metricsName, 1, tag)
 
-	disposed := resultStream.ForEach(func(v interface{}) {
-		event := v.(*timeplus.DataEvent)
-		for _, e := range *event {
+	log.Logger().Infof("iterate run query result")
+	resultStream.ForEach(func(v interface{}) {
+		event := v.(ResponseDataRow)
+		for _, e := range event {
 			log.Logger().Infof("observe queries %v", e) // TODO: make col configurable
 			tag := map[string]interface{}{
 				"event": "data",
@@ -285,8 +242,8 @@ func (o *ProtonObserver) runQuery(sql string) error {
 		log.Logger().Infof("query %s closed", id)
 	})
 
+	resultStream.Connect(ctx)
 	o.cancel = cancel
-	<-disposed
 
 	time.Sleep(100 * time.Millisecond)
 	o.metricsManager.Flush()
@@ -326,13 +283,13 @@ func (o *ProtonObserver) Observe() error {
 }
 
 func (o *ProtonObserver) Stop() {
-	log.Logger().Infof("call timeplus stop observing")
+	log.Logger().Infof("call proton stop observing")
 	o.isStopped = true
 	log.Logger().Infof("set stopped")
 	o.cancel()
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
-	o.metricsManager.Save("timeplus")
+	o.metricsManager.Save("proton")
 }
 
 func (o *ProtonObserver) Wait() {

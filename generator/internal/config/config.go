@@ -73,4 +73,20 @@ var Conf = config.Map{
 		Default: 5,
 		Usage:   "http timeout settings",
 	},
+	"proton-tcp-port": &config.Int{
+		Default: 8463,
+		Usage:   "proton tcp port",
+	},
+	"proton-max-idle-conns": &config.Int{
+		Default: 10,
+		Usage:   "the maximum number of connections in the idle connection pool",
+	},
+	"proton-conn-max-lifetime": &config.Int{
+		Default: 3600,
+		Usage:   "the maximum amount of time a connection may be reused (in seconds)",
+	},
+	"proton-conn-max-idle-time": &config.Int{
+		Default: 600,
+		Usage:   "the maximum amount of time a connection may be idle (in seconds)",
+	},
 }
