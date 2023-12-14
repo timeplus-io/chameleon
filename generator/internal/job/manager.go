@@ -77,7 +77,7 @@ func (m *JobManager) StartJob(id string) error {
 	if !ok {
 		return fmt.Errorf("%s job does not exist", id)
 	}
-	job.(*Job).Start()
+	go job.(*Job).Start()
 	return nil
 }
 

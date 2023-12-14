@@ -200,7 +200,7 @@ func (j *Job) Start() {
 			time.Sleep(1 * time.Second)
 			if -time.Until(startTime).Seconds() > float64(j.timeout) {
 				log.Logger().Infof("timeout and exit data generating")
-				j.Stop()
+				j.Stop() // stop the job on timeout
 				break
 			}
 		}

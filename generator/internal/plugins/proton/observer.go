@@ -283,7 +283,6 @@ func (o *ProtonObserver) Observe() error {
 func (o *ProtonObserver) Stop() {
 	log.Logger().Infof("call proton stop observing")
 	o.isStopped = true
-	log.Logger().Infof("set stopped")
 	o.cancel()
 	o.obWaiter.Wait()
 	log.Logger().Infof("stop observing")
