@@ -10,6 +10,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/internal/metrics"
 	"github.com/timeplus-io/chameleon/generator/internal/observer"
 	"github.com/timeplus-io/chameleon/generator/internal/utils"
+	"github.com/timeplus-io/go-client/timeplus"
 
 	"github.com/google/uuid"
 )
@@ -107,45 +108,48 @@ func NewProtonObserver(properties map[string]interface{}) (observer.Observer, er
 }
 
 func (o *ProtonObserver) observeLatency() error {
-	// log.Logger().Infof("start observing latecny")
-	// o.metricsManager.Add("latency")
+	log.Logger().Infof("start observing latecny")
+	o.metricsManager.Add("latency")
 
-	// resultStream, cancel, header, err := o.server.QueryStreamWithHeader(o.query, o.bufferCount, o.bufferTime)
-	// if err != nil {
-	// 	log.Logger().WithError(err).Errorf("failed to run query")
-	// 	return err
-	// }
+	id := uuid.NewString()
+	ctx, cancel := context.WithCancel(context.Background())
+	header, resultStream, _, err := o.server.QueryStream(ctx, o.query, id)
+	if err != nil {
+		log.Logger().WithError(err).Errorf("failed to run query")
+		cancel()
+		return err
+	}
 
-	// o.obWaiter.Add(1)
+	o.obWaiter.Add(1)
 
-	// timeIndex := -1
-	// for index, header := range header {
-	// 	if header.Name == o.timeColumn {
-	// 		timeIndex = index
-	// 		fmt.Printf("time index is %d\n", timeIndex)
-	// 	}
-	// }
-	// disposed := resultStream.ForEach(func(v interface{}) {
-	// 	fmt.Printf("event is %v\n", v)
+	timeIndex := -1
+	for index, header := range header {
+		if header.Name == o.timeColumn {
+			timeIndex = index
+			fmt.Printf("time index is %d\n", timeIndex)
+		}
+	}
+	resultStream.ForEach(func(v interface{}) {
+		fmt.Printf("event is %v\n", v)
 
-	// 	event := v.(*timeplus.DataEvent)
-	// 	for _, e := range *event {
-	// 		timestamp := e[timeIndex].(float64)
-	// 		tm := time.UnixMilli(int64(timestamp))
-	// 		log.Logger().Infof("observe latency %v", time.Until(tm))
-	// 		o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
-	// 	}
+		event := v.(*timeplus.DataEvent)
+		for _, e := range *event {
+			timestamp := e[timeIndex].(float64)
+			tm := time.UnixMilli(int64(timestamp))
+			log.Logger().Infof("observe latency %v", time.Until(tm))
+			o.metricsManager.Observe("latency", -float64(time.Until(tm).Microseconds())/1000.0, nil)
+		}
 
-	// }, func(err error) {
-	// 	log.Logger().Error("query failed", err)
-	// }, func() {
-	// 	log.Logger().Debugf("query %s closed")
-	// })
+	}, func(err error) {
+		log.Logger().Error("query failed", err)
+	}, func() {
+		log.Logger().Debugf("query %s closed", o.query)
+	})
 
-	// o.cancel = cancel
-	// <-disposed
-	// log.Logger().Infof("stop observing latecny")
-	// o.obWaiter.Done()
+	resultStream.Connect(ctx)
+	o.cancel = cancel
+	log.Logger().Infof("stop observing latecny")
+	o.obWaiter.Done()
 	return nil
 }
 
@@ -185,16 +189,13 @@ func (o *ProtonObserver) observeAvailability() error {
 }
 
 func (o *ProtonObserver) runQuery(sql string) error {
-	log.Logger().Infof("Start run query %s", sql)
 	o.obWaiter.Add(1)
 	defer o.obWaiter.Done()
 
 	id := uuid.NewString() // TODO : the API should return query Id
 	metricsName := "query"
-	log.Logger().Infof("call run query %s", sql)
 	ctx, cancel := context.WithCancel(context.Background())
 	_, resultStream, _, err := o.server.QueryStream(ctx, sql, id)
-	log.Logger().Infof("handle run query result")
 	if err != nil {
 		log.Logger().Errorf("failed to run query")
 		tag := map[string]interface{}{
@@ -204,6 +205,7 @@ func (o *ProtonObserver) runQuery(sql string) error {
 			"id":    id,
 		}
 		o.metricsManager.Observe(metricsName, 1, tag)
+		cancel()
 		return err
 	}
 
@@ -214,7 +216,6 @@ func (o *ProtonObserver) runQuery(sql string) error {
 	}
 	o.metricsManager.Observe(metricsName, 1, tag)
 
-	log.Logger().Infof("iterate run query result")
 	resultStream.ForEach(func(v interface{}) {
 		event := v.(ResponseDataRow)
 		for _, e := range event {

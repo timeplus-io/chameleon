@@ -21,4 +21,11 @@ sinks:
     properties:
       host: localhost
       port: 8123
+observer:
+  type: proton
+  properties:
+    host: localhost
+    metric: queries
+    querys:
+    - SELECT count(*) FROM test
 
