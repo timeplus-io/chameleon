@@ -47,12 +47,12 @@ sinks:
     username: ***
     password: ***
 observer:
-  type: kafka
-  properties:
-    topic: test_orders
-    brokers: pkc-ld537.ca-central-1.aws.confluent.cloud:9092
-    tls: true
-    sasl: plain
-    username: ***
-    password: ***
-    metric: latency
+  - type: kafka
+    properties:
+      topic: test_orders
+      brokers: pkc-ld537.ca-central-1.aws.confluent.cloud:9092
+      tls: true
+      sasl: plain
+      username: ***
+      password: ***
+      metric: latency

@@ -27,7 +27,6 @@ const KAFKA_OB_TYPE = "kafka"
 type KafkaObserver struct {
 	brokers       []string
 	topic         string
-	tls           bool
 	sasl          string
 	saslUsername  string
 	saslPassword  string
@@ -128,27 +127,7 @@ func NewKafkaObserver(properties map[string]interface{}) (observer.Observer, err
 		return nil, err
 	}
 
-	var metricsManager metrics.Metrics
-	if _, ok := properties["metric_store_address"]; !ok {
-		metricsManager = metrics.NewEmptyMetricManager()
-	} else {
-		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
-	}
+	metricsManager := metrics.NewCSVMetricManager()
 
 	return &KafkaObserver{
 		brokers:        strings.Split(brokers, ","),
@@ -202,7 +181,7 @@ func (o *KafkaObserver) observeLatency() error {
 				log.Logger().Infof("got one hit event %v", recordResult)
 				t, err := time.Parse(o.timeFormat, recordResult[o.timeColumn].(string))
 				if err != nil {
-					log.Logger().Errorf("failed to parse time column", err)
+					log.Logger().Errorf("failed to parse time column, %s", err)
 					continue
 				}
 
@@ -229,7 +208,7 @@ func (o *KafkaObserver) observeThroughput() error {
 		admClient := kadm.NewClient(o.client)
 		offsets, err := admClient.ListEndOffsets(o.ctx, o.topic)
 		if err != nil {
-			log.Logger().Warnf("failed to describe groups, %w", err)
+			log.Logger().Warnf("failed to describe groups, %s", err)
 			continue
 		}
 

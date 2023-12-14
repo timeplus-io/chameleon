@@ -21,7 +21,7 @@ sinks:
 - type: materialize
   properties: {}
 observer:
-  type: materialize
-  properties:
-    metric: availability
-    query: SELECT count(*) FROM test
+  - type: materialize
+    properties:
+      metric: availability
+      query: SELECT count(*) FROM test

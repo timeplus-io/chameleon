@@ -81,27 +81,7 @@ func NewTimeplusObserver(properties map[string]interface{}) (observer.Observer, 
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	var metricsManager metrics.Metrics
-	if _, ok := properties["metric_store_address"]; !ok {
-		metricsManager = metrics.NewCSVMetricManager()
-	} else {
-		metricStoreAddress, err := utils.GetWithDefault(properties, "metric_store_address", "http://localhost:8000")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricStoreAPIKey, err := utils.GetWithDefault(properties, "metric_store_apikey", "")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricStoreTenant, err := utils.GetWithDefault(properties, "metric_store_tenant", "")
-		if err != nil {
-			return nil, fmt.Errorf("invalid properties : %w", err)
-		}
-
-		metricsManager = metrics.NewTimeplusMetricManager(metricStoreAddress, metricStoreTenant, metricStoreAPIKey)
-	}
+	metricsManager := metrics.NewCSVMetricManager()
 
 	ob := &TimeplusObserver{
 		server:         timeplus.NewCient(address, tenant, apikey),
@@ -140,12 +120,9 @@ func (o *TimeplusObserver) observeLatency() error {
 	for index, header := range header {
 		if header.Name == o.timeColumn {
 			timeIndex = index
-			fmt.Printf("time index is %d\n", timeIndex)
 		}
 	}
 	disposed := resultStream.ForEach(func(v interface{}) {
-		fmt.Printf("event is %v\n", v)
-
 		event := v.(*timeplus.DataEvent)
 		for _, e := range *event {
 			timestamp := e[timeIndex].(float64)
@@ -157,7 +134,7 @@ func (o *TimeplusObserver) observeLatency() error {
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
-		log.Logger().Debugf("query %s closed")
+		log.Logger().Debugf("query %s closed", o.query)
 	})
 
 	o.cancel = cancel
@@ -188,7 +165,7 @@ func (o *TimeplusObserver) observeThroughput() error {
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
-		log.Logger().Debugf("query %s closed")
+		log.Logger().Debugf("query %s closed", o.query)
 	})
 
 	o.cancel = cancel
@@ -222,7 +199,7 @@ func (o *TimeplusObserver) observeAvailability() error {
 	}, func(err error) {
 		log.Logger().Error("query failed", err)
 	}, func() {
-		log.Logger().Debugf("query %s closed")
+		log.Logger().Debugf("query %s closed", o.query)
 	})
 
 	o.cancel = cancel

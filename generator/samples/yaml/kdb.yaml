@@ -47,9 +47,9 @@ sinks:
       port: 5001
 
 observer:
-  type: kdb
-  properties:
-    host: localhost
-    port: 5001
-    metric: availability
-    query: count test
+  - type: kdb
+    properties:
+      host: localhost
+      port: 5001
+      metric: availability
+      query: count test

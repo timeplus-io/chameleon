@@ -33,10 +33,8 @@ sinks:
       enable_low_level_ingest: false
 
 observer:
-  type: timeplus
-  properties:
-    address: http://localhost:8000
-    query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start
-    time_column: time
-    metric: throughput
-    metric_store_address: http://localhost:8000
+  - type: timeplus
+    properties:
+      address: http://localhost:8000
+      query: select window_start, count(*) as count from tumble(test,_tp_time, 1s) group by window_start
+      time_column: time

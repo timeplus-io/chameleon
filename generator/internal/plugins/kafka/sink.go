@@ -130,7 +130,7 @@ func (s *KafkaSink) Write(headers []string, rows [][]interface{}, index int) err
 		record := &kgo.Record{Topic: s.topic, Value: eventValue, Key: key}
 		s.client.Produce(s.ctx, record, func(_ *kgo.Record, err error) {
 			if err != nil {
-				log.Logger().Errorf("record had a produce error: %w", err)
+				log.Logger().Errorf("record had a produce error: %s", err)
 			}
 		})
 	}
