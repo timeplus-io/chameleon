@@ -32,6 +32,7 @@ type KafkaSink struct {
 	sasl         string
 	saslUsername string
 	saslPassword string
+	createTopic  bool
 
 	client *kgo.Client
 	ctx    context.Context
@@ -63,12 +64,18 @@ func NewKafkaSink(properties map[string]interface{}) (sink.Sink, error) {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
+	createTopic, err := utils.GetBoolWithDefault(properties, "create_topic", false)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
 	return &KafkaSink{
 		brokers:      strings.Split(brokers, ","),
 		tls:          tls,
 		sasl:         sasl,
 		saslUsername: saslUsername,
 		saslPassword: saslPassword,
+		createTopic:  createTopic,
 		ctx:          context.Background(),
 	}, nil
 }
@@ -103,6 +110,12 @@ func (s *KafkaSink) Init(name string, fields []common.Field) error {
 	}
 
 	s.client = client
+	if s.createTopic {
+		admClient := kadm.NewClient(s.client)
+		if _, err := admClient.CreateTopics(s.ctx, 1, 3, nil, s.topic); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

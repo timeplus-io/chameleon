@@ -208,6 +208,9 @@
         "handlers.JobResponse": {
             "type": "object",
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/job.JobConfiguration"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -222,6 +225,9 @@
         "job.Job": {
             "type": "object",
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/job.JobConfiguration"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -240,7 +246,10 @@
                     "type": "string"
                 },
                 "observer": {
-                    "$ref": "#/definitions/observer.Configuration"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observer.Configuration"
+                    }
                 },
                 "sinks": {
                     "type": "array",

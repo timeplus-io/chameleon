@@ -14,9 +14,10 @@ type JobHandler struct {
 }
 
 type JobResponse struct {
-	Id     string        `json:"id"`
-	Name   string        `json:"name"`
-	Status job.JobStatus `json:"status"`
+	Id     string               `json:"id"`
+	Name   string               `json:"name"`
+	Status job.JobStatus        `json:"status"`
+	Config job.JobConfiguration `json:"config"`
 }
 
 func NewJobHandler() *JobHandler {
@@ -49,6 +50,7 @@ func (h *JobHandler) CreateJob(c *gin.Context) {
 				Id:     job.Id,
 				Name:   job.Name,
 				Status: job.Status,
+				Config: job.Config,
 			}
 			c.JSON(http.StatusCreated, response)
 		}
@@ -88,6 +90,7 @@ func (h *JobHandler) GetJob(c *gin.Context) {
 			Id:     job.Id,
 			Name:   job.Name,
 			Status: job.Status,
+			Config: job.Config,
 		}
 		c.JSON(http.StatusOK, response)
 	}

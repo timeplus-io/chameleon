@@ -215,6 +215,9 @@ const docTemplate = `{
         "handlers.JobResponse": {
             "type": "object",
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/job.JobConfiguration"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -229,6 +232,9 @@ const docTemplate = `{
         "job.Job": {
             "type": "object",
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/job.JobConfiguration"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -247,7 +253,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "observer": {
-                    "$ref": "#/definitions/observer.Configuration"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observer.Configuration"
+                    }
                 },
                 "sinks": {
                     "type": "array",

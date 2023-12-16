@@ -77,7 +77,16 @@ func (m *JobManager) StartJob(id string) error {
 	if !ok {
 		return fmt.Errorf("%s job does not exist", id)
 	}
-	go job.(*Job).Start()
+
+	jobObject := job.(*Job)
+	if jobObject.Status == STATUS_RUNNING {
+		return fmt.Errorf("%s job is running", id)
+	}
+	if jobObject.Status == STATUS_STOPPED {
+		return fmt.Errorf("%s job is stopped, cannot rerun", id)
+	}
+
+	go jobObject.Start()
 	return nil
 }
 

@@ -2,6 +2,8 @@ basePath: /api
 definitions:
   handlers.JobResponse:
     properties:
+      config:
+        $ref: '#/definitions/job.JobConfiguration'
       id:
         type: string
       name:
@@ -11,6 +13,8 @@ definitions:
     type: object
   job.Job:
     properties:
+      config:
+        $ref: '#/definitions/job.JobConfiguration'
       id:
         type: string
       name:
@@ -23,7 +27,9 @@ definitions:
       name:
         type: string
       observer:
-        $ref: '#/definitions/observer.Configuration'
+        items:
+          $ref: '#/definitions/observer.Configuration'
+        type: array
       sinks:
         items:
           $ref: '#/definitions/sink.Configuration'

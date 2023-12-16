@@ -32,9 +32,10 @@ const (
 )
 
 type Job struct {
-	Id     string    `json:"id"`
-	Name   string    `json:"name"`
-	Status JobStatus `json:"status"`
+	Id     string           `json:"id"`
+	Name   string           `json:"name"`
+	Status JobStatus        `json:"status"`
+	Config JobConfiguration `json:"config"`
 
 	source    source.Source
 	sinks     []sink.Sink
@@ -119,10 +120,10 @@ func NewJob(config JobConfiguration) (*Job, error) {
 		}
 	}
 
-	return CreateJob(config.Name, source, sinks, obs, config.Timeout), nil
+	return CreateJob(config.Name, source, sinks, obs, config.Timeout, config), nil
 }
 
-func CreateJob(name string, source source.Source, sinks []sink.Sink, obs []observer.Observer, timeout int) *Job {
+func CreateJob(name string, source source.Source, sinks []sink.Sink, obs []observer.Observer, timeout int, config JobConfiguration) *Job {
 	id := uuid.New().String()
 	job := &Job{
 		Id:        id,
@@ -132,6 +133,7 @@ func CreateJob(name string, source source.Source, sinks []sink.Sink, obs []obser
 		sinks:     sinks,
 		observers: obs,
 		timeout:   timeout,
+		Config:    config,
 	}
 
 	// initialize all sinks with fields defineid in source
