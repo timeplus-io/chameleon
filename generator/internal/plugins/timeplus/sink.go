@@ -131,3 +131,10 @@ func (s *TimeplusSink) Write(headers []string, rows [][]interface{}, index int) 
 
 	return s.server.InsertData(ingestData)
 }
+
+func (s *TimeplusSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
+}

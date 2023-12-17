@@ -171,7 +171,7 @@ func (s *DolpinDBSink) Init(name string, fields []common.Field) error {
 
 	res, err := s.db.RunScript(creatTableScript)
 	if err != nil {
-		log.Logger().Errorf("create table failed: %w", err)
+		log.Logger().Errorf("create table failed: %s", err)
 		return err
 	}
 	s.columns = colums
@@ -208,7 +208,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
-				log.Logger().Errorf("create data type failed: %w", err)
+				log.Logger().Errorf("create data type failed: %s", err)
 				return err
 			}
 			colValues[index] = model.NewVector(datas)
@@ -220,7 +220,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
-				log.Logger().Errorf("create data type failed: %w", err)
+				log.Logger().Errorf("create data type failed: %s", err)
 				return err
 			}
 			colValues[index] = model.NewVector(datas)
@@ -232,7 +232,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
-				log.Logger().Errorf("create data type failed: %w", err)
+				log.Logger().Errorf("create data type failed: %s", err)
 				return err
 			}
 			colValues[index] = model.NewVector(datas)
@@ -244,7 +244,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
-				log.Logger().Errorf("create data type failed: %w", err)
+				log.Logger().Errorf("create data type failed: %s", err)
 				return err
 			}
 			colValues[index] = model.NewVector(datas)
@@ -256,7 +256,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
-				log.Logger().Errorf("create data type failed: %w", err)
+				log.Logger().Errorf("create data type failed: %s", err)
 				return err
 			}
 			colValues[index] = model.NewVector(datas)
@@ -281,10 +281,17 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 
 	res, err := s.db.RunFunc(fmt.Sprintf("tableInsert{loadTable('%s','%s')}", s.dbpath, s.tableName), args)
 	if err != nil {
-		log.Logger().Errorf("insert dolpin failed: %w", err)
+		log.Logger().Errorf("insert dolpin failed: %s", err)
 		return err
 	}
 
 	log.Logger().Debugf("insert success result: %v", res)
 	return nil
+}
+
+func (s *DolpinDBSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
 }

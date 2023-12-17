@@ -84,7 +84,7 @@ func (s *SplunkSink) Write(headers []string, rows [][]interface{}, index int) er
 	json.NewDecoder(bytes.NewBuffer(respBody)).Decode(&queryResult)
 	log.Logger().Debugf("the insert result is %d:%v", index, queryResult)
 	if queryResult["code"].(float64) != 0.0 {
-		log.Logger().Errorf("failed to insert data %d:%v", queryResult)
+		log.Logger().Errorf("failed to insert data %v", queryResult)
 	}
 
 	return nil
@@ -101,4 +101,11 @@ func (s *SplunkSink) ToSplunkEvents(events []common.Event) []map[string]interfac
 		}
 	}
 	return result
+}
+
+func (s *SplunkSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
 }

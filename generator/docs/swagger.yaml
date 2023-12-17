@@ -19,6 +19,8 @@ definitions:
         type: string
       name:
         type: string
+      stats:
+        $ref: '#/definitions/job.Stats'
       status:
         $ref: '#/definitions/job.JobStatus'
     type: object
@@ -51,6 +53,13 @@ definitions:
     - STATUS_RUNNING
     - STATUS_STOPPED
     - STATUS_FAILED
+  job.Stats:
+    properties:
+      failed_write:
+        type: integer
+      success_write:
+        type: integer
+    type: object
   observer.Configuration:
     properties:
       properties:
@@ -219,7 +228,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.JobResponse'
+            $ref: '#/definitions/job.Job'
         "404":
           description: Not Found
       summary: get job by id.

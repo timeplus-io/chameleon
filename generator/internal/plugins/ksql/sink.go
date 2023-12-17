@@ -92,7 +92,7 @@ func (s *KSQLSink) Init(name string, fields []common.Field) error {
 			"brokers": s.brokers,
 		}
 		if brokerSink, err := kafka.NewKafkaSink(properties); err != nil {
-			log.Logger().Error("failed to create broker sink : %w", err)
+			log.Logger().Errorf("failed to create broker sink : %s", err)
 		} else {
 			s.brokerSink = brokerSink
 			s.brokerSink.Init(name, fields)
@@ -110,14 +110,14 @@ func (s *KSQLSink) Init(name string, fields []common.Field) error {
 
 	dropStreamSql := fmt.Sprintf("DROP STREAM %s;", name)
 	if err := s.client.Execute(dropStreamSql); err != nil {
-		log.Logger().Warnf("drop stream failed : %w", err)
+		log.Logger().Warnf("drop stream failed : %s", err)
 	}
 
 	createStreamSql := fmt.Sprintf("CREATE STREAM %s (%s) WITH (KAFKA_TOPIC='%s', PARTITIONS=1, VALUE_FORMAT='JSON');", name, strings.Join(fieldsString, ","), name)
 	log.Logger().Debugf("create stream with sql %s", createStreamSql)
 
 	if err := s.client.Execute(createStreamSql); err != nil {
-		log.Logger().Errorf("create stream failed : %w", err)
+		log.Logger().Errorf("create stream failed : %s", err)
 		return err
 	}
 
@@ -156,7 +156,7 @@ func (s *KSQLSink) writeSQL(headers []string, rows [][]interface{}, index int) e
 		log.Logger().Debugf("insert data with sql %s", sql)
 
 		if err := s.client.Execute(sql); err != nil {
-			log.Logger().Errorf("failed to insert : %w", err)
+			log.Logger().Errorf("failed to insert : %s", err)
 			return err
 		}
 	}
@@ -166,4 +166,11 @@ func (s *KSQLSink) writeSQL(headers []string, rows [][]interface{}, index int) e
 
 func (s *KSQLSink) writeBroker(headers []string, rows [][]interface{}, index int) error {
 	return s.brokerSink.Write(headers, rows, index)
+}
+
+func (s *KSQLSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
 }

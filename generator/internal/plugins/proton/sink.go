@@ -111,3 +111,10 @@ func (s *ProtonSink) Write(headers []string, rows [][]interface{}, index int) er
 	}
 	return nil
 }
+
+func (s *ProtonSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
+}

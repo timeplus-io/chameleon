@@ -31,17 +31,24 @@ const (
 	STATUS_FAILED  JobStatus = "failed"
 )
 
+type Stats struct {
+	SuccessWrite int `json:"success_write"`
+	FailedWrite  int `json:"failed_write"`
+}
+
 type Job struct {
 	Id     string           `json:"id"`
 	Name   string           `json:"name"`
 	Status JobStatus        `json:"status"`
 	Config JobConfiguration `json:"config"`
+	Stats  *Stats           `json:"stats,omitempty"`
 
 	source    source.Source
 	sinks     []sink.Sink
 	observers []observer.Observer
 	jobWaiter sync.WaitGroup
 	timeout   int
+	lock      sync.Mutex
 }
 
 func LoadConfig(file string) (*JobConfiguration, error) {
@@ -134,6 +141,11 @@ func CreateJob(name string, source source.Source, sinks []sink.Sink, obs []obser
 		observers: obs,
 		timeout:   timeout,
 		Config:    config,
+		lock:      sync.Mutex{},
+		Stats: &Stats{
+			SuccessWrite: 0,
+			FailedWrite:  0,
+		},
 	}
 
 	// initialize all sinks with fields defineid in source
@@ -191,6 +203,13 @@ func (j *Job) Start() {
 					for _, sink := range j.sinks {
 						if err := sink.Write(header, data, i); err != nil {
 							log.Logger().Errorf("failed to write event : %v ", err)
+							j.lock.Lock()
+							j.Stats.FailedWrite += len(data)
+							j.lock.Unlock()
+						} else {
+							j.lock.Lock()
+							j.Stats.SuccessWrite += len(data)
+							j.lock.Unlock()
 						}
 					}
 				}

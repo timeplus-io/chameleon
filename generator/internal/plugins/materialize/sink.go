@@ -106,7 +106,7 @@ func (s *MaterializeSink) Init(name string, fields []common.Field) error {
 
 	// todo: drop table if exist
 	if _, err := conn.Exec(context.Background(), createTableSql); err != nil {
-		log.Logger().Warnf("create table failed %w", err)
+		log.Logger().Warnf("create table failed %s", err)
 		return err
 	}
 	return nil
@@ -147,4 +147,11 @@ func (s *MaterializeSink) Write(headers []string, rows [][]interface{}, index in
 		log.Logger().Error("failed to insert data to materialze", err)
 	}
 	return nil
+}
+
+func (s *MaterializeSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
 }

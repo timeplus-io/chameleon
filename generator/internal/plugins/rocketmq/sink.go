@@ -69,3 +69,10 @@ func (s *RocketMQSink) Write(headers []string, rows [][]interface{}, index int) 
 	}
 	return nil
 }
+
+func (s *RocketMQSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
+}

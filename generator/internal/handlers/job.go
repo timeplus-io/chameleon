@@ -78,7 +78,7 @@ func (h *JobHandler) ListJob(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "job id"
-// @Success 200 {object} JobResponse
+// @Success 200 {object} job.Job
 // @Failure 404
 // @Router /jobs/{id} [get]
 func (h *JobHandler) GetJob(c *gin.Context) {
@@ -86,13 +86,13 @@ func (h *JobHandler) GetJob(c *gin.Context) {
 	if job, err := h.manager.GetJob(id); err != nil {
 		c.Status(http.StatusNotFound)
 	} else {
-		response := JobResponse{
-			Id:     job.Id,
-			Name:   job.Name,
-			Status: job.Status,
-			Config: job.Config,
-		}
-		c.JSON(http.StatusOK, response)
+		// response := JobResponse{
+		// 	Id:     job.Id,
+		// 	Name:   job.Name,
+		// 	Status: job.Status,
+		// 	Config: job.Config,
+		// }
+		c.JSON(http.StatusOK, job)
 	}
 }
 

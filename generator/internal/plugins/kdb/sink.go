@@ -89,7 +89,7 @@ func (s *KDBSink) Init(name string, fields []common.Field) error {
 
 	res, err := s.client.Call(creatTableScript)
 	if err != nil {
-		log.Logger().Errorf("query kdb failed: %w", err)
+		log.Logger().Errorf("query kdb failed: %s", err)
 		return err
 	}
 	s.columns = colums
@@ -135,9 +135,16 @@ func (s *KDBSink) Write(headers []string, rows [][]interface{}, index int) error
 
 	_, err := s.client.Call(insertSQL)
 	if err != nil {
-		log.Logger().Errorf("insert kdb failed: %w", err)
+		log.Logger().Errorf("insert kdb failed: %s", err)
 		return err
 	}
 	log.Logger().Infof("insert success")
 	return nil
+}
+
+func (s *KDBSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
 }

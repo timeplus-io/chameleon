@@ -149,3 +149,10 @@ func (s *KafkaSink) Write(headers []string, rows [][]interface{}, index int) err
 	}
 	return nil
 }
+
+func (s *KafkaSink) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
+}

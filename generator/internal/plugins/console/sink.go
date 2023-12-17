@@ -36,3 +36,10 @@ func (s *Console) Write(headers []string, rows [][]interface{}, index int) error
 func (s *Console) Init(name string, fields []common.Field) error {
 	return nil
 }
+
+func (s *Console) GetStats() *sink.Stats {
+	return &sink.Stats{
+		SuccessWrite: 0,
+		FailedWrite:  0,
+	}
+}

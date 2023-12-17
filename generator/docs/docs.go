@@ -107,7 +107,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.JobResponse"
+                            "$ref": "#/definitions/job.Job"
                         }
                     },
                     "404": {
@@ -241,6 +241,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "stats": {
+                    "$ref": "#/definitions/job.Stats"
+                },
                 "status": {
                     "$ref": "#/definitions/job.JobStatus"
                 }
@@ -286,6 +289,17 @@ const docTemplate = `{
                 "STATUS_STOPPED",
                 "STATUS_FAILED"
             ]
+        },
+        "job.Stats": {
+            "type": "object",
+            "properties": {
+                "failed_write": {
+                    "type": "integer"
+                },
+                "success_write": {
+                    "type": "integer"
+                }
+            }
         },
         "observer.Configuration": {
             "type": "object",
