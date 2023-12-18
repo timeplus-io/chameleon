@@ -106,7 +106,7 @@ func (o *KDBObserver) observeAvailability() error {
 	for {
 		res, err := o.client.Call(o.query)
 		if err != nil {
-			log.Logger().Errorf("query kdb failed: %w", err)
+			log.Logger().Errorf("query kdb failed: %s", err)
 		} else {
 			count := res.Data.(int64)
 			log.Logger().Infof("query success result: %d", count)

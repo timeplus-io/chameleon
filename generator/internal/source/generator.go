@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
 	fake "github.com/brianvoe/gofakeit/v6"
 	rxgo "github.com/reactivex/rxgo/v2"
 
@@ -61,7 +60,7 @@ type GeneratorEngine struct {
 	streamChannels []chan rxgo.Item
 	streams        []rxgo.Observable
 
-	waiter sync.WaitGroup
+	waiter *sync.WaitGroup
 	lock   sync.Mutex
 
 	cache common.Event
@@ -76,7 +75,7 @@ func init() {
 		Example:     "1950",
 		Output:      "int",
 		Generate: func(r *rand.Rand, m *fake.MapParams, info *fake.Info) (interface{}, error) {
-			return gofakeit.IntRange(1925, 2002), nil
+			return fake.IntRange(1925, 2002), nil
 		},
 	})
 	faker = fake.New(0)
@@ -92,7 +91,7 @@ func NewGenarator(config Configuration) (*GeneratorEngine, error) {
 		streams[i] = rxgo.FromChannel(streamChannels[i])
 	}
 
-	waiter := sync.WaitGroup{}
+	waiter := new(sync.WaitGroup)
 	waiter.Add(config.Concurrency)
 
 	if config.BatchNumber == 0 {

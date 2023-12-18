@@ -268,7 +268,7 @@ func (s *DolpinDBSink) Write(headers []string, rows [][]interface{}, index int) 
 			}
 			datas, err := model.NewDataTypeListWithRaw(modelType, v)
 			if err != nil {
-				log.Logger().Errorf("create data type failed: %w", err)
+				log.Logger().Errorf("create data type failed: %s", err)
 				return err
 			}
 			colValues[index] = model.NewVector(datas)

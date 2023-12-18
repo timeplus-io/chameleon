@@ -137,21 +137,21 @@ func (o *MaterializeObserver) observeLatency() error {
 
 	deleteViewSQL := fmt.Sprintf("DROP VIEW %s", o.view)
 	if _, err := o.conn.Exec(context.Background(), deleteViewSQL); err != nil {
-		log.Logger().Warnf("drop view failed %w", err)
+		log.Logger().Warnf("drop view failed %s", err)
 	}
 
 	condition := fmt.Sprintf("time > '%s'", time.Now().UTC().Format(o.timeFormat))
 	createViewSQl := fmt.Sprintf("CREATE MATERIALIZED VIEW %s AS %s AND %s", o.view, o.query, condition)
 	log.Logger().Infof("create view sql is %s", createViewSQl)
 	if _, err := o.conn.Exec(context.Background(), createViewSQl); err != nil {
-		log.Logger().Warnf("create view failed %w", err)
+		log.Logger().Warnf("create view failed %s", err)
 		return err
 	}
 
 	ctx := context.Background()
 	tx, err := o.conn.Begin(ctx)
 	if err != nil {
-		log.Logger().Warnf("create view failed %w", err)
+		log.Logger().Warnf("create view failed %s", err)
 		return err
 	}
 	defer tx.Rollback(ctx)
@@ -159,7 +159,7 @@ func (o *MaterializeObserver) observeLatency() error {
 	tailQuery := fmt.Sprintf("DECLARE c CURSOR FOR TAIL %s", o.view)
 	_, err = tx.Exec(ctx, tailQuery)
 	if err != nil {
-		log.Logger().Warnf("create tail cur failed %w", err)
+		log.Logger().Warnf("create tail cur failed %s", err)
 		return err
 	}
 
@@ -170,7 +170,7 @@ func (o *MaterializeObserver) observeLatency() error {
 
 		rows, err := tx.Query(ctx, "FETCH ALL c")
 		if err != nil {
-			log.Logger().Warnf("fetch failed %w", err)
+			log.Logger().Warnf("fetch failed %s", err)
 			tx.Rollback(ctx)
 			return err
 		}
@@ -182,7 +182,7 @@ func (o *MaterializeObserver) observeLatency() error {
 			var eventTime time.Time
 			err := rows.Scan(&timestamp, &diff, &value, &eventTime)
 			if err != nil {
-				log.Logger().Errorf("failed to scan result : %w", err)
+				log.Logger().Errorf("failed to scan result : %s", err)
 				continue
 			}
 			log.Logger().Infof("%v %v %v %v\n", timestamp, diff, value, eventTime)
@@ -193,7 +193,7 @@ func (o *MaterializeObserver) observeLatency() error {
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		log.Logger().Errorf("failed to commit : %w", err)
+		log.Logger().Errorf("failed to commit : %s", err)
 	}
 	return nil
 }
@@ -206,20 +206,20 @@ func (o *MaterializeObserver) observeThroughput() error {
 
 	deleteViewSQL := fmt.Sprintf("DROP VIEW %s", o.view)
 	if _, err := conn.Exec(context.Background(), deleteViewSQL); err != nil {
-		log.Logger().Warnf("drop view failed %w", err)
+		log.Logger().Warnf("drop view failed %s", err)
 	}
 
 	createViewSQl := fmt.Sprintf("CREATE MATERIALIZED VIEW %s AS %s ", o.view, o.query)
 	log.Logger().Infof("create view sql is %s", createViewSQl)
 	if _, err := conn.Exec(context.Background(), createViewSQl); err != nil {
-		log.Logger().Warnf("create view failed %w", err)
+		log.Logger().Warnf("create view failed %s", err)
 		return err
 	}
 
 	ctx := context.Background()
 	tx, err := conn.Begin(ctx)
 	if err != nil {
-		log.Logger().Warnf("create view failed %w", err)
+		log.Logger().Warnf("create view failed %s", err)
 		return err
 	}
 	defer tx.Rollback(ctx)
@@ -227,7 +227,7 @@ func (o *MaterializeObserver) observeThroughput() error {
 	tailQuery := fmt.Sprintf("DECLARE c CURSOR FOR TAIL %s", o.view)
 	_, err = tx.Exec(ctx, tailQuery)
 	if err != nil {
-		log.Logger().Warnf("create tail cur failed %w", err)
+		log.Logger().Warnf("create tail cur failed %s", err)
 		return err
 	}
 
@@ -238,7 +238,7 @@ func (o *MaterializeObserver) observeThroughput() error {
 
 		rows, err := tx.Query(ctx, "FETCH ALL c")
 		if err != nil {
-			log.Logger().Warnf("fetch failed %w", err)
+			log.Logger().Warnf("fetch failed %s", err)
 			tx.Rollback(ctx)
 			return err
 		}
@@ -250,7 +250,7 @@ func (o *MaterializeObserver) observeThroughput() error {
 			var count int32
 			err := rows.Scan(&timestamp, &diff1, &diff2, &count)
 			if err != nil {
-				log.Logger().Errorf("failed to scan result : %w", err)
+				log.Logger().Errorf("failed to scan result : %s", err)
 				continue
 			}
 
@@ -261,7 +261,7 @@ func (o *MaterializeObserver) observeThroughput() error {
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		log.Logger().Errorf("failed to commit : %w", err)
+		log.Logger().Errorf("failed to commit : %s", err)
 	}
 	return nil
 }
@@ -279,7 +279,7 @@ func (o *MaterializeObserver) observeAvailability() error {
 
 		rows, err := o.conn.Query(context.Background(), o.query)
 		if err != nil {
-			log.Logger().Warnf("failed to run query %w", err)
+			log.Logger().Warnf("failed to run query %s", err)
 			continue
 		}
 
@@ -287,7 +287,7 @@ func (o *MaterializeObserver) observeAvailability() error {
 			var count interface{}
 			err := rows.Scan(&count)
 			if err != nil {
-				log.Logger().Errorf("failed to scan result : %w", err)
+				log.Logger().Errorf("failed to scan result : %s", err)
 				continue
 			}
 
