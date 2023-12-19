@@ -209,6 +209,43 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/previews": {
+            "post": {
+                "description": "Preview a generated data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "preview"
+                ],
+                "summary": "Preview a generated data.",
+                "parameters": [
+                    {
+                        "description": "preview request",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PreviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PreviewResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -226,6 +263,25 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/job.JobStatus"
+                }
+            }
+        },
+        "handlers.PreviewRequest": {
+            "type": "object",
+            "properties": {
+                "rule": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.PreviewResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
                 }
             }
         },

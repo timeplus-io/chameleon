@@ -11,6 +11,18 @@ definitions:
       status:
         $ref: '#/definitions/job.JobStatus'
     type: object
+  handlers.PreviewRequest:
+    properties:
+      rule:
+        type: string
+      type:
+        type: string
+    type: object
+  handlers.PreviewResponse:
+    properties:
+      data:
+        type: string
+    type: object
   job.Job:
     properties:
       config:
@@ -276,4 +288,28 @@ paths:
       summary: stop a running job.
       tags:
       - job
+  /previews:
+    post:
+      consumes:
+      - application/json
+      description: Preview a generated data.
+      parameters:
+      - description: preview request
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PreviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PreviewResponse'
+        "400":
+          description: Bad Request
+      summary: Preview a generated data.
+      tags:
+      - preview
 swagger: "2.0"

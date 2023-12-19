@@ -128,6 +128,7 @@ func startServer() *http.Server {
 
 	v1beta1 := router.Group("/api")
 	jobHandler := handlers.NewJobHandler()
+	previewHandler := handlers.NewPreviewHandler()
 
 	{
 		v1beta1.POST("/jobs", jobHandler.CreateJob)
@@ -137,6 +138,8 @@ func startServer() *http.Server {
 
 		v1beta1.POST("/jobs/:id/start", jobHandler.StartJob)
 		v1beta1.POST("/jobs/:id/stop", jobHandler.StopJob)
+
+		v1beta1.POST("/previews", previewHandler.Preview)
 	}
 
 	address := viper.GetString("server-addr")
