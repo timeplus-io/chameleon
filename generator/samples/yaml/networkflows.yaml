@@ -1,0 +1,57 @@
+---
+name: flows
+timeout: 0
+source:
+  batch_size: 256
+  concurency: 8
+  interval: 100
+  interval_delta: 0
+  batch_number: 65535
+  fields:
+  - name: Bytes
+    type: generate
+    rule: "{number:1,1000}"
+  - name: DstAS
+    type: generate
+    rule: "{number:65000,65002}"
+  - name: DstAddr
+    type: generate
+    rule: "{ipv4address}"
+  - name: DstPort
+    type: generate
+    rule: "{number:20,65535}"
+  - name: Etype
+    type: generate
+    rule: '34525'
+  - name: Packets
+    type: generate
+    rule: "{number:4,100}"
+  - name: SamplingRate
+    type: generate
+    rule: '1'
+  - name: SequenceNum
+    type: generate
+    rule: "{number:875771300,875782900}"
+  - name: SrcAS
+    type: generate
+    rule: "{number:65000,65002}"
+  - name: SrcAddr
+    type: generate
+    rule: "{ipv4address}"
+  - name: SrcPort
+    type: generate
+    rule: "{number:20,65535}"
+  - name: TimeFlowStart
+    type: timestamp_int
+  - name: TimeReceived
+    type: timestamp_int
+  random_event: true
+sinks:
+- type: kafka
+  properties:
+    brokers: kafka.demo-internal:9092
+    create_topic: false
+    password: ''
+    sasl: none
+    tls: false
+    username: ''

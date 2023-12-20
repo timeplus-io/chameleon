@@ -1,6 +1,7 @@
 package source
 
 import (
+	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -143,7 +144,13 @@ func (s *GeneratorEngine) Start() {
 func (s *GeneratorEngine) run(index int) error {
 	log.Logger().Infof("start generate routine with index %d, batch number %d ", index, s.Config.BatchNumber)
 	streamChannel := s.streamChannels[index]
-	for i := 0; i < s.Config.BatchNumber; i++ {
+	number := s.Config.BatchNumber
+
+	if number == 0 {
+		number = math.MaxInt
+	}
+
+	for i := 0; i < number; i++ {
 		if s.Finished {
 			log.Logger().Warnf("run generator finished %d", index)
 			break
