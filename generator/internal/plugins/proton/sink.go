@@ -94,9 +94,9 @@ func (s *ProtonSink) Init(name string, fields []common.Field) error {
 		RetentionMS:    DefaultLogStoreRetentionMS,
 	}
 
-	s.client.DeleteStream(streamDef.Name)
-	return s.client.CreateStream(streamDef, StreamStorageConfig)
-
+	// s.client.DeleteStream(streamDef.Name)
+	s.client.CreateStream(streamDef, StreamStorageConfig)
+	return nil
 }
 
 func (s *ProtonSink) Write(headers []string, rows [][]interface{}, index int) error {
