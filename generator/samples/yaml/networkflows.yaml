@@ -6,7 +6,7 @@ source:
   concurency: 8
   interval: 100
   interval_delta: 0
-  batch_number: 65535
+  batch_number: 0
   fields:
   - name: Bytes
     type: generate
