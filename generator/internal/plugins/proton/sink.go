@@ -14,7 +14,7 @@ const ProtonSinkType = "proton"
 
 const DefaultTTL = "to_datetime(_tp_time) + INTERVAL 30 DAY"
 const DefaultLogStoreRetentionBytes = 604800000
-const DefaultLogStoreRetentionMS = 1342177280
+const DefaultLogStoreRetentionMS = 3600000 // 1 hour for default
 
 type ProtonSink struct {
 	client     *Client
