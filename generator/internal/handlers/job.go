@@ -46,6 +46,7 @@ func (h *JobHandler) CreateJob(c *gin.Context) {
 		if job, err := h.manager.CreateJob(config); err != nil {
 			c.Status(http.StatusInternalServerError)
 		} else {
+			h.manager.StartJob(job.Id) // start job immediatly
 			response := JobResponse{
 				Id:     job.Id,
 				Name:   job.Name,
