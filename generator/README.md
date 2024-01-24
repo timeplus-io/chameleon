@@ -52,9 +52,9 @@ run `make init` and `make build`
 
 # Server mode
 
-run `generator -S` will run generator in a server mode, you can call REST API to create/get/delete new generator job
+run `generator -S` will run generator in a server mode, you can call REST API to create/get/delete new generator job.
 
-run `make gen`
+the server is running at `http://localhost:3000/` and you can visit `http://localhost:3000/swagger/index.html` for API doc.
 
 # Generating Stream Data
 

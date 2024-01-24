@@ -25,14 +25,14 @@ gen:
 run: gen
 	go run main.go -S
 
-build:
+build: gen
 	go build 
 
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 
 docker_run:
-	docker run -it -v $(PWD)/samples:/samples $(IMAGE_NAME) -f /samples/yaml/proton.yaml
+	docker run -it -v $(PWD)/samples:/samples $(IMAGE_NAME) -S
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)
