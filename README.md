@@ -9,13 +9,13 @@ Make stream data test easy and efficient!
 
 ## What is Chameleon
 
-Chameleon is Timeplus's open source repository for stream data test tools, we are openning these code to make stream data related test easy and efficient.
+Chameleon is Timeplus's open source repository for stream data test tools. These toolsets are targeting to make stream data related test easy and efficient.
 
 There are several sub-projects in this folder:
 
 - [Stream Data Generator](https://github.com/timeplus-io/chameleon/tree/develop/generator):  Generating fake json based events into different targets such as Proton, Timeplus Cloud, Apache Kafka
-- [Taxi/Car Data Stream](https://github.com/timeplus-io/chameleon/tree/develop/cardemo): Generating live car data based on newyork yellow taxi data. Refer to this [blog](https://www.timeplus.com/post/coding-with-chatgpt) for more information
-- [TSBS Data Loader](https://github.com/timeplus-io/chameleon/tree/develop/tsbs): Generating TSBS dataset
+- [Taxi/Car Data Stream](https://github.com/timeplus-io/chameleon/tree/develop/cardemo): Generating live car data based on [New York city yellow taxi trip data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page). Refer to this [blog](https://www.timeplus.com/post/coding-with-chatgpt) for more information
+- [TSBS Data Loader](https://github.com/timeplus-io/chameleon/tree/develop/tsbs): Generating [TSBS](https://github.com/timescale/tsbs) dataset, a Time Series Benchmark dataset
 - [Stream Data Loader](https://github.com/timeplus-io/chameleon/tree/develop/dataloader) : A performance test tool can be used to generate huge amount of stream data with different format for performance test purpose
 
 
@@ -37,7 +37,6 @@ For more information, refer to :
 - [Timeplus Playground](https://play.timeplus.com/playground)
 - [Timeplus Documentation](https://docs.timeplus.com/)
 - [Timeplus Slack](https://timepluscommunity.slack.com/)
-- [Timeplus Medium](https://medium.com/www-timeplus-com)
-- [Join Timeplus Beta](https://www.timeplus.com/) 
+- [Try Timeplus Cloud](https://www.timeplus.com/) 
 
   
