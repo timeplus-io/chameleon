@@ -29,9 +29,13 @@ For more information, refer to :
 
 Chameleon is Timeplus's open source repository for stream data test tools, we are openning these code to make stream data related test easy and efficient.
 
-Streaming data platform benchmarking is full of challengs, Timeplus's performance test tool `dataloader` is ready here and can be used to generate huge amount of stream data with different format for performance test purpose, refer to [dataloader](https://github.com/timeplus-io/chameleon/tree/develop/dataloader) for more information.
+There are several sub-projects in this folder:
 
-There will be more functions and other tools opening in the future, ping us if you have any comment.
+- [Stream Data Generator](https://github.com/timeplus-io/chameleon/tree/develop/generator):  Generating fake json based events into different targets such as Proton, Timeplus Cloud, Apache Kafka
+- [Taxi/Car Data Stream](https://github.com/timeplus-io/chameleon/tree/develop/cardemo): Generating live car data based on newyork yellow taxi data. Refer to this [blog](https://www.timeplus.com/post/coding-with-chatgpt) for more information
+- [TSBS Data Loader](https://github.com/timeplus-io/chameleon/tree/develop/tsbs): Generating TSBS dataset
+- [Stream Data Loader](https://github.com/timeplus-io/chameleon/tree/develop/dataloader) : A performance test tool can be used to generate huge amount of stream data with different format for performance test purpose
+
 
 > At Timeplus, component is named after the [particles](https://en.wikipedia.org/wiki/List_of_particles), [chameleon](https://en.wikipedia.org/wiki/Chameleon_particle) is a hypothetical scalar particle that couples to matter more weakly than gravity, postulated as a dark energy candidate.
 
