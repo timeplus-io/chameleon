@@ -46,6 +46,16 @@ There are three parts while using the generator
 3. observer, which is used to collecting the performance metrics of the target system, using the query capabilities provided by the target data processing system.
 
 
+# Build
+
+run `make init` and `make build`
+
+# Server mode
+
+run `generator -S` will run generator in a server mode, you can call REST API to create/get/delete new generator job
+
+run `make gen`
+
 # Generating Stream Data
 
 By configuring the `source`, random stream data can be generated, here is a sample source configuration.
