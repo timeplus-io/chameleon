@@ -3,12 +3,12 @@ package test_test
 import (
 	"time"
 
-	"github.com/timeplus-io/chameleon/generator/job"
-	"github.com/timeplus-io/chameleon/generator/observer"
-	"github.com/timeplus-io/chameleon/generator/plugins/console"
-	"github.com/timeplus-io/chameleon/generator/plugins/timeplus"
-	"github.com/timeplus-io/chameleon/generator/sink"
-	"github.com/timeplus-io/chameleon/generator/source"
+	"github.com/timeplus-io/chameleon/generator/internal/job"
+	"github.com/timeplus-io/chameleon/generator/internal/observer"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/console"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/timeplus"
+	"github.com/timeplus-io/chameleon/generator/internal/sink"
+	"github.com/timeplus-io/chameleon/generator/internal/source"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -34,7 +34,18 @@ var _ = Describe("Test Job", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(console).ShouldNot(BeNil())
 
-			job := job.CreateJob("test job", generator, []sink.Sink{console}, nil, 0)
+			jobConfig := job.JobConfiguration{
+				Name:   "test job",
+				Source: source.DefaultConfiguration(),
+				Sinks: []sink.Configuration{
+					{
+						Type:       "console",
+						Properties: map[string]interface{}{},
+					},
+				},
+			}
+
+			job := job.CreateJob("test job", generator, []sink.Sink{console}, nil, 0, jobConfig)
 
 			job.Start()
 			time.Sleep(3 * time.Second)
@@ -89,10 +100,10 @@ var _ = Describe("Test Job", func() {
 		It("test ob only job", func() {
 			jobConfig := job.JobConfiguration{
 				Name: "test job",
-				Observer: observer.Configuration{
+				Observers: []observer.Configuration{{
 					Type:       "neutron",
 					Properties: map[string]interface{}{},
-				},
+				}},
 			}
 
 			manager := job.NewJobManager()

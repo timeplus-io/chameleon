@@ -1,20 +1,49 @@
 basePath: /api
 definitions:
-  job.Job:
+  handlers.JobResponse:
     properties:
+      config:
+        $ref: '#/definitions/job.JobConfiguration'
       id:
         type: string
       name:
         type: string
       status:
+        $ref: '#/definitions/job.JobStatus'
+    type: object
+  handlers.PreviewRequest:
+    properties:
+      rule:
         type: string
+      type:
+        type: string
+    type: object
+  handlers.PreviewResponse:
+    properties:
+      data:
+        type: string
+    type: object
+  job.Job:
+    properties:
+      config:
+        $ref: '#/definitions/job.JobConfiguration'
+      id:
+        type: string
+      name:
+        type: string
+      stats:
+        $ref: '#/definitions/job.Stats'
+      status:
+        $ref: '#/definitions/job.JobStatus'
     type: object
   job.JobConfiguration:
     properties:
       name:
         type: string
       observer:
-        $ref: '#/definitions/observer.Configuration'
+        items:
+          $ref: '#/definitions/observer.Configuration'
+        type: array
       sinks:
         items:
           $ref: '#/definitions/sink.Configuration'
@@ -22,6 +51,25 @@ definitions:
       source:
         $ref: '#/definitions/source.Configuration'
       timeout:
+        type: integer
+    type: object
+  job.JobStatus:
+    enum:
+    - init
+    - running
+    - stopped
+    - failed
+    type: string
+    x-enum-varnames:
+    - STATUS_INIT
+    - STATUS_RUNNING
+    - STATUS_STOPPED
+    - STATUS_FAILED
+  job.Stats:
+    properties:
+      failed_write:
+        type: integer
+      success_write:
         type: integer
     type: object
   observer.Configuration:
@@ -80,8 +128,32 @@ definitions:
       timestamp_locale:
         type: string
       type:
-        type: string
+        $ref: '#/definitions/source.FieldType'
     type: object
+  source.FieldType:
+    enum:
+    - timestamp
+    - timestamp_int
+    - string
+    - int
+    - float
+    - bool
+    - map
+    - array
+    - generate
+    - regex
+    type: string
+    x-enum-varnames:
+    - FIELDTYPE_TIMESTAMP
+    - FIELDTYPE_TIMESTAMP_INT
+    - FIELDTYPE_STRING
+    - FIELDTYPE_INT
+    - FIELDTYPE_FLOAT
+    - FIELDTYPE_BOOL
+    - FIELDTYPE_MAP
+    - FIELDTYPE_ARRAY
+    - FIELDTYPE_GENERATE
+    - FIELDTYPE_REGEX
 info:
   contact:
     email: gang@timeplus.io
@@ -123,7 +195,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/job.Job'
+            $ref: '#/definitions/handlers.JobResponse'
         "400":
           description: Bad Request
         "500":
@@ -216,4 +288,28 @@ paths:
       summary: stop a running job.
       tags:
       - job
+  /previews:
+    post:
+      consumes:
+      - application/json
+      description: Preview a generated data.
+      parameters:
+      - description: preview request
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PreviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PreviewResponse'
+        "400":
+          description: Bad Request
+      summary: Preview a generated data.
+      tags:
+      - preview
 swagger: "2.0"
