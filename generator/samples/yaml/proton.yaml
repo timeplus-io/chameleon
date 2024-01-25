@@ -1,26 +1,52 @@
 ---
 name: test
-timeout: 20
+timeout: 65535
 source:
-  batch_size: 512
-  concurency: 8
-  interval: 100
+  batch_size: 4
+  concurency: 2
+  interval: 1000
   interval_delta: 0
   batch_number: 100000000
   random_event: true
   fields:
-    - name: value
-      type: int
-      limit:
-        - 0
-        - 10000
-    - name: time
-      type: timestamp_int
+  - name: ordertime
+    type: timestamp_int
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: orderid
+    type: generate
+    rule: "O{number:1,1000}"
+  - name: itemid
+    type: generate
+    rule: "I{number:1,1000}"
+  - name: orderunits
+    type: float
+    limit: [0.0, 10.0]
+  - name: city
+    type: generate
+    rule: "{city}"
+  - name: state
+    type: generate
+    rule: "{state}"
+  - name: zipcode
+    type: generate
+    rule: "{zip}"
+  - name: timestamp
+    type: timestamp
+    timestamp_format: '2006-01-02 15:04:05.000000'
+  - name: time
+    type: timestamp_int
+  - name: value
+    type: int
+    limit:
+    - 0
+    - 1000
+
 sinks:
   - type: proton
     properties:
       host: localhost
       port: 8123
+
 observer:
   - type: proton
     properties:

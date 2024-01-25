@@ -25,26 +25,14 @@ gen:
 run: gen
 	go run main.go -S
 
-run_proton:
-	go run main.go -f ./samples/yaml/proton.yaml
-
-build:
+build: gen
 	go build 
-
-run_materialize_client:
-	docker run -it --rm jbergknoff/postgresql-client postgresql://materialize@host.docker.internal:6875/materialize
-
-kafka_consume:
-	docker exec -it kafka /usr/bin/kafka-console-consumer \
-		--topic order --bootstrap-server localhost:9092
-ksql_client:
-	docker exec -it ksqldb-cli ksql http://ksqldb-server:8088
 
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 
 docker_run:
-	docker run -it -v $(PWD)/samples:/samples $(IMAGE_NAME) -f /samples/yaml/timeplus.yaml
+	docker run -it -v $(PWD)/samples:/samples $(IMAGE_NAME) -S
 
 push:
 	docker tag $(IMAGE_NAME) $(FULLNAME)

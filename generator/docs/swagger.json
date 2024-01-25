@@ -255,7 +255,7 @@
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/job.JobStatus"
+                    "type": "string"
                 }
             }
         },
@@ -294,7 +294,7 @@
                     "$ref": "#/definitions/job.Stats"
                 },
                 "status": {
-                    "$ref": "#/definitions/job.JobStatus"
+                    "type": "string"
                 }
             }
         },
@@ -323,21 +323,6 @@
                     "type": "integer"
                 }
             }
-        },
-        "job.JobStatus": {
-            "type": "string",
-            "enum": [
-                "init",
-                "running",
-                "stopped",
-                "failed"
-            ],
-            "x-enum-varnames": [
-                "STATUS_INIT",
-                "STATUS_RUNNING",
-                "STATUS_STOPPED",
-                "STATUS_FAILED"
-            ]
         },
         "job.Stats": {
             "type": "object",
@@ -433,36 +418,9 @@
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/source.FieldType"
+                    "type": "string"
                 }
             }
-        },
-        "source.FieldType": {
-            "type": "string",
-            "enum": [
-                "timestamp",
-                "timestamp_int",
-                "string",
-                "int",
-                "float",
-                "bool",
-                "map",
-                "array",
-                "generate",
-                "regex"
-            ],
-            "x-enum-varnames": [
-                "FIELDTYPE_TIMESTAMP",
-                "FIELDTYPE_TIMESTAMP_INT",
-                "FIELDTYPE_STRING",
-                "FIELDTYPE_INT",
-                "FIELDTYPE_FLOAT",
-                "FIELDTYPE_BOOL",
-                "FIELDTYPE_MAP",
-                "FIELDTYPE_ARRAY",
-                "FIELDTYPE_GENERATE",
-                "FIELDTYPE_REGEX"
-            ]
         }
     }
 }
