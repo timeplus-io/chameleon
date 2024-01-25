@@ -9,7 +9,7 @@ Make stream data test easy and efficient!
 
 ## What is Chameleon
 
-Chameleon is Timeplus's open source repository for stream data test tools. These toolsets are targeting to make stream data related test easy and efficient.
+Chameleon is Timeplus's open source repository for stream data test tools. These tools are targeting to make stream data related tests easy and efficient.
 
 There are several sub-projects in this folder:
 
