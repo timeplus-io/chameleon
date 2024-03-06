@@ -19,6 +19,7 @@ import (
 	"github.com/timeplus-io/chameleon/generator/internal/handlers"
 	"github.com/timeplus-io/chameleon/generator/internal/job"
 	"github.com/timeplus-io/chameleon/generator/internal/log"
+	"github.com/timeplus-io/chameleon/generator/internal/plugins/aerospike"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/console"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/dolpindb"
 	"github.com/timeplus-io/chameleon/generator/internal/plugins/kafka"
@@ -114,6 +115,7 @@ func initPlugins() {
 	kdb.Init()
 	dolpindb.Init()
 	proton.Init()
+	aerospike.Init()
 }
 
 func startServer() *http.Server {
