@@ -21,7 +21,6 @@ docker: Dockerfile
 
 docker_run:
 	docker run \
-		-v $(PWD)/routes.json:/timeplus/routes.json:ro \
 		-v $(PWD)/.cardemo.yaml:/timeplus/.cardemo.yaml:ro \
 		-v $(PWD)/sinks.yaml:/timeplus/sinks.yaml:ro \
 		$(IMAGE_NAME) --config /timeplus/.cardemo.yaml -f ./sinks.yaml
