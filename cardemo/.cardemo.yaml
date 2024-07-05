@@ -1,0 +1,31 @@
+
+log-level: info
+
+cardemo:
+  app:
+    schedule:
+      interval: 1000
+  user:
+    batch: 100
+    count: 10000
+  car:
+    batch: 100
+    count: 10000
+    update:
+      interval: 1000
+    price: 2.5
+    recharge:
+      mileage: 5000
+  trip:
+    target:
+      max: 20
+      min: 1
+  book:
+    cancel:
+      rate: 0.1
+  type:
+    trips:
+      amount: Decimal(10, 2)
+    credit_change: 
+      amount: Decimal(10, 2)
+
