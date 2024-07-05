@@ -47,8 +47,8 @@ sinks:
       dbpath: dfs://perftest
 
 observer:
-  type: dolpindb
-  properties:
-    metric: availability
-    address: localhost:8848
-    dbpath: dfs://perftest
+  - type: dolpindb
+    properties:
+      metric: availability
+      address: localhost:8848
+      dbpath: dfs://perftest

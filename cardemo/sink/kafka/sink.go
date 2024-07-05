@@ -21,6 +21,8 @@ import (
 const KAFKA_SASL_TYPE_NONE = "none"
 const KAFKA_SASL_TYPE_PLAIN = "plain"
 const KAFKA_SASL_TYPE_SCRAM = "scram"
+const KAFKA_SASL_TYPE_SCRAM_256 = "scram256"
+const KAFKA_SASL_TYPE_SCRAM_512 = "scram512"
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 type KafkaSink struct {
@@ -81,6 +83,9 @@ func (s *KafkaSink) Init() error {
 	if s.tls {
 		tlsDialer := &tls.Dialer{NetDialer: &net.Dialer{Timeout: 10 * time.Second}}
 		opts = append(opts, kgo.Dialer(tlsDialer.DialContext))
+
+		tlsConfig := kgo.DialTLSConfig(&tls.Config{InsecureSkipVerify: true})
+		opts = append(opts, tlsConfig)
 	}
 
 	if s.sasl == KAFKA_SASL_TYPE_PLAIN {
@@ -93,6 +98,16 @@ func (s *KafkaSink) Init() error {
 			User: s.saslUsername,
 			Pass: s.saslPassword,
 		}.AsSha512Mechanism()))
+	} else if s.sasl == KAFKA_SASL_TYPE_SCRAM_512 {
+		opts = append(opts, kgo.SASL(scram.Auth{
+			User: s.saslUsername,
+			Pass: s.saslPassword,
+		}.AsSha512Mechanism()))
+	} else if s.sasl == KAFKA_SASL_TYPE_SCRAM_256 {
+		opts = append(opts, kgo.SASL(scram.Auth{
+			User: s.saslUsername,
+			Pass: s.saslPassword,
+		}.AsSha256Mechanism()))
 	}
 
 	client, err := kgo.NewClient(opts...)
@@ -117,7 +132,7 @@ func (s *KafkaSink) initCars(cars []*common.DimCar) error {
 		record := &kgo.Record{Topic: "dimcar", Value: eventValue, Key: key}
 		s.client.Produce(s.ctx, record, func(_ *kgo.Record, err error) {
 			if err != nil {
-				log.Logger().Errorf("record had a produce error: %w", err)
+				log.Logger().Errorf("record had a produce error: %s", err)
 			}
 		})
 	}
@@ -137,7 +152,7 @@ func (s *KafkaSink) initUsers(users []*common.DimUser) error {
 		record := &kgo.Record{Topic: "dimuser", Value: eventValue, Key: key}
 		s.client.Produce(s.ctx, record, func(_ *kgo.Record, err error) {
 			if err != nil {
-				log.Logger().Errorf("record had a produce error: %w", err)
+				log.Logger().Errorf("record had a produce error: %s", err)
 			}
 		})
 	}
@@ -165,7 +180,7 @@ func (s *KafkaSink) send(event map[string]any, stream string, timeCol string) er
 	record := &kgo.Record{Topic: stream, Value: eventValue, Key: key}
 	s.client.Produce(s.ctx, record, func(_ *kgo.Record, err error) {
 		if err != nil {
-			log.Logger().Errorf("record had a produce error: %w", err)
+			log.Logger().Errorf("record had a produce error: %s", err)
 		}
 	})
 	return nil

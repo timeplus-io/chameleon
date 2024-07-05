@@ -46,9 +46,9 @@ sinks:
     brokers: localhost:9092
 
 observer:
-  type: kafka
-  properties:
-    topic: order
-    brokers: localhost:9092
-    metric: latency
+  - type: kafka
+    properties:
+      topic: order
+      brokers: localhost:9092
+      metric: latency
 

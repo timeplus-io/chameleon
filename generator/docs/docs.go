@@ -70,7 +70,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/job.Job"
+                            "$ref": "#/definitions/handlers.JobResponse"
                         }
                     },
                     "400": {
@@ -210,17 +210,96 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/previews": {
+            "post": {
+                "description": "Preview a generated data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "preview"
+                ],
+                "summary": "Preview a generated data.",
+                "parameters": [
+                    {
+                        "description": "preview request",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PreviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PreviewResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "job.Job": {
+        "handlers.JobResponse": {
             "type": "object",
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/job.JobConfiguration"
+                },
                 "id": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.PreviewRequest": {
+            "type": "object",
+            "properties": {
+                "rule": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.PreviewResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                }
+            }
+        },
+        "job.Job": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/job.JobConfiguration"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stats": {
+                    "$ref": "#/definitions/job.Stats"
                 },
                 "status": {
                     "type": "string"
@@ -234,7 +313,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "observer": {
-                    "$ref": "#/definitions/observer.Configuration"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/observer.Configuration"
+                    }
                 },
                 "sinks": {
                     "type": "array",
@@ -246,6 +328,17 @@ const docTemplate = `{
                     "$ref": "#/definitions/source.Configuration"
                 },
                 "timeout": {
+                    "type": "integer"
+                }
+            }
+        },
+        "job.Stats": {
+            "type": "object",
+            "properties": {
+                "failed_write": {
+                    "type": "integer"
+                },
+                "success_write": {
                     "type": "integer"
                 }
             }

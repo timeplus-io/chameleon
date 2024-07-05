@@ -1,10 +1,9 @@
 ---
 name: test-long-running-query
 observer:
-  type: timeplus
-  properties:
-    address: http://localhost:8000
-    metric: queries
-    querys:
-    - SELECT count(*) FROM table(test)
-    - SELECT count(*) FROM table(test)
+  - type: timeplus
+    properties:
+      address: http://localhost:8000
+      metric: queries
+      querys:
+      - SELECT count(*) FROM table(test)

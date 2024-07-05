@@ -21,7 +21,7 @@ sinks:
     hec_address: https://localhost:8088/services/collector/event
     hec_token: abcd1234
 observer:
-  type: splunk
-  properties:
-    search: search index=main source="my_source"  | stats count
-    metric: availability
+  - type: splunk
+    properties:
+      search: search index=main source="my_source"  | stats count
+      metric: availability

@@ -1,28 +1,60 @@
 
 # Timeplus Chameleon Generator
 
-Chameleon generator is a stream data generation tool which can be used in streaming functional test and performance test. Written in Golang, chameleon generator can genertor random data stream based on defined schema, it also provide observer functions which can be used to observe the performance of data analytic systems.
+Chameleon generator is a stream data generation tool which can be used in streaming functional test and performance test. Written in Golang, chameleon generator can generate random data stream based on pre-defined schema, it also provides observer functions which can be used to observe the performance of data analytic systems.
 
 # Quick Run
 
-To run chameleon generator, for example splunk, 
+To run chameleon generator, for example all data stream to [Proton](https://github.com/timeplus-io/proton), 
 
-1. start a splunk stack from dir `deplyment/splunk` with `docker-compose up`
-2. run a stream data generator by `go run main.go -f ./samples/yaml/splunk.yaml`
-3. run a observer with `go run main.go -f ./samples/yaml/splunk_ob_latency.yaml`
+1. start a Proton instance using docker `docker run -d --name proton -p 8123:8123 -p 8463:8463 ghcr.io/timeplus-io/proton:latest`
+2. run a stream data generator by `go run main.go -f ./samples/yaml/proton.yaml`
+3. run `docker exec -it proton proton-client` to start a proton client and then run following query `select * from test` , a stream called `test` is created by the generator and continuously generating random events into that stream. the query will return all generated events in real time.
 
-the report will be generated locally after obsever finish its observing job.
+``` shell
+select * from test
+
+SELECT
+  *
+FROM
+  test
+
+Query id: 7e8aeb97-eab5-45cd-b64a-8628c1995dcd
+
+┌─────ordertime─┬─orderid─┬─itemid─┬─orderunits─┬─city───────────┬─state───────┬─zipcode─┬───────────────timestamp─┬──────────time─┬─value─┬────────────────_tp_time─┐
+│ 1706120709174 │ O570    │ I866   │   5.490351 │ Newark         │ Connecticut │ 36863   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   996 │ 2024-01-24 18:25:09.177 │
+│ 1706120709174 │ O323    │ I984   │  3.0044174 │ San Bernardino │ Colorado    │ 71880   │ 2024-01-24 18:25:09.174 │ 1706120709174 │    86 │ 2024-01-24 18:25:09.177 │
+│ 1706120709174 │ O658    │ I756   │   6.129027 │ San Francisco  │ Missouri    │ 11499   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   541 │ 2024-01-24 18:25:09.177 │
+│ 1706120709174 │ O774    │ I189   │   8.842153 │ Oklahoma       │ Alabama     │ 30266   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   370 │ 2024-01-24 18:25:09.177 │
+└───────────────┴─────────┴────────┴────────────┴────────────────┴─────────────┴─────────┴─────────────────────────┴───────────────┴───────┴─────────────────────────┘
+┌─────ordertime─┬─orderid─┬─itemid─┬─orderunits─┬─city──────┬─state────────┬─zipcode─┬───────────────timestamp─┬──────────time─┬─value─┬────────────────_tp_time─┐
+│ 1706120709174 │ O572    │ I26    │   9.162193 │ Durham    │ Illinois     │ 99955   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   176 │ 2024-01-24 18:25:09.177 │
+│ 1706120709174 │ O482    │ I640   │   9.704296 │ Omaha     │ Kansas       │ 95799   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   519 │ 2024-01-24 18:25:09.177 │
+│ 1706120709174 │ O733    │ I271   │  7.8437223 │ Oklahoma  │ Illinois     │ 88276   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   850 │ 2024-01-24 18:25:09.177 │
+│ 1706120709174 │ O612    │ I89    │   4.526264 │ Oakland   │ Rhode Island │ 85202   │ 2024-01-24 18:25:09.174 │ 1706120709174 │   166 │ 2024-01-24 18:25:09.177 │
+└───────────────┴─────────┴────────┴────────────┴───────────┴──────────────┴─────────┴─────────────────────────┴───────────────┴───────┴─────────────────────────┘
+```
+
+also, according to the configuration, two observers are collecting the throughput and data latency. the report will be generated locally after obsever finish its observing job.
 
 
 # Architecture Principles
-
-![Timeplus Chaneleon](architecture.png)
 
 There are three parts while using the generator
 1. writer, which is composed by multiple go routines to generating streaming data and write to target system
 2. target data processing system, which is the taget of observing, which we want to figure out how well it is when performaing specifig data processing tasks
 3. observer, which is used to collecting the performance metrics of the target system, using the query capabilities provided by the target data processing system.
 
+
+# Build
+
+run `make init` and `make build`
+
+# Server mode
+
+run `generator -S` will run generator in a server mode, you can call REST API to create/get/delete new generator job.
+
+the server is running at `http://localhost:3000/` and you can visit `http://localhost:3000/swagger/index.html` for API doc.
 
 # Generating Stream Data
 
@@ -50,11 +82,13 @@ here is the definition of all configurations of `source`
 
 | Field Name | Description |Sample Value|
 | ----------- | ----------- | ----------- |
-| `batch_size` |  how many events contained in each batch| `0` |
+| `batch_size` |  how many events contained in each batch| `16` |
+| `concurency` |  how many concurrent go routines is used to generat event| `2` |
 | `interval` |  the interval between each iteration in ms| `1000` |
 | `interval_delta` |  a random variation of the interval of each iteration , used to simulate interval jitter| `300` |
 | `batch_number ` |  how many iterations to run for each goroutine, if not specified, run max int iterations | `1000` |
-| `fields` | a list of fields definition |  |
+| `random_event ` |  when set to false, will a fixed event, this is used for performance test where random data is not required  | `true` |
+| `fields` | a list of json fields definition |  |
 
 for fields, it contains following attributes
 
@@ -85,7 +119,21 @@ sinks:
 
 above configuration defines one sink of splunk with specified hec address and token.  multiple sinks can be defined in the configuration.  
 
-Current supported sink types are `splunk`,`materialize`,`ksql`,`kafka`,`neutron` (neutron is code name of Timeplus API service).  Please refer to the code for properties required for each sink type.
+Current supported sink types are 
+
+- `timeplus`
+- `proton`
+- `splunk`
+- `kdb`
+- `materialize`
+- `ksql`
+- `kafka`
+- `kafka`
+- `console`
+- `dolpindb`
+- `rocketmq`
+
+refer to [samples](./samples) folder for the sink configurerations
 
 # Observe System Performance
 

@@ -3,8 +3,8 @@ package test_test
 import (
 	"time"
 
-	"github.com/timeplus-io/chameleon/generator/log"
-	"github.com/timeplus-io/chameleon/generator/source"
+	"github.com/timeplus-io/chameleon/generator/internal/log"
+	"github.com/timeplus-io/chameleon/generator/internal/source"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
