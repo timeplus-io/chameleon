@@ -1,4 +1,4 @@
-package timeplus
+package proton
 
 import (
 	"fmt"
@@ -6,19 +6,16 @@ import (
 
 	"github.com/timeplus-io/chameleon/cardemo/common"
 	"github.com/timeplus-io/chameleon/cardemo/log"
-
 	"github.com/timeplus-io/chameleon/cardemo/utils"
-
-	"github.com/timeplus-io/go-client/timeplus"
 )
 
 const DefaultTTL = "to_datetime(_tp_time) + INTERVAL 30 DAY"
 const DefaultLogStoreRetentionBytes = 604800000
 const DefaultLogStoreRetentionMS = 1342177280
 
-var DimCarStreamDef = timeplus.StreamDef{
+var DimCarStreamDef = StreamDef{
 	Name: "dim_car_info",
-	Columns: []timeplus.ColumnDef{
+	Columns: []ColumnDef{
 		{
 			Name: "in_service",
 			Type: "bool",
@@ -32,14 +29,12 @@ var DimCarStreamDef = timeplus.StreamDef{
 			Type: "string",
 		},
 	},
-	TTLExpression:          DefaultTTL,
-	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
-	LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
+	TTLExpression: DefaultTTL,
 }
 
-var DimUserStreamDef = timeplus.StreamDef{
+var DimUserStreamDef = StreamDef{
 	Name: "dim_user_info",
-	Columns: []timeplus.ColumnDef{
+	Columns: []ColumnDef{
 		{
 			Name: "birthday",
 			Type: "string",
@@ -69,14 +64,12 @@ var DimUserStreamDef = timeplus.StreamDef{
 			Type: "string",
 		},
 	},
-	TTLExpression:          DefaultTTL,
-	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
-	LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
+	TTLExpression: DefaultTTL,
 }
 
-var BookingStreamDef = timeplus.StreamDef{
+var BookingStreamDef = StreamDef{
 	Name: "bookings",
-	Columns: []timeplus.ColumnDef{
+	Columns: []ColumnDef{
 		{
 			Name: "action",
 			Type: "string",
@@ -115,14 +108,12 @@ var BookingStreamDef = timeplus.StreamDef{
 			Default: "time",
 		},
 	},
-	TTLExpression:          DefaultTTL,
-	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
-	LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
+	TTLExpression: DefaultTTL,
 }
 
-var CarStream = timeplus.StreamDef{
+var CarStream = StreamDef{
 	Name: "car_live_data",
-	Columns: []timeplus.ColumnDef{
+	Columns: []ColumnDef{
 		{
 			Name: "in_use",
 			Type: "bool",
@@ -165,14 +156,12 @@ var CarStream = timeplus.StreamDef{
 			Default: "time",
 		},
 	},
-	TTLExpression:          DefaultTTL,
-	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
-	LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
+	TTLExpression: DefaultTTL,
 }
 
-var TripStream = timeplus.StreamDef{
+var TripStream = StreamDef{
 	Name: "trips",
-	Columns: []timeplus.ColumnDef{
+	Columns: []ColumnDef{
 		{
 			Name: "pay_type",
 			Type: "string",
@@ -223,70 +212,82 @@ var TripStream = timeplus.StreamDef{
 			Default: "end_time",
 		},
 	},
-	TTLExpression:          DefaultTTL,
-	LogStoreRetentionBytes: DefaultLogStoreRetentionBytes,
-	LogStoreRetentionMS:    DefaultLogStoreRetentionMS,
+	TTLExpression: DefaultTTL,
 }
 
-var CarInfoView = timeplus.View{
+var CarInfoView = ViewDef{
 	Name:         "car_info",
 	Query:        "select * from table(dim_car_info)",
 	Materialized: false,
 }
 
-var UserInfoView = timeplus.View{
+var UserInfoView = ViewDef{
 	Name:         "user_info",
 	Query:        "select * from table(dim_user_info)",
 	Materialized: false,
 }
 
-var RevenueView = timeplus.View{
+var RevenueView = ViewDef{
 	Name:         "today_revenue",
 	Query:        "select sum(amount) from trips where end_time > today()",
 	Materialized: true,
 }
 
-type TimeplusSink struct {
-	client    *timeplus.TimeplusClient
-	producers map[string]*TimeplusStreamProducer
+type ProtonSink struct {
+	client    *Client
+	producers map[string]*ProtonStreamProducer
 }
 
-func NewTimeplusSink(properties map[string]any) (*TimeplusSink, error) {
-	address, err := utils.GetWithDefault(properties, "address", "http://localhost:8000")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
-
-	apikey, err := utils.GetWithDefault(properties, "apikey", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
-
-	tenant, err := utils.GetWithDefault(properties, "tenant", "")
-	if err != nil {
-		return nil, fmt.Errorf("invalid properties : %w", err)
-	}
+func NewProtonSink(properties map[string]any) (*ProtonSink, error) {
 
 	interval, err := utils.GetIntWithDefault(properties, "interval", 200)
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties : %w", err)
 	}
 
-	server := timeplus.NewCient(address, tenant, apikey)
+	host, err := utils.GetWithDefault(properties, "host", "localhost")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	portRest, err := utils.GetIntWithDefault(properties, "rest_port", 3218)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	portTCP, err := utils.GetIntWithDefault(properties, "tcp_port", 8463)
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	user, err := utils.GetWithDefault(properties, "user", "default")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	password, err := utils.GetWithDefault(properties, "password", "")
+	if err != nil {
+		return nil, fmt.Errorf("invalid properties : %w", err)
+	}
+
+	driverConfig := NewConfig(host, user, password, portTCP)
+	driver := NewEngine(driverConfig)
+
+	server := NewClient("", host, portRest, user, password, driver, driver)
 
 	producerInterval := time.Duration(interval) * time.Millisecond
-	producers := make(map[string]*TimeplusStreamProducer)
-	producers["car_live_data"] = NewTimeplusStreamProducer(server, "car_live_data", producerInterval)
-	producers["trips"] = NewTimeplusStreamProducer(server, "trips", producerInterval)
-	producers["bookings"] = NewTimeplusStreamProducer(server, "bookings", producerInterval)
+	producers := make(map[string]*ProtonStreamProducer)
+	producers["car_live_data"] = NewProtonStreamProducer(server, "car_live_data", producerInterval)
+	producers["trips"] = NewProtonStreamProducer(server, "trips", producerInterval)
+	producers["bookings"] = NewProtonStreamProducer(server, "bookings", producerInterval)
 
-	return &TimeplusSink{
+	return &ProtonSink{
 		client:    server,
 		producers: producers,
 	}, nil
 }
 
-func (s *TimeplusSink) Init() error {
+func (s *ProtonSink) Init() error {
 	if err := s.initStream(DimCarStreamDef); err != nil {
 		log.Logger().Warnf("DimCarStream failed to init")
 		return err
@@ -327,39 +328,45 @@ func (s *TimeplusSink) Init() error {
 	return nil
 }
 
-func (s *TimeplusSink) initStream(streamDef timeplus.StreamDef) error {
+func (s *ProtonSink) initStream(streamDef StreamDef) error {
 	log.Logger().Infof("Calling Stream Init")
+
+	streamStorageConfig := StreamStorageConfig{
+		RetentionBytes: DefaultLogStoreRetentionBytes,
+		RetentionMS:    DefaultLogStoreRetentionMS,
+	}
 
 	if s.client.ExistStream(streamDef.Name) {
 		if streamDef.Name == DimCarStreamDef.Name {
-			if err := s.client.DeleteStream(CarInfoView.Name); err != nil {
+			if err := s.client.DeleteStreamView(CarInfoView.Name); err != nil {
 				log.Logger().Errorf("failed to delete view %s, %s", CarInfoView.Name, err.Error())
 				return err
 			}
 		}
 
 		if streamDef.Name == DimUserStreamDef.Name {
-			if err := s.client.DeleteStream(UserInfoView.Name); err != nil {
+			if err := s.client.DeleteStreamView(UserInfoView.Name); err != nil {
 				log.Logger().Errorf("failed to delete view %s, %s", UserInfoView.Name, err.Error())
 				return err
 			}
 		}
 
 		if streamDef.Name == DimCarStreamDef.Name || streamDef.Name == DimUserStreamDef.Name {
-			log.Logger().Warnf("stream %s already exist, no need to delete and recreate", streamDef.Name)
-			if err := s.client.DeleteStream(streamDef.Name); err != nil {
+			log.Logger().Warnf("recreate stream %s", streamDef.Name)
+			if err := s.client.DeleteStreamView(streamDef.Name); err != nil {
+				log.Logger().Errorf("failed to delete existing stream %s, %s", streamDef.Name, err.Error())
 				return err
 			}
-			return s.client.CreateStream(streamDef)
+			return s.client.CreateStream(streamDef, streamStorageConfig)
 		} else {
 			log.Logger().Warnf("stream %s already exist, no need to create", streamDef.Name)
 			return nil
 		}
 	}
-	return s.client.CreateStream(streamDef)
+	return s.client.CreateStream(streamDef, streamStorageConfig)
 }
 
-func (s *TimeplusSink) initView(view timeplus.View) error {
+func (s *ProtonSink) initView(view ViewDef) error {
 	if s.client.ExistView(view.Name) {
 		log.Logger().Warnf("stream %s already exist, no need to create", view.Name)
 		return nil
@@ -367,53 +374,46 @@ func (s *TimeplusSink) initView(view timeplus.View) error {
 	return s.client.CreateView(view)
 }
 
-func dimCarsToIngestData(cars []*common.DimCar) timeplus.IngestData {
-	ingestData := timeplus.IngestData{}
+func dimCarsToIngestData(cars []*common.DimCar) IngestData {
+	ingestData := IngestData{}
 	ingestData.Columns = common.GetDimCarHeader()
-	ingestData.Data = make([][]any, len(cars))
+	ingestData.Data = make([]IngestDataRow, len(cars))
 	for i, car := range cars {
 		ingestData.Data[i] = car.ToRow()
 	}
 	return ingestData
 }
 
-func (s *TimeplusSink) InitCars(cars []*common.DimCar) error {
+func (s *ProtonSink) InitCars(cars []*common.DimCar) error {
 	ingestData := dimCarsToIngestData(cars)
-	payload := &timeplus.IngestPayload{
-		Data:   ingestData,
-		Stream: DimCarStreamDef.Name,
-	}
-	if err := s.client.InsertData(payload); err != nil {
+
+	if _, err := s.client.IngestEvent(ingestData, DimCarStreamDef.Name); err != nil {
 		log.Logger().Errorf("failed to initialize data to stream %s, %s", DimCarStreamDef.Name, err)
 		return err
 	}
 	return nil
 }
 
-func dimUsersToIngestData(users []*common.DimUser) timeplus.IngestData {
-	ingestData := timeplus.IngestData{}
+func dimUsersToIngestData(users []*common.DimUser) IngestData {
+	ingestData := IngestData{}
 	ingestData.Columns = common.GetDimUserHeader()
-	ingestData.Data = make([][]any, len(users))
+	ingestData.Data = make([]IngestDataRow, len(users))
 	for i, user := range users {
 		ingestData.Data[i] = user.ToRow()
 	}
 	return ingestData
 }
 
-func (s *TimeplusSink) InitUsers(users []*common.DimUser) error {
+func (s *ProtonSink) InitUsers(users []*common.DimUser) error {
 	ingestData := dimUsersToIngestData(users)
-	payload := &timeplus.IngestPayload{
-		Data:   ingestData,
-		Stream: DimUserStreamDef.Name,
-	}
-	if err := s.client.InsertData(payload); err != nil {
+	if _, err := s.client.IngestEvent(ingestData, DimUserStreamDef.Name); err != nil {
 		log.Logger().Errorf("failed to initialize data to stream %s, %s", DimUserStreamDef.Name, err)
 		return err
 	}
 	return nil
 }
 
-func (s *TimeplusSink) Send(event map[string]any, stream string, timeCol string) error {
+func (s *ProtonSink) Send(event map[string]any, stream string, timeCol string) error {
 	if p, ok := s.producers[stream]; ok {
 		p.produce(event)
 	} else {

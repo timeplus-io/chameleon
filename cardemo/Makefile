@@ -16,6 +16,9 @@ build:
 run:
 	go run main.go --config ./.cardemo.yaml -f ./sinks.yaml
 
+run_proton:
+	docker run -d --pull always -p 3218:3218 -p 8463:8463 --name proton ghcr.io/timeplus-io/proton:latest
+
 docker: Dockerfile
 	docker build -t $(IMAGE_NAME) .
 
